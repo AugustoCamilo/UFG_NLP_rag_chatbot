@@ -1,6 +1,6 @@
 # ingest.py
 import os
-# Importação da biblioteca tqdm
+import shutil  # --- ALTERAÇÃO: Importado para manipulação de diretórios ---
 from tqdm import tqdm 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import Chroma
@@ -17,8 +17,6 @@ def process_documents():
     """Carrega, divide e vetoriza os documentos PDF."""
     print("Iniciando a ingestão de documentos...")
     
-    # --- Alteração Inicia Aqui ---
-
     # 1. Carregar documentos
     
     # Primeiro, lista todos os arquivos PDF
@@ -42,8 +40,6 @@ def process_documents():
             print(f"\nErro ao carregar o arquivo {filename}: {e}") 
             # Continua para o próximo arquivo
 
-    # --- Alteração Termina Aqui ---
-
     if not documents:
         print("Nenhum documento pôde ser carregado com sucesso.")
         return
@@ -56,6 +52,30 @@ def process_documents():
     # 3. Inicializar modelo de embedding
     # Usará a CPU por padrão.
     embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
+
+    # --- ALTERAÇÃO INICIA AQUI ---
+    # 3.5. Limpar o banco de dados vetorial antigo ANTES de criar um novo
+    print(f"Verificando e limpando o diretório do banco de dados antigo: {VECTOR_DB_DIR}")
+    if os.path.isdir(VECTOR_DB_DIR): # Verifica se o diretório existe
+        try:
+            # shutil.rmtree é usado para remover um diretório e todo o seu conteúdo
+            shutil.rmtree(VECTOR_DB_DIR) 
+            print(f"Diretório antigo '{VECTOR_DB_DIR}' removido com sucesso.")
+        except OSError as e:
+            print(f"Erro ao remover o diretório {VECTOR_DB_DIR}: {e}")
+            print("Por favor, feche todos os programas que possam estar usando este diretório e tente novamente.")
+            return # Aborta a ingestão se não for possível limpar
+    elif os.path.exists(VECTOR_DB_DIR):
+        # Caso exista um arquivo com o mesmo nome (o que não deveria)
+        print(f"Atenção: O caminho '{VECTOR_DB_DIR}' existe, mas não é um diretório. Removendo...")
+        try:
+            os.remove(VECTOR_DB_DIR)
+        except OSError as e:
+            print(f"Erro ao remover o arquivo {VECTOR_DB_DIR}: {e}")
+            return
+    else:
+        print("Nenhum banco de dados antigo encontrado. Criando um novo.")
+    # --- ALTERAÇÃO TERMINA AQUI ---
 
     # 4. Criar e persistir o banco de dados vetorial
     # Usando ChromaDB com persistência local
