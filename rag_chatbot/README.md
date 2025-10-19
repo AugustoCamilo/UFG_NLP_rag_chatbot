@@ -34,3 +34,31 @@ pip install llama-cpp-python
 ```bash
 pip install tqdm
 ```
+
+---
+
+# Download do Modelo de Linguagem (LLM)
+
+Para uma solução open-source e local, usaremos um modelo no formato **GGUF**.
+
+## 1. Acesso ao Hugging Face
+
+Visite o repositório no Hugging Face, por exemplo:
+
+🔗 [TheBloke/Mistral-7B-Instruct-v0.2-GGUF](https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF)
+
+## 2. Escolha do Arquivo
+
+Baixe um arquivo GGUF **quantizado**. Recomenda-se um modelo de tamanho médio, como:
+
+```
+mistral-7b-instruct-v0.2.Q4_K_M.gguf
+```
+
+## 3. Salvamento do Arquivo
+
+Após o download, salve o arquivo dentro da pasta:
+
+```
+models/
+```
