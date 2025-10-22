@@ -21,4 +21,4 @@ EMBEDDING_MODEL_NAME = 'sentence-transformers/all-MiniLM-L6-v2'
 # --- Configuração da Busca ---
 # (Bônus) Centralizando também os parâmetros de busca
 SEARCH_K_RAW = 20  # Quantos chunks buscar inicialmente
-SEARCH_K_FINAL = 3 # Quantos chunks exibir no final
+SEARCH_K_FINAL = 3  # Quantos chunks exibir no final
