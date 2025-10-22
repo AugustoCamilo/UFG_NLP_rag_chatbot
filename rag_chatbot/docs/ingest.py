@@ -1,95 +1,85 @@
 # ingest.py
 import os
-import shutil  # --- ALTERAÇÃO: Importado para manipulação de diretórios ---
+import shutil
 from tqdm import tqdm 
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
+# --- ALTERAÇÃO: Importar Chroma do novo pacote ---
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-
-# Caminhos
-DOCS_DIR = '.'
-VECTOR_DB_DIR = '../vector_db'
-EMBEDDING_MODEL_NAME = 'sentence-transformers/all-MiniLM-L6-v2'
+# Importar o arquivo de configuração
+import config
 
 def process_documents():
     """Carrega, divide e vetoriza os documentos PDF."""
     print("Iniciando a ingestão de documentos...")
     
     # 1. Carregar documentos
-    
-    # Primeiro, lista todos os arquivos PDF
-    pdf_files = [f for f in os.listdir(DOCS_DIR) if f.endswith('.pdf')]
+    pdf_files = [f for f in os.listdir(config.DOCS_DIR) if f.endswith('.pdf')]
     
     if not pdf_files:
-        print(f"Nenhum documento PDF encontrado no diretório: {DOCS_DIR}")
+        print(f"Nenhum documento PDF encontrado no diretório: {config.DOCS_DIR}")
         return
 
-    print(f"Encontrados {len(pdf_files)} arquivos PDF. Iniciando carregamento...")
+    print(f"Encontrados {len(pdf_files)} arquivos PDF. Iniciando carregamento e divisão...")
 
-    documents = []
-    # Use tqdm() para envolver a lista de arquivos e criar a barra de progresso
-    for filename in tqdm(pdf_files, desc="Carregando PDFs", unit="arquivo"):
-        filepath = os.path.join(DOCS_DIR, filename)
-        loader = PyPDFLoader(filepath)
-        try:
-            documents.extend(loader.load())
-        except Exception as e:
-            # \n é importante para pular a linha da barra de progresso
-            print(f"\nErro ao carregar o arquivo {filename}: {e}") 
-            # Continua para o próximo arquivo
-
-    if not documents:
-        print("Nenhum documento pôde ser carregado com sucesso.")
-        return
-
-    # 2. Dividir documentos em chunks
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    chunks = text_splitter.split_documents(documents)
-    print(f"Documentos divididos em {len(chunks)} chunks.")
+    
+    all_chunks = [] 
+    
+    for filename in tqdm(pdf_files, desc="Processando PDFs", unit="arquivo"):
+        filepath = os.path.join(config.DOCS_DIR, filename)
+        loader = PyPDFLoader(filepath)
+        
+        try:
+            chunks = loader.load_and_split(text_splitter=text_splitter)
+            all_chunks.extend(chunks)
+            
+        except Exception as e:
+            print(f"\nErro ao carregar ou dividir o arquivo {filename}: {e}")
+
+    if not all_chunks:
+        print("Nenhum documento pôde ser processado com sucesso.")
+        return
+
+    print(f"Documentos divididos em {len(all_chunks)} chunks.")
 
     # 3. Inicializar modelo de embedding
-    # Usará a CPU por padrão.
-    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
+    embeddings = HuggingFaceEmbeddings(model_name=config.EMBEDDING_MODEL_NAME)
 
-    # --- ALTERAÇÃO INICIA AQUI ---
     # 3.5. Limpar o banco de dados vetorial antigo ANTES de criar um novo
-    print(f"Verificando e limpando o diretório do banco de dados antigo: {VECTOR_DB_DIR}")
-    if os.path.isdir(VECTOR_DB_DIR): # Verifica se o diretório existe
+    print(f"Verificando e limpando o diretório do banco de dados antigo: {config.VECTOR_DB_DIR}")
+    if os.path.isdir(config.VECTOR_DB_DIR):
         try:
-            # shutil.rmtree é usado para remover um diretório e todo o seu conteúdo
-            shutil.rmtree(VECTOR_DB_DIR) 
-            print(f"Diretório antigo '{VECTOR_DB_DIR}' removido com sucesso.")
+            shutil.rmtree(config.VECTOR_DB_DIR)
+            print(f"Diretório antigo '{config.VECTOR_DB_DIR}' removido com sucesso.")
         except OSError as e:
-            print(f"Erro ao remover o diretório {VECTOR_DB_DIR}: {e}")
+            print(f"Erro ao remover o diretório {config.VECTOR_DB_DIR}: {e}")
             print("Por favor, feche todos os programas que possam estar usando este diretório e tente novamente.")
-            return # Aborta a ingestão se não for possível limpar
-    elif os.path.exists(VECTOR_DB_DIR):
-        # Caso exista um arquivo com o mesmo nome (o que não deveria)
-        print(f"Atenção: O caminho '{VECTOR_DB_DIR}' existe, mas não é um diretório. Removendo...")
+            return
+    elif os.path.exists(config.VECTOR_DB_DIR):
+        print(f"Atenção: O caminho '{config.VECTOR_DB_DIR}' existe, mas não é um diretório. Removendo...")
         try:
-            os.remove(VECTOR_DB_DIR)
+            os.remove(config.VECTOR_DB_DIR)
         except OSError as e:
-            print(f"Erro ao remover o arquivo {VECTOR_DB_DIR}: {e}")
+            print(f"Erro ao remover o arquivo {config.VECTOR_DB_DIR}: {e}")
             return
     else:
         print("Nenhum banco de dados antigo encontrado. Criando um novo.")
-    # --- ALTERAÇÃO TERMINA AQUI ---
 
     # 4. Criar e persistir o banco de dados vetorial
-    # Usando ChromaDB com persistência local
     print("Iniciando vetorização e criação do banco de dados (pode levar um tempo)...")
+    
+    # A classe Chroma agora é importada do langchain_chroma
     vectordb = Chroma.from_documents(
-        documents=chunks,
+        documents=all_chunks,
         embedding=embeddings,
-        persist_directory=VECTOR_DB_DIR
+        persist_directory=config.VECTOR_DB_DIR
     )
     
-    vectordb.persist()
-    print(f"Banco de vetores criado e salvo em '{VECTOR_DB_DIR}'.")
+    print(f"Banco de vetores criado e salvo em '{config.VECTOR_DB_DIR}'.")
     print("Ingestão concluída.")
 
 if __name__ == '__main__':
-    # Coloque seus arquivos PDF na pasta 'docs' antes de rodar este script.
     process_documents()
