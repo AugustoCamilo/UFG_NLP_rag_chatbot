@@ -2,8 +2,7 @@
 import os
 import shutil
 from tqdm import tqdm 
-from langchain_community.document_loaders import PyPDFLoader
-# --- ALTERAÇÃO: Importar Chroma do novo pacote ---
+from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -30,7 +29,7 @@ def process_documents():
     
     for filename in tqdm(pdf_files, desc="Processando PDFs", unit="arquivo"):
         filepath = os.path.join(config.DOCS_DIR, filename)
-        loader = PyPDFLoader(filepath)
+        loader = PyMuPDFLoader(filepath)
         
         try:
             chunks = loader.load_and_split(text_splitter=text_splitter)

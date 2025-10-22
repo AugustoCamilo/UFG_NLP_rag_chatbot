@@ -62,3 +62,8 @@ Após o download, salve o arquivo dentro da pasta:
 ```
 models/
 ```
+
+pip install langchain-community pymupdf
+'''
+será apresentada uma mensagem de erro, então usar conda install anaconda-cloud-auth
+'''
