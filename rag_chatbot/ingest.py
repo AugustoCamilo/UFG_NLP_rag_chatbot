@@ -1,6 +1,7 @@
 # ingest.py
 import os
 import shutil
+import re  # <<< NOVO IMPORT para Expressões Regulares
 from tqdm import tqdm
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_chroma import Chroma
@@ -9,6 +10,43 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 # Importar o arquivo de configuração
 import config
+
+
+# --- NOVA FUNÇÃO ---
+def clean_page_content(page_text):
+    """
+    Limpa o texto de uma página, removendo rodapés conhecidos usando Regex.
+
+    !!! IMPORTANTE: Você DEVE personalizar esta função com os padrões
+    do SEU rodapé específico.
+    """
+
+    # --- INÍCIO DA ÁREA DE PERSONALIZAÇÃO ---
+
+    # Expressão regular para remover o rodapé do Edital/SEI
+    # \d+ = um ou mais dígitos
+    # \s+ = um ou mais espaços/tabs
+    # \. = o caractere de ponto literal
+    footer_pattern_sei = r"(Edital|Minuta)\s+\d+\s+SEI \d+\s*/\s*pg\.\s*\d+"
+
+    # Aplica a remoção, ignorando maiúsculas/minúsculas
+    page_text = re.sub(footer_pattern_sei, "", page_text, flags=re.IGNORECASE)
+
+    # O exemplo 2 original foi removido, mas você pode mantê-lo
+    # se também quiser remover rodapés genéricos "Página X"
+    # footer_pattern_2 = r"\bPágina \d+( de \d+)?\b"
+    # page_text = re.sub(footer_pattern_2, "", page_text, flags=re.IGNORECASE)
+
+    # --- FIM DA ÁREA DE PERSONALIZAÇÃO ---
+
+    # Remove linhas em branco excessivas que podem ter sido deixadas
+    # após a remoção dos rodapés
+    page_text = re.sub(r"\n\s*\n", "\n", page_text)
+
+    return page_text.strip()
+
+
+# --- FIM DA NOVA FUNÇÃO ---
 
 
 def process_documents():
@@ -23,27 +61,43 @@ def process_documents():
         return
 
     print(
-        f"Encontrados {len(pdf_files)} arquivos PDF. Iniciando carregamento e divisão..."
+        f"Encontrados {len(pdf_files)} arquivos PDF. Iniciando carregamento e limpeza..."
     )
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 
-    all_chunks = []
+    # --- LÓGICA DE CARREGAMENTO ALTERADA ---
+
+    # Lista para guardar todas as páginas (como 'Document') JÁ LIMPAS
+    all_docs = []
 
     for filename in tqdm(pdf_files, desc="Processando PDFs", unit="arquivo"):
         filepath = os.path.join(config.DOCS_DIR, filename)
         loader = PyMuPDFLoader(filepath)
 
         try:
-            chunks = loader.load_and_split(text_splitter=text_splitter)
-            all_chunks.extend(chunks)
+            # 1. Carrega o PDF (uma lista de Documentos, 1 por página)
+            docs_por_pagina = loader.load()
+
+            # 2. Limpa o rodapé de CADA página
+            for doc in docs_por_pagina:
+                doc.page_content = clean_page_content(doc.page_content)
+
+            # 3. Adiciona as páginas limpas à lista principal
+            all_docs.extend(docs_por_pagina)
 
         except Exception as e:
-            print(f"\nErro ao carregar ou dividir o arquivo {filename}: {e}")
+            print(f"\nErro ao carregar ou limpar o arquivo {filename}: {e}")
 
-    if not all_chunks:
+    if not all_docs:
         print("Nenhum documento pôde ser processado com sucesso.")
         return
+
+    # 4. Divide os documentos JÁ LIMPOS em chunks
+    print("Documentos limpos. Iniciando divisão em chunks...")
+    all_chunks = text_splitter.split_documents(all_docs)
+
+    # --- FIM DA LÓGICA DE CARREGAMENTO ALTERADA ---
 
     print(f"Documentos divididos em {len(all_chunks)} chunks.")
 

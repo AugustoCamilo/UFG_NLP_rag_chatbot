@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-M">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot RAG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div id="chat-container">
+        <div id="chat-header">
+            <h2>Solução Chatbot RAG</h2>
+        </div>
+        <div id="chat-window">
+            <div class="message bot-message">
+                <p>Olá! Eu sou seu assistente de IA. Fui treinado com seus documentos. Como posso ajudar?</p>
+            </div>
+        </div>
+        <div id="chat-input-area">
+            <input type="text" id="user-input" placeholder="Digite sua mensagem...">
+            <button id="send-button">Enviar</button>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>

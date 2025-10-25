@@ -1,0 +1,23 @@
+# Framework Web
+flask
+
+# Framework principal do LangChain
+langchain
+langchain-core
+
+# Módulos e integrações do LangChain
+langchain-community
+langchain-chroma
+langchain-google-genai
+langchain-huggingface
+langchain-text-splitters
+
+# Modelos de Embedding e Re-Ranking
+sentence-transformers
+
+# Carregamento de PDF (requerido pelo PyMuPDFLoader)
+pymupdf
+
+# Utilitários
+python-dotenv
+tqdm
