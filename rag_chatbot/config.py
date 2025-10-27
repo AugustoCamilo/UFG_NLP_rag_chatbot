@@ -18,7 +18,7 @@ MODEL_DIR = os.path.join(BASE_DIR, "models")
 
 # --- Configuração do LLM (Gemini) ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL_NAME = "gemini-1.5-flash"  # Use "gemini-pro" se preferir a versão 1.0
+GEMINI_MODEL_NAME = "gemini-2.5-flash"  # Use "gemini-pro" se preferir a versão 1.0
 
 # --- Configuração do Modelo de Embedding ---
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"

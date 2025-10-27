@@ -5,8 +5,8 @@ import uuid
 # Importa a nova classe RAGChain
 from rag_chain import RAGChain
 
-st.title("Chat RAG com Re-Ranking (Solução 1)")
-st.caption("Usando ChromaDB, Google Gemini e SentenceTransformer Re-Ranker")
+st.title("Programa Quita Goiás")
+st.caption("Processamento em Linguagem Natual - Turma 2 - Grupo 25")
 
 # 1. Gerenciar o ID da Sessão (como na Solução 2)
 if "session_id" not in st.session_state:
@@ -36,7 +36,7 @@ for user_msg, bot_msg in messages:
         st.write(bot_msg)
 
 # 4. Gerenciar nova entrada do usuário
-prompt = st.chat_input("Faça sua pergunta sobre os documentos...")
+prompt = st.chat_input("Faça sua pergunta sobre Quita Goiás")
 if prompt:
     # Exibe a pergunta do usuário
     with st.chat_message("user"):
