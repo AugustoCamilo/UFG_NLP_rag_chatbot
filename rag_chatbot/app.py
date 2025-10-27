@@ -2,6 +2,7 @@
 import streamlit as st
 import uuid
 from streamlit.components.v1 import html  # <-- 1. NOVO IMPORT
+import os  # <<< --- IMPORT NECESSÁRIO ---
 
 # Importa a nova classe RAGChain
 from rag_chain import RAGChain
@@ -30,6 +31,17 @@ def set_focus():
 
 
 # --- FIM DA NOVA FUNÇÃO ---
+
+# --- NOVO: BOTÃO DE SAIR NA BARRA LATERAL ---
+with st.sidebar:
+    st.header("Controle da Aplicação")
+    st.warning("Clicar em 'Sair' encerrará o servidor do Streamlit.")
+    if st.button("Sair e Encerrar Aplicação"):
+        print("Botão 'Sair' clicado. Encerrando o processo do servidor.")
+        # Este comando força o processo Python a parar.
+        # É a forma mais direta de "fechar" o servidor pela UI.
+        os._exit(0)
+# --- FIM DA NOVA SEÇÃO ---
 
 
 st.title("Programa Quita Goiás")

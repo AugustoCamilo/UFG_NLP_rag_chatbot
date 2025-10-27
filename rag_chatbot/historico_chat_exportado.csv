@@ -1,23 +1,10 @@
-id,session_id,user_message,bot_response,timestamp
-1,86be9674-883a-4248-b62c-c22d69a2a532,quita goias,"O Quita Goiás é um programa de transação tributária coordenado pela PGE-GO (Procuradoria-Geral do Estado de Goiás), instituído pela Lei Complementar nº 197/2024.
+id,session_id,user_message,bot_response,total_tokens,total_chars,timestamp
+1,9d9c10f7-d327-4650-a551-624a8b71ef43,"olá, bom dia, tudo bem com você?",Olá! Eu sou um assistente virtual e estou pronto para tirar suas dúvidas sobre o programa Quita Goiás. Como posso ajudar?,0,153,2025-10-27 13:35:57
+2,9d9c10f7-d327-4650-a551-624a8b71ef43,o que é o programa?,"O Quita Goiás é um programa de transação tributária coordenado pela Procuradoria-Geral do Estado de Goiás (PGE-GO). Ele foi criado pela Lei Complementar nº 197/2024 e tem como objetivo facilitar a resolução amigável de conflitos e a cobrança de dívidas de impostos (créditos tributários) que já estão inscritas na Dívida Ativa.
 
-Seus objetivos são:
-*   Facilitar a resolução consensual de conflitos tributários, sem necessidade de judicialização.
-*   Permitir que contribuintes em dificuldade regularizem sua situação fiscal com condições mais acessíveis.
-*   Reduzir o volume de litígios e processos tributários no Poder Judiciário.
-*   Contribuir para a recuperação de créditos do Estado, visando reduzir a dívida ativa goiana, que soma cerca de R$ 40 bilhões.
+Em resumo, é um acordo entre o Estado de Goiás e o contribuinte para resolver essas dívidas.",0,440,2025-10-27 13:36:19
+3,9d9c10f7-d327-4650-a551-624a8b71ef43,posso participar?,"Desculpe, não encontrei essa informação. Eu sou um assistente focado no programa Quita Goiás e só posso responder sobre os tópicos presentes nos documentos oficiais. Você poderia perguntar de outra forma sobre o programa?",0,238,2025-10-27 13:36:39
+4,9d9c10f7-d327-4650-a551-624a8b71ef43,posso participar do quita goias?,"Sim, você pode participar do programa Quita Goiás se você for um devedor (seja pessoa física ou sua empresa) que possui dívidas de impostos inscritas na Dívida Ativa do Estado de Goiás.
 
-O programa oferece:
-*   Descontos de até 70% sobre juros e multas para contribuintes goianos.
-*   Redução de até 70% no valor total da dívida para pessoas físicas, microempresas e empresas de pequeno porte.
-*   Desconto de até 65% para outras pessoas jurídicas.
-
-As condições de pagamento incluem:
-*   Prazo de até 145 meses para pagamento para contribuintes goianos em geral.
-*   Parcelamento em até 145 vezes para pessoas físicas, microempresas e empresas de pequeno porte.
-*   Parcelamento em até 120 vezes para outras pessoas jurídicas.
-
-O primeiro edital do programa foi lançado, e os contribuintes goianos podem negociar suas dívidas tributárias a partir de segunda-feira (20/10). O procurador-geral, Rafael Arruda, destaca que a transação tributária é uma alternativa eficiente, recomendada por órgãos como o Conselho Nacional de Justiça (CNJ), por dispensar a intervenção judicial e reduzir a litigiosidade.",2025-10-27 11:51:38
-2,86be9674-883a-4248-b62c-c22d69a2a532,quem pode participar?,"Podem participar do Quita Goiás (Transação Tributária) o Estado de Goiás (incluindo suas autarquias e outras entidades), representado pela PGE, e os devedores (pessoas físicas ou jurídicas).",2025-10-27 11:58:29
-3,86be9674-883a-4248-b62c-c22d69a2a532,qual o meu desconto?,"Desculpe, não encontrei essa informação nos documentos fornecidos. O desconto varia de acordo com o tipo de contribuinte e a classificação do crédito.",2025-10-27 11:59:02
-4,35f82a9c-725f-4609-9acd-3bd6deed41c1,olá,"Desculpe, não encontrei essa informação nos documentos fornecidos.",2025-10-27 12:21:05
+O acordo é feito entre o Estado de Goiás, representado pela Procuradoria-Geral do Estado (PGE), e os devedores.",0,330,2025-10-27 13:37:14
+5,9d9c10f7-d327-4650-a551-624a8b71ef43,qual a regra da brincadeira fusca azul?,"Desculpe, não encontrei essa informação. Eu sou um assistente focado no programa Quita Goiás e só posso responder sobre os tópicos presentes nos documentos oficiais. Você poderia perguntar de outra forma sobre o programa?",0,260,2025-10-27 13:37:41
