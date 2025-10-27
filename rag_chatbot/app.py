@@ -1,9 +1,36 @@
 # app.py
 import streamlit as st
 import uuid
+from streamlit.components.v1 import html  # <-- 1. NOVO IMPORT
 
 # Importa a nova classe RAGChain
 from rag_chain import RAGChain
+
+
+# --- 2. NOVA FUNÇÃO PARA FOCAR O INPUT ---
+def set_focus():
+    """
+    Injeta JavaScript para focar automaticamente a caixa de chat_input.
+    """
+    # O seletor '[data-testid="stChatInput"] textarea' é a forma mais
+    # confiável de encontrar a caixa de texto do st.chat_input.
+    # Usamos setTimeout para dar tempo ao Streamlit de renderizar o elemento.
+    script = """
+    <script>
+    setTimeout(function() {
+        var input = document.querySelector('[data-testid="stChatInput"] textarea');
+        if (input) {
+            input.focus();
+        }
+    }, 100);
+    </script>
+    """
+    # Injeta o script na página
+    html(script, height=0)
+
+
+# --- FIM DA NOVA FUNÇÃO ---
+
 
 st.title("Programa Quita Goiás")
 st.caption("Processamento em Linguagem Natual - Turma 2 - Grupo 25")
@@ -36,7 +63,7 @@ for user_msg, bot_msg in messages:
         st.write(bot_msg)
 
 # 4. Gerenciar nova entrada do usuário
-prompt = st.chat_input("Faça sua pergunta sobre Quita Goiás")
+prompt = st.chat_input("Faça sua pergunta sobre os documentos...")
 if prompt:
     # Exibe a pergunta do usuário
     with st.chat_message("user"):
@@ -47,3 +74,11 @@ if prompt:
         with st.spinner("Buscando, re-rankeando e pensando..."):
             response = chain.generate_response(prompt)
             st.write(response)
+
+
+# --- 3. CHAMADA DA FUNÇÃO DE FOCO ---
+# Chamar a função de foco no final do script.
+# Isso garante que ela execute em cada recarregamento da página
+# (seja o carregamento inicial ou após enviar uma mensagem).
+set_focus()
+# --- FIM DA CHAMADA ---
