@@ -1,7 +1,7 @@
 # rag_chain.py
 import os
 import sqlite3
-from typing import List, TypedDict
+from typing import List, TypedDict, Optional  # <-- ATUALIZADO
 from datetime import datetime  # Import necessário
 
 from dotenv import load_dotenv
@@ -22,7 +22,7 @@ load_dotenv()
 history_db.init_db()
 
 
-# --- ATUALIZADO: RAGState agora inclui timestamps ---
+# --- ATUALIZADO: RAGState agora inclui timestamps E new_message_id ---
 class RAGState(TypedDict):
     """Define o estado do grafo LangGraph."""
 
@@ -34,6 +34,9 @@ class RAGState(TypedDict):
     # Timestamps para métricas
     request_start_time: datetime
     retrieval_end_time: datetime
+
+    # ID da mensagem de chat recém-criada
+    new_message_id: Optional[int]  # <-- NOVO
 
 
 # --- FIM DA ATUALIZAÇÃO ---
@@ -135,7 +138,7 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                 FROM chat_history
                 WHERE session_id = ?
                 ORDER BY request_start_time ASC
-                """,  # --- ATUALIZADO: Ordenar por request_start_time ---
+                """,
                 (self.session_id,),
             )
             for row in cursor.fetchall():
@@ -146,7 +149,11 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
             print(f"Erro ao carregar histórico: {e}")
 
         # Passa o request_start_time para os próximos nós
-        return {"history": messages, "request_start_time": state["request_start_time"]}
+        return {
+            "history": messages,
+            "request_start_time": state["request_start_time"],
+            "new_message_id": None,  # Garante que seja None no início
+        }
 
     # --- ATUALIZADO: Nó `retrieve` agora captura o timestamp ---
     def retrieve(self, state: RAGState) -> RAGState:
@@ -215,8 +222,9 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                 bot_tokens = token_usage.get("completion_tokens", 0)
             # --- Fim das Métricas ---
 
+            # --- ATUALIZAÇÃO: Captura o ID da nova mensagem ---
             # Salva a interação no histórico com os novos dados
-            self.save_message(
+            new_message_id = self.save_message(
                 user_msg,
                 answer,
                 user_chars,
@@ -230,15 +238,16 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                 generation_duration_sec,
                 total_duration_sec,
             )
+            # --- FIM DA ATUALIZAÇÃO ---
 
-            return {"answer": answer}
+            return {"answer": answer, "new_message_id": new_message_id}
         except Exception as e:
             print(f"Erro ao invocar LLM: {e}")
             return {"answer": "Ocorreu um erro ao processar sua solicitação."}
 
     # --- FIM DA ATUALIZAÇÃO ---
 
-    # --- FUNÇÃO SAVE_MESSAGE TOTALMENTE ATUALIZADA ---
+    # --- FUNÇÃO SAVE_MESSAGE ATUALIZADA PARA RETORNAR O ID ---
     def save_message(
         self,
         user_msg: str,
@@ -253,9 +262,10 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
         retrieval_duration_sec: float,
         generation_duration_sec: float,
         total_duration_sec: float,
-    ):
-        """Salva a interação atual no banco SQLite."""
+    ) -> Optional[int]:
+        """Salva a interação atual no banco SQLite e retorna o ID da nova linha."""
         print(f"Salvando mensagem para session_id: {self.session_id}")
+        new_id = None
         try:
             conn = self._get_db_connection()
             cursor = conn.cursor()
@@ -286,16 +296,26 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                     total_duration_sec,
                 ),
             )
+            # --- NOVO: Captura o ID da linha recém-inserida ---
+            new_id = cursor.lastrowid
+            # --- FIM ---
+
             conn.commit()
             conn.close()
+
         except Exception as e:
             print(f"Erro ao salvar mensagem: {e}")
+
+        return new_id  # Retorna o ID
 
     # --- FIM DA ATUALIZAÇÃO ---
 
     # --- ATUALIZADO: Ponto de entrada agora captura o request_start_time ---
-    def generate_response(self, question: str) -> str:
-        """Ponto de entrada para o fluxo RAG."""
+    def generate_response(self, question: str) -> dict:
+        """
+        Ponto de entrada para o fluxo RAG.
+        Retorna um dicionário com a resposta e o ID da mensagem.
+        """
 
         # Captura o timestamp inicial aqui
         request_start_time = datetime.now()
@@ -307,27 +327,40 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
             "history": [],
             "request_start_time": request_start_time,  # Passa para o estado
             "retrieval_end_time": request_start_time,  # Inicializa (será sobrescrito)
+            "new_message_id": None,  # Inicializa
         }
         # Invoca o grafo
         result = self.graph.invoke(initial_state)
-        return result["answer"]
+
+        # Retorna o dicionário completo
+        return {"answer": result["answer"], "message_id": result["new_message_id"]}
 
     # --- FIM DA ATUALIZAÇÃO ---
 
+    # --- ATUALIZADO: get_history_for_display agora junta o feedback ---
     def get_history_for_display(self) -> List[tuple]:
-        """Busca o histórico formatado para exibição no Streamlit."""
+        """
+        Busca o histórico formatado para exibição no Streamlit,
+        incluindo o ID da mensagem e o feedback existente.
+        """
         print(f"Buscando histórico de display para: {self.session_id}")
         history = []
         try:
             conn = self._get_db_connection()
             cursor = conn.cursor()
+            # Query ATUALIZADA com LEFT JOIN na tabela feedback
             cursor.execute(
                 """
-                SELECT user_message, bot_response
-                FROM chat_history
-                WHERE session_id = ?
-                ORDER BY request_start_time ASC
-                """,  # --- ATUALIZADO: Ordenar por request_start_time ---
+                SELECT 
+                    h.id, 
+                    h.user_message, 
+                    h.bot_response, 
+                    f.rating
+                FROM chat_history h
+                LEFT JOIN feedback f ON h.id = f.message_id
+                WHERE h.session_id = ?
+                ORDER BY h.request_start_time ASC
+                """,
                 (self.session_id,),
             )
             history = cursor.fetchall()
@@ -336,3 +369,34 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
             print(f"Erro ao buscar histórico para display: {e}")
 
         return history
+
+    # --- FIM DA ATUALIZAÇÃO ---
+
+    # --- NOVA FUNÇÃO: save_feedback ---
+    def save_feedback(self, message_id: int, rating: str, comment: str = None):
+        """Salva o feedback do usuário no banco de dados."""
+        print(f"Salvando feedback para message_id: {message_id} (Rating: {rating})")
+        try:
+            conn = self._get_db_connection()
+            cursor = conn.cursor()
+
+            # Use INSERT OR REPLACE para permitir que o usuário mude de ideia
+            # (ou apenas INSERT se preferir que o primeiro clique seja final)
+            cursor.execute(
+                """
+                INSERT INTO feedback (message_id, rating, comment)
+                VALUES (?, ?, ?)
+                ON CONFLICT(message_id) DO UPDATE SET
+                rating = excluded.rating,
+                comment = excluded.comment,
+                timestamp = CURRENT_TIMESTAMP
+                """,
+                (message_id, rating, comment),
+            )
+            conn.commit()
+            conn.close()
+            print("Feedback salvo com sucesso.")
+        except Exception as e:
+            print(f"Erro ao salvar feedback: {e}")
+
+    # --- FIM DA NOVA FUNÇÃO ---

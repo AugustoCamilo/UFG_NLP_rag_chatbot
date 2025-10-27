@@ -5,7 +5,7 @@ import sys
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 from datetime import datetime
-import config
+import config  # Import necessário
 
 # Importa a classe centralizada que faz o trabalho pesado
 from vector_retriever import VectorRetriever
@@ -57,7 +57,8 @@ def run_search_test(retriever: VectorRetriever):
         else:
             st.success(f"Exibindo os {len(top_k_results)} resultados MAIS RELEVANTES:")
 
-            # Exibe os resultados (lógica de read_db_vector.py)
+            # --- COMENTÁRIO ATUALIZADO ---
+            # Exibe os resultados da busca
             for i, (doc, rerank_score) in enumerate(top_k_results):
                 source = doc.metadata.get("source", "N/A")
                 page = doc.metadata.get("page", "N/A")
@@ -84,7 +85,8 @@ def run_list_all(retriever: VectorRetriever):
         else:
             st.success(f"Total de chunks encontrados no banco: {len(documents)}")
 
-            # Exibe os resultados (lógica de read_db_vector.py)
+            # --- COMENTÁRIO ATUALIZADO ---
+            # Exibe os chunks encontrados
             for i in range(len(documents)):
                 doc_text = documents[i]
                 source = metadatas[i].get("source", "N/A")
@@ -105,7 +107,8 @@ def run_export_xml(retriever: VectorRetriever):
         output_path = os.path.join(SCRIPT_DIR, output_filename)
 
         with st.spinner("Exportando chunks para XML..."):
-            # Lógica de exportação (copiada de read_db_vector.py)
+            # --- COMENTÁRIO ATUALIZADO ---
+            # Lógica de exportação
 
             # 1. Obter dados
             data = retriever.get_all_chunks()
@@ -134,7 +137,7 @@ def run_export_xml(retriever: VectorRetriever):
                 chunk_id_el.text = str(i + 1)
                 conteudo_el = ET.SubElement(item, "conteudo")
                 conteudo_el.text = doc_text
-                metadados_el = ET.SubElement(item, "metadados")
+                metadados_el = ET.SubElement(item, "metadatos")
                 for key, value in meta.items():
                     meta_key_el = ET.SubElement(metadados_el, key.replace(" ", "_"))
                     meta_key_el.text = str(value)
@@ -159,7 +162,6 @@ def run_shutdown():
     st.subheader("Modo 4: Encerrar Servidor")
     st.warning("Clicar neste botão encerrará este servidor Streamlit.")
 
-    # Lógica de encerramento (copiada de app.py)
     if st.button("Encerrar Aplicação"):
         st.success("Encerrando servidor...")
         print("Comando de encerramento recebido da UI.")
@@ -170,7 +172,10 @@ def run_shutdown():
 def main():
     st.set_page_config(page_title="Validação do VectorDB", layout="wide")
     st.title("Ferramenta de Validação do Banco de Vetores (ChromaDB)")
-    st.caption("Esta interface testa o 'vector_retriever.py' e o 'ingest.py'.")
+    # --- CAPTION ATUALIZADO ---
+    st.caption(
+        "Interface de auditoria para o VectorDB (baseado em 'vector_retriever.py' e 'ingest.py')"
+    )
 
     # Inicializa o retriever (usando o cache)
     retriever = initialize_retriever()
