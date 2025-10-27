@@ -38,12 +38,15 @@ def read_all_history(conn):
 
     try:
         cursor = conn.cursor()
-        # Seleciona todas as colunas da tabela chat_history
+        # --- ATUALIZADO: Seleciona as novas colunas ---
         cursor.execute(
             """
-            SELECT id, session_id, user_message, bot_response, total_tokens, total_chars, timestamp 
+            SELECT id, session_id, user_message, bot_response, 
+                   user_chars, bot_chars, user_tokens, bot_tokens,
+                   request_start_time, retrieval_duration_sec, 
+                   generation_duration_sec, total_duration_sec
             FROM chat_history 
-            ORDER BY timestamp ASC
+            ORDER BY request_start_time ASC
         """
         )
 
@@ -56,16 +59,31 @@ def read_all_history(conn):
         print(f"Total de mensagens encontradas: {len(rows)}")
 
         for row in rows:
-            (id, session_id, user_msg, bot_msg, tokens, chars, timestamp) = row
+            (
+                id,
+                session_id,
+                user_msg,
+                bot_msg,
+                u_chars,
+                b_chars,
+                u_tokens,
+                b_tokens,
+                start,
+                retr_dur,
+                gen_dur,
+                total_dur,
+            ) = row
 
-            print("\n" + "=" * 50)
-            print(f"ID: {id} | Sessão: {session_id}")
-            print(f"Data: {timestamp} | Tokens: {tokens} | Chars: {chars}")
-            print("-" * 50)
-            print(f"  USUÁRIO: {user_msg}")
-            print(f"ASSISTENTE: {bot_msg}")
+            print("\n" + "=" * 60)
+            print(f"ID: {id} | Sessão: {session_id} | Início: {start}")
+            print(
+                f"Duração (s): Total={total_dur:<.2f} (Recup: {retr_dur:<.2f}s, Geração: {gen_dur:<.2f}s)"
+            )
+            print(f"Usuário (Chars: {u_chars}, Tokens: {u_tokens}): {user_msg}")
+            print(f"Assist. (Chars: {b_chars}, Tokens: {b_tokens}): {bot_msg}")
+            # --- FIM DA ATUALIZAÇÃO ---
 
-        print("\n" + "=" * 50)
+        print("\n" + "=" * 60)
         print("Leitura de todo o histórico concluída.")
 
     except Exception as e:
@@ -82,13 +100,16 @@ def search_by_session(conn, session_id):
 
     try:
         cursor = conn.cursor()
-        # Seleciona as colunas filtrando por session_id
+        # --- ATUALIZADO: Seleciona as novas colunas ---
         cursor.execute(
             """
-            SELECT id, user_message, bot_response, total_tokens, total_chars, timestamp 
+            SELECT id, user_message, bot_response, 
+                   user_chars, bot_chars, user_tokens, bot_tokens,
+                   request_start_time, retrieval_duration_sec, 
+                   generation_duration_sec, total_duration_sec
             FROM chat_history 
             WHERE session_id = ? 
-            ORDER BY timestamp ASC
+            ORDER BY request_start_time ASC
         """,
             (session_id.strip(),),
         )
@@ -102,16 +123,30 @@ def search_by_session(conn, session_id):
         print(f"Total de mensagens encontradas para esta sessão: {len(rows)}")
 
         for row in rows:
-            (id, user_msg, bot_msg, tokens, chars, timestamp) = row
+            (
+                id,
+                user_msg,
+                bot_msg,
+                u_chars,
+                b_chars,
+                u_tokens,
+                b_tokens,
+                start,
+                retr_dur,
+                gen_dur,
+                total_dur,
+            ) = row
 
-            print("\n" + "-" * 50)
-            print(f"ID: {id} | Data: {timestamp}")
-            print(f"Tokens: {tokens} | Chars: {chars}")
-            print("-" * 50)
-            print(f"  USUÁRIO: {user_msg}")
-            print(f"ASSISTENTE: {bot_msg}")
+            print("\n" + "-" * 60)
+            print(f"ID: {id} | Início: {start}")
+            print(
+                f"Duração (s): Total={total_dur:<.2f} (Recup: {retr_dur:<.f}s, Geração: {gen_dur:<.2f}s)"
+            )
+            print(f"Usuário (Chars: {u_chars}, Tokens: {u_tokens}): {user_msg}")
+            print(f"Assist. (Chars: {b_chars}, Tokens: {b_tokens}): {bot_msg}")
+            # --- FIM DA ATUALIZAÇÃO ---
 
-        print("\n" + "-" * 50)
+        print("\n" + "-" * 60)
         print(f"Fim do histórico para a sessão: {session_id}")
 
     except Exception as e:
@@ -124,10 +159,14 @@ def list_sessions(conn):
 
     try:
         cursor = conn.cursor()
-        # Agrupa por session_id para auditoria
+        # --- ATUALIZADO: Usa response_end_time para 'last_activity' ---
         cursor.execute(
             """
-            SELECT session_id, COUNT(*) as msg_count, MAX(timestamp) as last_activity
+            SELECT 
+                session_id, 
+                COUNT(*) as msg_count, 
+                MAX(response_end_time) as last_activity,
+                AVG(total_duration_sec) as avg_duration
             FROM chat_history 
             GROUP BY session_id
             ORDER BY last_activity DESC
@@ -141,15 +180,19 @@ def list_sessions(conn):
             return
 
         print(f"Total de sessões únicas encontradas: {len(rows)}")
-        print("\n" + "-" * 70)
-        print(f"{'ID DA SESSÃO':<38} | {'MSGS':<5} | {'ÚLTIMA ATIVIDADE':<20}")
-        print("-" * 70)
+        print("\n" + "-" * 80)
+        print(
+            f"{'ID DA SESSÃO':<38} | {'MSGS':<5} | {'DURAÇÃO MÉDIA (s)':<18} | {'ÚLTIMA ATIVIDADE':<20}"
+        )
+        print("-" * 80)
 
         for row in rows:
-            (session_id, msg_count, last_activity) = row
-            print(f"{session_id:<38} | {msg_count:<5} | {last_activity:<20}")
+            (session_id, msg_count, last_activity, avg_duration) = row
+            print(
+                f"{session_id:<38} | {msg_count:<5} | {avg_duration:<18.2f} | {str(last_activity):<20}"
+            )
 
-        print("-" * 70)
+        print("-" * 80)
 
     except Exception as e:
         print(f"Erro ao listar sessões: {e}")
@@ -166,7 +209,8 @@ def export_history_to_csv(conn):
 
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM chat_history ORDER BY timestamp ASC")
+        # --- ATUALIZADO: Ordena por request_start_time ---
+        cursor.execute("SELECT * FROM chat_history ORDER BY request_start_time ASC")
 
         rows = cursor.fetchall()
         if not rows:

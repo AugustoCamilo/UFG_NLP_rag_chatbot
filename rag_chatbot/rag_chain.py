@@ -2,6 +2,7 @@
 import os
 import sqlite3
 from typing import List, TypedDict
+from datetime import datetime  # Import necessário
 
 from dotenv import load_dotenv
 from langchain_core.documents import Document
@@ -21,6 +22,7 @@ load_dotenv()
 history_db.init_db()
 
 
+# --- ATUALIZADO: RAGState agora inclui timestamps ---
 class RAGState(TypedDict):
     """Define o estado do grafo LangGraph."""
 
@@ -28,6 +30,13 @@ class RAGState(TypedDict):
     context: List[Document]
     answer: str
     history: List[HumanMessage | AIMessage]
+
+    # Timestamps para métricas
+    request_start_time: datetime
+    retrieval_end_time: datetime
+
+
+# --- FIM DA ATUALIZAÇÃO ---
 
 
 class RAGChain:
@@ -53,29 +62,23 @@ class RAGChain:
 
         # 3. Definir o prompt do sistema
         self.system_prompt = """<prompt_de_sistema>
-
 <definicao_do_papel>
 Você é um assistente virtual especialista no programa Quita Goiás, com foco em Transação Tributária. Sua identidade é a de um especialista prestativo e confiável.
 </definicao_do_papel>
-
 <instrucoes_principais>
 Sua principal função é fornecer informações precisas, claras e detalhadas sobre o programa Quita Goiás, suas regras e procedimentos.
 </instrucoes_principais>
-
 <restricoes_de_conhecimento>
 1.  **Restrição Absoluta de Conhecimento:** Você deve basear suas respostas *exclusivamente* nas informações fornecidas no contexto.
 2.  **Proibição de Conhecimento Prévio:** É estritamente proibido usar qualquer conhecimento prévio ou informações externas ao contexto fornecido.
 </restricoes_de_conhecimento>
-
 <persona_e_estilo>
 1.  **Tom:** Mantenha uma postura profissional, amigável, prestativa e de especialista.
 2.  **Linguagem:** Responda em linguagem natural, fluente e utilizando a língua portuguesa do Brasil.
 3.  **Clareza (Anti-Jargão):** Evite o uso de termos jurídicos ou complexos. Sempre priorize a forma mais simples e acessível de explicar os conceitos, pensando no contribuinte leigo.
 4.  **Explicação de Termos:** Se for absolutamente obrigatório usar um termo jurídico ou técnico (que esteja no contexto), explique-o de forma simples imediatamente.
 </persona_e_estilo>
-
 <regras_situacionais>
-
     <regra>
         <condicao>
         Se a mensagem do usuário for *apenas* um cumprimento (exemplos: "Olá", "Oi", "Bom dia", "Tudo bem?").
@@ -84,7 +87,6 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
         Responda ao cumprimento de forma amigável e se presente. Use este formato: "Olá! Eu sou um assistente virtual e estou pronto para tirar suas dúvidas sobre o programa Quita Goiás. Como posso ajudar?"
         </acao>
     </regra>
-    
     <regra>
         <condicao>
         Se a resposta para a pergunta do usuário *não* estiver no contexto fornecido.
@@ -93,7 +95,6 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
         Responda *exatamente* com o seguinte texto, sem adicionar ou modificar nada: "Desculpe, não encontrei essa informação. Eu sou um assistente focado no programa Quita Goiás e só posso responder sobre os tópicos presentes nos documentos oficiais. Você poderia perguntar de outra forma sobre o programa?"
         </acao>
     </regra>
-    
     <regra>
         <condicao>
         Para todas as outras perguntas sobre o programa Quita Goiás.
@@ -102,9 +103,7 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
         Forneça uma resposta precisa, clara e detalhada, baseando-se *apenas* nas informações do contexto.
         </acao>
     </regra>
-
 </regras_situacionais>
-
 </prompt_de_sistema>"""
 
         # 4. Construir o grafo (LangGraph)
@@ -135,8 +134,8 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                 SELECT user_message, bot_response
                 FROM chat_history
                 WHERE session_id = ?
-                ORDER BY timestamp ASC
-                """,
+                ORDER BY request_start_time ASC
+                """,  # --- ATUALIZADO: Ordenar por request_start_time ---
                 (self.session_id,),
             )
             for row in cursor.fetchall():
@@ -146,56 +145,114 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
         except Exception as e:
             print(f"Erro ao carregar histórico: {e}")
 
-        return {"history": messages}
+        # Passa o request_start_time para os próximos nós
+        return {"history": messages, "request_start_time": state["request_start_time"]}
 
+    # --- ATUALIZADO: Nó `retrieve` agora captura o timestamp ---
     def retrieve(self, state: RAGState) -> RAGState:
         """Recupera o contexto usando o VectorRetriever (com re-ranking)."""
         print("Recuperando contexto...")
         retrieved_docs = self.retriever.retrieve_context(state["question"])
-        return {"context": retrieved_docs}
 
+        # Captura o timestamp de fim da recuperação
+        retrieval_end_time = datetime.now()
+
+        return {"context": retrieved_docs, "retrieval_end_time": retrieval_end_time}
+
+    # --- FIM DA ATUALIZAÇÃO ---
+
+    # --- ATUALIZADO: Nó `generate` agora calcula todas as métricas ---
     def generate(self, state: RAGState) -> RAGState:
         """Gera a resposta usando a LLM e o contexto."""
         print("Gerando resposta...")
+
+        # Obter timestamps do estado
+        request_start_time = state["request_start_time"]
+        retrieval_end_time = state["retrieval_end_time"]
+
+        user_msg = state["question"]
+        user_chars = len(user_msg)
+
         docs_content = "\n\n--- Contexto ---\n\n".join(
             doc.page_content for doc in state["context"]
         )
 
-        # Monta a lista de mensagens (Sistema + Histórico + Pergunta)
+        # Monta a lista de mensagens
         messages = [SystemMessage(content=self.system_prompt)]
         messages.extend(state["history"])
         messages.append(
-            HumanMessage(
-                content=f"Contexto: {docs_content}\n\nPergunta: {state['question']}"
-            )
+            HumanMessage(content=f"Contexto: {docs_content}\n\nPergunta: {user_msg}")
         )
 
         try:
-            # --- MODIFICADO ---
             response = self.model.invoke(messages)
+
+            # Captura o timestamp final
+            response_end_time = datetime.now()
+
+            # --- Cálculo de Métricas ---
             answer = response.content
+            bot_chars = len(answer)
 
-            # Calcular caracteres (pergunta do usuário + resposta do bot)
-            total_chars = len(state["question"]) + len(answer)
+            # Calcula durações
+            retrieval_duration_sec = (
+                retrieval_end_time - request_start_time
+            ).total_seconds()
+            generation_duration_sec = (
+                response_end_time - retrieval_end_time
+            ).total_seconds()
+            total_duration_sec = (
+                response_end_time - request_start_time
+            ).total_seconds()
 
-            # Calcular tokens (extraindo dos metadados da resposta da API)
-            total_tokens = 0
+            # Extrai tokens
+            user_tokens = 0  # Tokens do prompt
+            bot_tokens = 0  # Tokens da resposta
+
             if response.response_metadata:
                 token_usage = response.response_metadata.get("token_usage", {})
-                total_tokens = token_usage.get("total_tokens", 0)
+                user_tokens = token_usage.get("prompt_tokens", 0)
+                bot_tokens = token_usage.get("completion_tokens", 0)
+            # --- Fim das Métricas ---
 
             # Salva a interação no histórico com os novos dados
-            self.save_message(state["question"], answer, total_tokens, total_chars)
-            # --- FIM DA MODIFICAÇÃO ---
+            self.save_message(
+                user_msg,
+                answer,
+                user_chars,
+                bot_chars,
+                user_tokens,
+                bot_tokens,
+                request_start_time,
+                retrieval_end_time,
+                response_end_time,
+                retrieval_duration_sec,
+                generation_duration_sec,
+                total_duration_sec,
+            )
 
             return {"answer": answer}
         except Exception as e:
             print(f"Erro ao invocar LLM: {e}")
             return {"answer": "Ocorreu um erro ao processar sua solicitação."}
 
-    # --- MODIFICADO ---
+    # --- FIM DA ATUALIZAÇÃO ---
+
+    # --- FUNÇÃO SAVE_MESSAGE TOTALMENTE ATUALIZADA ---
     def save_message(
-        self, user_msg: str, bot_msg: str, total_tokens: int, total_chars: int
+        self,
+        user_msg: str,
+        bot_msg: str,
+        user_chars: int,
+        bot_chars: int,
+        user_tokens: int,
+        bot_tokens: int,
+        request_start_time: datetime,
+        retrieval_end_time: datetime,
+        response_end_time: datetime,
+        retrieval_duration_sec: float,
+        generation_duration_sec: float,
+        total_duration_sec: float,
     ):
         """Salva a interação atual no banco SQLite."""
         print(f"Salvando mensagem para session_id: {self.session_id}")
@@ -204,29 +261,58 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO chat_history (session_id, user_message, bot_response, total_tokens, total_chars)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO chat_history (
+                    session_id, user_message, bot_response, 
+                    user_chars, bot_chars, 
+                    user_tokens, bot_tokens, 
+                    request_start_time, retrieval_end_time, response_end_time,
+                    retrieval_duration_sec, generation_duration_sec, total_duration_sec
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (self.session_id, user_msg, bot_msg, total_tokens, total_chars),
+                (
+                    self.session_id,
+                    user_msg,
+                    bot_msg,
+                    user_chars,
+                    bot_chars,
+                    user_tokens,
+                    bot_tokens,
+                    request_start_time,
+                    retrieval_end_time,
+                    response_end_time,
+                    retrieval_duration_sec,
+                    generation_duration_sec,
+                    total_duration_sec,
+                ),
             )
             conn.commit()
             conn.close()
         except Exception as e:
             print(f"Erro ao salvar mensagem: {e}")
 
-    # --- FIM DA MODIFICAÇÃO ---
+    # --- FIM DA ATUALIZAÇÃO ---
 
+    # --- ATUALIZADO: Ponto de entrada agora captura o request_start_time ---
     def generate_response(self, question: str) -> str:
         """Ponto de entrada para o fluxo RAG."""
+
+        # Captura o timestamp inicial aqui
+        request_start_time = datetime.now()
+
         initial_state = {
             "question": question,
             "context": [],
             "answer": "",
             "history": [],
+            "request_start_time": request_start_time,  # Passa para o estado
+            "retrieval_end_time": request_start_time,  # Inicializa (será sobrescrito)
         }
         # Invoca o grafo
         result = self.graph.invoke(initial_state)
         return result["answer"]
+
+    # --- FIM DA ATUALIZAÇÃO ---
 
     def get_history_for_display(self) -> List[tuple]:
         """Busca o histórico formatado para exibição no Streamlit."""
@@ -240,8 +326,8 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                 SELECT user_message, bot_response
                 FROM chat_history
                 WHERE session_id = ?
-                ORDER BY timestamp ASC
-                """,
+                ORDER BY request_start_time ASC
+                """,  # --- ATUALIZADO: Ordenar por request_start_time ---
                 (self.session_id,),
             )
             history = cursor.fetchall()

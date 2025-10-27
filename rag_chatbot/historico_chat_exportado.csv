@@ -1,10 +1,30 @@
-id,session_id,user_message,bot_response,total_tokens,total_chars,timestamp
-1,9d9c10f7-d327-4650-a551-624a8b71ef43,"olá, bom dia, tudo bem com você?",Olá! Eu sou um assistente virtual e estou pronto para tirar suas dúvidas sobre o programa Quita Goiás. Como posso ajudar?,0,153,2025-10-27 13:35:57
-2,9d9c10f7-d327-4650-a551-624a8b71ef43,o que é o programa?,"O Quita Goiás é um programa de transação tributária coordenado pela Procuradoria-Geral do Estado de Goiás (PGE-GO). Ele foi criado pela Lei Complementar nº 197/2024 e tem como objetivo facilitar a resolução amigável de conflitos e a cobrança de dívidas de impostos (créditos tributários) que já estão inscritas na Dívida Ativa.
+id,session_id,user_message,bot_response,user_chars,bot_chars,user_tokens,bot_tokens,request_start_time,retrieval_end_time,response_end_time,retrieval_duration_sec,generation_duration_sec,total_duration_sec
+1,2b015082-4200-4dcc-8ec9-2e9dfe05f217,"olá, bom dia",Olá! Eu sou um assistente virtual e estou pronto para tirar suas dúvidas sobre o programa Quita Goiás. Como posso ajudar?,12,121,0,0,2025-10-27 11:02:53.781224,2025-10-27 11:02:54.379991,2025-10-27 11:02:56.278510,0.598767,1.898519,2.497286
+2,2b015082-4200-4dcc-8ec9-2e9dfe05f217,me explique o programa,"O programa Quita Goiás é uma iniciativa coordenada pela Procuradoria-Geral do Estado (PGE-GO) que funciona como um mecanismo de transação tributária. Ele foi criado para ajudar contribuintes a regularizarem suas dívidas com o Estado de forma mais fácil e consensual, reduzindo o número de processos judiciais.
 
-Em resumo, é um acordo entre o Estado de Goiás e o contribuinte para resolver essas dívidas.",0,440,2025-10-27 13:36:19
-3,9d9c10f7-d327-4650-a551-624a8b71ef43,posso participar?,"Desculpe, não encontrei essa informação. Eu sou um assistente focado no programa Quita Goiás e só posso responder sobre os tópicos presentes nos documentos oficiais. Você poderia perguntar de outra forma sobre o programa?",0,238,2025-10-27 13:36:39
-4,9d9c10f7-d327-4650-a551-624a8b71ef43,posso participar do quita goias?,"Sim, você pode participar do programa Quita Goiás se você for um devedor (seja pessoa física ou sua empresa) que possui dívidas de impostos inscritas na Dívida Ativa do Estado de Goiás.
+**Quem pode participar:**
+Podem aderir pessoas físicas e jurídicas que possuam débitos de tributos como ICMS, ITCMD e IPVA.
 
-O acordo é feito entre o Estado de Goiás, representado pela Procuradoria-Geral do Estado (PGE), e os devedores.",0,330,2025-10-27 13:37:14
-5,9d9c10f7-d327-4650-a551-624a8b71ef43,qual a regra da brincadeira fusca azul?,"Desculpe, não encontrei essa informação. Eu sou um assistente focado no programa Quita Goiás e só posso responder sobre os tópicos presentes nos documentos oficiais. Você poderia perguntar de outra forma sobre o programa?",0,260,2025-10-27 13:37:41
+**Quais dívidas são abrangidas:**
+Neste primeiro edital, o programa foca nas ""grandes dívidas"", ou seja, aquelas com valores acima de R$ 500 mil e que têm um histórico de baixa chance de serem recuperadas. Para débitos de menor valor, como o IPVA, um edital específico será lançado em dezembro.
+
+**Benefícios do programa:**
+O Quita Goiás oferece descontos significativos e opções de parcelamento:
+*   **Para pessoas físicas, microempresas e empresas de pequeno porte:** o desconto pode chegar a até 70% do valor total da dívida, com a possibilidade de parcelar em até 145 vezes.
+*   **Para outras pessoas jurídicas:** o desconto pode ser de até 65%, com parcelamento em até 120 vezes.
+Os descontos são calculados pela Secretaria da Economia, que avalia o grau de recuperabilidade de cada dívida.
+
+**Como funciona a participação:**
+1.  O contribuinte interessado deve fazer a solicitação por e-mail para **ntt@pge.go.gov.br**.
+2.  O pedido precisa conter os dados do contribuinte (seja pessoa física ou jurídica) e a documentação exigida.
+3.  Após o envio, o contribuinte receberá por e-mail uma simulação com os valores dos débitos que podem ser negociados e as condições de pagamento.
+4.  Se o acordo for fechado, o pagamento à vista encerra a cobrança. Se for parcelado, a Secretaria da Economia fará o acompanhamento até a quitação total.
+5.  Durante todo o processo, a cobrança da dívida é suspensa, assim como qualquer ação judicial relacionada a ela.
+
+Em resumo, o Quita Goiás é uma oportunidade para os contribuintes quitarem suas dívidas tributárias com condições facilitadas, evitando litígios e regularizando sua situação fiscal.",22,2075,0,0,2025-10-27 11:03:12.739779,2025-10-27 11:03:13.218940,2025-10-27 11:03:21.598497,0.479161,8.379557,8.858718
+3,2b015082-4200-4dcc-8ec9-2e9dfe05f217,posso participar do quita?,"Sim, você pode participar do programa Quita Goiás se for uma pessoa física ou jurídica que possua débitos de tributos como ICMS, ITCMD e IPVA.
+
+É importante saber que, neste primeiro momento, o programa está focado em dívidas de valores mais altos, acima de R$ 500 mil, que são consideradas de difícil recuperação. Para débitos de menor valor, como o IPVA, um edital específico será lançado em dezembro.
+
+Se você se enquadra nesses critérios, pode solicitar sua participação enviando um e-mail para **ntt@pge.go.gov.br** com seus dados e a documentação exigida.",26,561,0,0,2025-10-27 11:03:47.665835,2025-10-27 11:03:48.135575,2025-10-27 11:03:52.448133,0.46974,4.312558,4.782298
+4,2b015082-4200-4dcc-8ec9-2e9dfe05f217,qual a origem dos dinossauros?,"Desculpe, não encontrei essa informação. Eu sou um assistente focado no programa Quita Goiás e só posso responder sobre os tópicos presentes nos documentos oficiais. Você poderia perguntar de outra forma sobre o programa?",30,221,0,0,2025-10-27 11:04:10.883513,2025-10-27 11:04:11.385138,2025-10-27 11:04:14.141603,0.501625,2.756465,3.25809
