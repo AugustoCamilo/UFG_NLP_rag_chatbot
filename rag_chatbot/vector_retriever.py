@@ -4,7 +4,7 @@ from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from sentence_transformers import CrossEncoder
 from langchain_core.documents import Document
-from typing import List
+from typing import List, Tuple  # <-- ATUALIZADO
 
 # Importar o arquivo de configuração
 import config
@@ -49,13 +49,26 @@ class VectorRetriever:
             print(f"Ocorreu um erro ao inicializar o VectorRetriever: {e}")
             raise
 
+    # --- MÉTODO retrieve_context ORIGINAL, MODIFICADO PARA USAR O NOVO ---
     def retrieve_context(self, query: str) -> List[Document]:
         """
-        Executa a busca vetorial (Recall) seguida pelo Re-Ranking (Precision).
+        Executa a busca e o re-ranking e retorna apenas a lista de Documentos.
+        Mantido para compatibilidade com o rag_chain.py.
+        """
+        results_with_scores = self.retrieve_context_with_scores(query)
+        # Extrai apenas os documentos da tupla
+        return [doc for doc, score in results_with_scores]
+
+    # --- FIM DA MODIFICAÇÃO ---
+
+    # --- NOVO MÉTODO PRINCIPAL COM LÓGICA DE BUSCA ---
+    def retrieve_context_with_scores(self, query: str) -> List[Tuple[Document, float]]:
+        """
+        Executa a busca vetorial (Recall) seguida pelo Re-Ranking (Precision)
+        e retorna os Documentos junto com seus scores de relevância.
         """
         print(f"Iniciando Etapa 1 (Recall) para: '{query}'")
         # ETAPA 1: RECALL (Busca Vetorial Rápida)
-        # Busca K "brutos" resultados
         results_with_scores = self.vectordb.similarity_search_with_score(
             query, k=config.SEARCH_K_RAW
         )
@@ -84,12 +97,28 @@ class VectorRetriever:
             # 5. Pegar o Top-K final
             top_k_results = reranked_results[: config.SEARCH_K_FINAL]
 
-            # 6. Extrair apenas os Documentos
-            final_docs = [doc for (doc, old_score), rerank_score in top_k_results]
+            # 6. Formatar a saída para (Documento, score_relevancia)
+            final_results = [
+                (doc, rerank_score) for (doc, old_score), rerank_score in top_k_results
+            ]
 
-            print(f"Etapa 2 concluída. {len(final_docs)} chunks selecionados.")
-            return final_docs
+            print(f"Etapa 2 concluída. {len(final_results)} chunks selecionados.")
+            return final_results
 
         except Exception as e:
             print(f"Erro durante o Re-Ranking: {e}")
             return []
+
+    # --- FIM DO NOVO MÉTODO ---
+
+    # --- NOVO MÉTODO PARA EXPOR O .get() ---
+    def get_all_chunks(self) -> dict:
+        """
+        Expõe o método .get() do banco de dados Chroma.
+        Usado pelo read_db_vector.py para listar e exportar chunks.
+        """
+        if self.vectordb:
+            return self.vectordb.get()
+        return {"documents": [], "metadatas": []}
+
+    # --- FIM DO NOVO MÉTODO ---
