@@ -1,4 +1,4 @@
-# read_db.py
+# read_db_vector.py
 import os
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings

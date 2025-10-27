@@ -29,6 +29,7 @@ def init_db():
     cursor = conn.cursor()
 
     # Tabela para histórico de chat
+    # --- MODIFICADO ---
     cursor.execute(
         """
     CREATE TABLE IF NOT EXISTS chat_history (
@@ -36,10 +37,13 @@ def init_db():
         session_id TEXT NOT NULL,
         user_message TEXT NOT NULL,
         bot_response TEXT NOT NULL,
+        total_tokens INTEGER,
+        total_chars INTEGER,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     )
     """
     )
+    # --- FIM DA MODIFICAÇÃO ---
 
     # Tabela para feedback
     cursor.execute(

@@ -52,12 +52,60 @@ class RAGChain:
         self.retriever = VectorRetriever()
 
         # 3. Definir o prompt do sistema
-        self.system_prompt = """Você é um assistente de IA especialista.
-        Sua tarefa é responder à pergunta do usuário com base unicamente no contexto fornecido.
-        Seja claro, conciso e use as informações dos documentos.
-        Se a resposta não estiver no contexto, diga "Desculpe, não encontrei essa informação nos documentos fornecidos."
-        Não use nenhum conhecimento prévio.
-        Responda em português."""
+        self.system_prompt = """<prompt_de_sistema>
+
+<definicao_do_papel>
+Você é um assistente virtual especialista no programa Quita Goiás, com foco em Transação Tributária. Sua identidade é a de um especialista prestativo e confiável.
+</definicao_do_papel>
+
+<instrucoes_principais>
+Sua principal função é fornecer informações precisas, claras e detalhadas sobre o programa Quita Goiás, suas regras e procedimentos.
+</instrucoes_principais>
+
+<restricoes_de_conhecimento>
+1.  **Restrição Absoluta de Conhecimento:** Você deve basear suas respostas *exclusivamente* nas informações fornecidas no contexto.
+2.  **Proibição de Conhecimento Prévio:** É estritamente proibido usar qualquer conhecimento prévio ou informações externas ao contexto fornecido.
+</restricoes_de_conhecimento>
+
+<persona_e_estilo>
+1.  **Tom:** Mantenha uma postura profissional, amigável, prestativa e de especialista.
+2.  **Linguagem:** Responda em linguagem natural, fluente e utilizando a língua portuguesa do Brasil.
+3.  **Clareza (Anti-Jargão):** Evite o uso de termos jurídicos ou complexos. Sempre priorize a forma mais simples e acessível de explicar os conceitos, pensando no contribuinte leigo.
+4.  **Explicação de Termos:** Se for absolutamente obrigatório usar um termo jurídico ou técnico (que esteja no contexto), explique-o de forma simples imediatamente.
+</persona_e_estilo>
+
+<regras_situacionais>
+
+    <regra>
+        <condicao>
+        Se a mensagem do usuário for *apenas* um cumprimento (exemplos: "Olá", "Oi", "Bom dia", "Tudo bem?").
+        </condicao>
+        <acao>
+        Responda ao cumprimento de forma amigável e se presente. Use este formato: "Olá! Eu sou um assistente virtual e estou pronto para tirar suas dúvidas sobre o programa Quita Goiás. Como posso ajudar?"
+        </acao>
+    </regra>
+    
+    <regra>
+        <condicao>
+        Se a resposta para a pergunta do usuário *não* estiver no contexto fornecido.
+        </condicao>
+        <acao>
+        Responda *exatamente* com o seguinte texto, sem adicionar ou modificar nada: "Desculpe, não encontrei essa informação. Eu sou um assistente focado no programa Quita Goiás e só posso responder sobre os tópicos presentes nos documentos oficiais. Você poderia perguntar de outra forma sobre o programa?"
+        </acao>
+    </regra>
+    
+    <regra>
+        <condicao>
+        Para todas as outras perguntas sobre o programa Quita Goiás.
+        </condicao>
+        <acao>
+        Forneça uma resposta precisa, clara e detalhada, baseando-se *apenas* nas informações do contexto.
+        </acao>
+    </regra>
+
+</regras_situacionais>
+
+</prompt_de_sistema>"""
 
         # 4. Construir o grafo (LangGraph)
         graph = StateGraph(RAGState)
@@ -123,16 +171,32 @@ class RAGChain:
         )
 
         try:
+            # --- MODIFICADO ---
             response = self.model.invoke(messages)
             answer = response.content
-            # Salva a interação no histórico
-            self.save_message(state["question"], answer)
+
+            # Calcular caracteres (pergunta do usuário + resposta do bot)
+            total_chars = len(state["question"]) + len(answer)
+
+            # Calcular tokens (extraindo dos metadados da resposta da API)
+            total_tokens = 0
+            if response.response_metadata:
+                token_usage = response.response_metadata.get("token_usage", {})
+                total_tokens = token_usage.get("total_tokens", 0)
+
+            # Salva a interação no histórico com os novos dados
+            self.save_message(state["question"], answer, total_tokens, total_chars)
+            # --- FIM DA MODIFICAÇÃO ---
+
             return {"answer": answer}
         except Exception as e:
             print(f"Erro ao invocar LLM: {e}")
             return {"answer": "Ocorreu um erro ao processar sua solicitação."}
 
-    def save_message(self, user_msg: str, bot_msg: str):
+    # --- MODIFICADO ---
+    def save_message(
+        self, user_msg: str, bot_msg: str, total_tokens: int, total_chars: int
+    ):
         """Salva a interação atual no banco SQLite."""
         print(f"Salvando mensagem para session_id: {self.session_id}")
         try:
@@ -140,15 +204,17 @@ class RAGChain:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO chat_history (session_id, user_message, bot_response)
-                VALUES (?, ?, ?)
+                INSERT INTO chat_history (session_id, user_message, bot_response, total_tokens, total_chars)
+                VALUES (?, ?, ?, ?, ?)
                 """,
-                (self.session_id, user_msg, bot_msg),
+                (self.session_id, user_msg, bot_msg, total_tokens, total_chars),
             )
             conn.commit()
             conn.close()
         except Exception as e:
             print(f"Erro ao salvar mensagem: {e}")
+
+    # --- FIM DA MODIFICAÇÃO ---
 
     def generate_response(self, question: str) -> str:
         """Ponto de entrada para o fluxo RAG."""
