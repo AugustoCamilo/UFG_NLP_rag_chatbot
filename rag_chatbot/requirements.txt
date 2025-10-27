@@ -1,23 +1,26 @@
-# Framework Web
-flask
+# Framework da Interface Web
+streamlit==1.50.0
 
-# Framework principal do LangChain
-langchain
-langchain-core
+# Frameworks principais do LangChain
+langchain==1.0.2
+langchain-core==1.0.1
+langgraph==1.0.1
 
 # Módulos e integrações do LangChain
-langchain-community
-langchain-chroma
-langchain-google-genai
-langchain-huggingface
-langchain-text-splitters
+langchain-community==0.4
+langchain-chroma==1.0.0
+langchain-google-genai==3.0.0
+langchain-huggingface==1.0.0
+langchain-text-splitters==1.0.0
 
 # Modelos de Embedding e Re-Ranking
-sentence-transformers
+sentence-transformers==5.1.2
 
 # Carregamento de PDF (requerido pelo PyMuPDFLoader)
-pymupdf
+PyMuPDF==1.26.5
 
 # Utilitários
-python-dotenv
-tqdm
+python-dotenv==1.1.1
+tqdm==4.67.1
+
+

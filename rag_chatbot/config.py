@@ -24,7 +24,8 @@ GEMINI_MODEL_NAME = "gemini-1.5-flash"  # Use "gemini-pro" se preferir a versão
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 # --- Modelo usado para o re-ranking (CrossEncoder)
-RERANKER_MODEL_NAME = "sentence-transformers/ms-marco-MiniLM-L-6-v2"
+# RERANKER_MODEL_NAME = "sentence-transformers/ms-marco-MiniLM-L-6-v2"
+RERANKER_MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L6-v2"  # <-- LINHA CORRIGIDA
 # --- Configuração da Busca (Retriever) ---
 SEARCH_K_RAW = 20  # Quantos chunks buscar inicialmente
 SEARCH_K_FINAL = 3  # Quantos chunks selecionar após o re-ranking
