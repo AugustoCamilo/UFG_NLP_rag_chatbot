@@ -1,7 +1,7 @@
 # ingest.py
 import os
 import shutil
-import re  # <<< NOVO IMPORT para Expressões Regulares
+import re
 from tqdm import tqdm
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_chroma import Chroma

@@ -21,7 +21,7 @@ A solução utiliza uma arquitetura moderna que combina:
     1.  **Recall (Busca Vetorial Rápida):** Usa um modelo Bi-Encoder (`all-MiniLM-L6-v2`) para encontrar rapidamente os `SEARCH_K_RAW` (padrão 20) documentos semanticamente mais *similares* à pergunta do usuário.
     2.  **Precision (Re-Ranking Inteligente):** Reavalia os resultados do Recall usando um modelo CrossEncoder (`cross-encoder/ms-marco-MiniLM-L6-v2`) para reordená-los com base na relevância semântica e selecionar os `SEARCH_K_FINAL` (padrão 3) documentos mais relevantes para a pergunta.
 * **Geração de Resposta:**
-    * Utiliza a API do **Google Gemini** (configurável, padrão `gemini-1.5-flash`) para gerar respostas fluentes e precisas, baseando-se *exclusivamente* no contexto recuperado e no histórico da conversa.
+    * Utiliza a API do **Google Gemini** (configurável, padrão `gemini-2.5-flash`) para gerar respostas fluentes e precisas, baseando-se *exclusivamente* no contexto recuperado e no histórico da conversa.
     * Implementa um *system prompt* detalhado com persona, restrições de conhecimento e regras situacionais (saudações, resposta não encontrada).
 * **Interface Web:**
     * Interface de chat amigável construída com **Streamlit** (`app.py`).
