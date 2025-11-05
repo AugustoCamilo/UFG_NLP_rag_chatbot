@@ -28,11 +28,10 @@ def connect_to_db():
         st.stop()
 
     try:
-        # --- LINHA MODIFICADA ---
+
         # Adiciona check_same_thread=False para permitir que
         # o cache do Streamlit funcione com SQLite.
         conn = sqlite3.connect(db_path, check_same_thread=False)
-        # --- FIM DA MODIFICAÇÃO ---
 
         st.sidebar.success(f"Conectado ao DB.")
         return conn
@@ -232,7 +231,8 @@ def run_list_feedback(conn):
         with st.spinner("Consultando avaliações..."):
             try:
                 cursor = conn.cursor()
-                # Nova query para buscar feedbacks com o contexto da conversa
+                #
+                # Query para buscar feedbacks com o contexto da conversa
                 cursor.execute(
                     """
                     SELECT 

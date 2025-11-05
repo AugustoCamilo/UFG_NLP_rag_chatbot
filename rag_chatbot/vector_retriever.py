@@ -49,7 +49,6 @@ class VectorRetriever:
             print(f"Ocorreu um erro ao inicializar o VectorRetriever: {e}")
             raise
 
-    # --- MÉTODO retrieve_context ORIGINAL, MODIFICADO PARA USAR O NOVO ---
     def retrieve_context(self, query: str) -> List[Document]:
         """
         Executa a busca e o re-ranking e retorna apenas a lista de Documentos.
@@ -59,9 +58,6 @@ class VectorRetriever:
         # Extrai apenas os documentos da tupla
         return [doc for doc, score in results_with_scores]
 
-    # --- FIM DA MODIFICAÇÃO ---
-
-    # --- NOVO MÉTODO PRINCIPAL COM LÓGICA DE BUSCA ---
     def retrieve_context_with_scores(self, query: str) -> List[Tuple[Document, float]]:
         """
         Executa a busca vetorial (Recall) seguida pelo Re-Ranking (Precision)
@@ -109,9 +105,6 @@ class VectorRetriever:
             print(f"Erro durante o Re-Ranking: {e}")
             return []
 
-    # --- FIM DO NOVO MÉTODO ---
-
-    # --- NOVO MÉTODO PARA EXPOR O .get() ---
     def get_all_chunks(self) -> dict:
         """
         Expõe o método .get() do banco de dados Chroma.
@@ -120,5 +113,3 @@ class VectorRetriever:
         if self.vectordb:
             return self.vectordb.get()
         return {"documents": [], "metadatas": []}
-
-    # --- FIM DO NOVO MÉTODO ---

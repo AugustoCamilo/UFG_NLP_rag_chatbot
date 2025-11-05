@@ -3,8 +3,6 @@ import streamlit as st
 import uuid
 from streamlit.components.v1 import html
 import os  # Import necessário para o botão Sair
-
-# Importa a nova classe RAGChain
 from rag_chain import RAGChain
 
 
@@ -29,7 +27,7 @@ def set_focus():
 # --- FIM DA FUNÇÃO ---
 
 
-# --- FUNÇÃO DE CALLBACK ATUALIZADA ---
+# --- FUNÇÃO DE CALLBACK  ---
 def handle_feedback(chain_instance, message_id, rating):
     """
     Chamada quando um botão de feedback (like/dislike) é clicado.
@@ -43,7 +41,7 @@ def handle_feedback(chain_instance, message_id, rating):
     st.toast("Obrigado pelo seu feedback!", icon="👍")
 
 
-# --- FIM DA ATUALIZAÇÃO ---
+# --- FIM DA FUNÇÃO ---
 
 
 # --- FUNÇÃO PARA EXIBIR OS BOTÕES ---

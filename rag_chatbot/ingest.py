@@ -12,7 +12,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 import config
 
 
-# --- NOVA FUNÇÃO ---
+# --- FUNÇÃO PARA RETIRAR O RODAPÉ ---
 def clean_page_content(page_text):
     """
     Limpa o texto de uma página, removendo rodapés conhecidos usando Regex.
@@ -46,7 +46,7 @@ def clean_page_content(page_text):
     return page_text.strip()
 
 
-# --- FIM DA NOVA FUNÇÃO ---
+# --- FIM DA FUNÇÃO ---
 
 
 def process_documents():
@@ -66,7 +66,7 @@ def process_documents():
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 
-    # --- LÓGICA DE CARREGAMENTO ALTERADA ---
+    # --- LÓGICA DE CARREGAMENTO ---
 
     # Lista para guardar todas as páginas (como 'Document') JÁ LIMPAS
     all_docs = []
@@ -97,7 +97,7 @@ def process_documents():
     print("Documentos limpos. Iniciando divisão em chunks...")
     all_chunks = text_splitter.split_documents(all_docs)
 
-    # --- FIM DA LÓGICA DE CARREGAMENTO ALTERADA ---
+    # --- FIM DA LÓGICA DE CARREGAMENTO ---
 
     print(f"Documentos divididos em {len(all_chunks)} chunks.")
 

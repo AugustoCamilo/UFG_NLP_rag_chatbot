@@ -22,7 +22,6 @@ load_dotenv()
 history_db.init_db()
 
 
-# --- ATUALIZADO: RAGState agora inclui timestamps E new_message_id ---
 class RAGState(TypedDict):
     """Define o estado do grafo LangGraph."""
 
@@ -37,9 +36,6 @@ class RAGState(TypedDict):
 
     # ID da mensagem de chat recém-criada
     new_message_id: Optional[int]  # <-- NOVO
-
-
-# --- FIM DA ATUALIZAÇÃO ---
 
 
 class RAGChain:
@@ -155,7 +151,6 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
             "new_message_id": None,  # Garante que seja None no início
         }
 
-    # --- ATUALIZADO: Nó `retrieve` agora captura o timestamp ---
     def retrieve(self, state: RAGState) -> RAGState:
         """Recupera o contexto usando o VectorRetriever (com re-ranking)."""
         print("Recuperando contexto...")
@@ -166,9 +161,6 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
 
         return {"context": retrieved_docs, "retrieval_end_time": retrieval_end_time}
 
-    # --- FIM DA ATUALIZAÇÃO ---
-
-    # --- ATUALIZADO: Nó `generate` agora calcula todas as métricas ---
     def generate(self, state: RAGState) -> RAGState:
         """Gera a resposta usando a LLM e o contexto."""
         print("Gerando resposta...")
@@ -222,7 +214,6 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                 bot_tokens = token_usage.get("completion_tokens", 0)
             # --- Fim das Métricas ---
 
-            # --- ATUALIZAÇÃO: Captura o ID da nova mensagem ---
             # Salva a interação no histórico com os novos dados
             new_message_id = self.save_message(
                 user_msg,
@@ -238,14 +229,11 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                 generation_duration_sec,
                 total_duration_sec,
             )
-            # --- FIM DA ATUALIZAÇÃO ---
 
             return {"answer": answer, "new_message_id": new_message_id}
         except Exception as e:
             print(f"Erro ao invocar LLM: {e}")
             return {"answer": "Ocorreu um erro ao processar sua solicitação."}
-
-    # --- FIM DA ATUALIZAÇÃO ---
 
     # --- FUNÇÃO SAVE_MESSAGE ATUALIZADA PARA RETORNAR O ID ---
     def save_message(
@@ -296,9 +284,8 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                     total_duration_sec,
                 ),
             )
-            # --- NOVO: Captura o ID da linha recém-inserida ---
+            # --- Captura o ID da linha recém-inserida ---
             new_id = cursor.lastrowid
-            # --- FIM ---
 
             conn.commit()
             conn.close()
@@ -308,9 +295,6 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
 
         return new_id  # Retorna o ID
 
-    # --- FIM DA ATUALIZAÇÃO ---
-
-    # --- ATUALIZADO: Ponto de entrada agora captura o request_start_time ---
     def generate_response(self, question: str) -> dict:
         """
         Ponto de entrada para o fluxo RAG.
@@ -335,9 +319,6 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
         # Retorna o dicionário completo
         return {"answer": result["answer"], "message_id": result["new_message_id"]}
 
-    # --- FIM DA ATUALIZAÇÃO ---
-
-    # --- ATUALIZADO: get_history_for_display agora junta o feedback ---
     def get_history_for_display(self) -> List[tuple]:
         """
         Busca o histórico formatado para exibição no Streamlit,
@@ -370,9 +351,6 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
 
         return history
 
-    # --- FIM DA ATUALIZAÇÃO ---
-
-    # --- NOVA FUNÇÃO: save_feedback ---
     def save_feedback(self, message_id: int, rating: str, comment: str = None):
         """Salva o feedback do usuário no banco de dados."""
         print(f"Salvando feedback para message_id: {message_id} (Rating: {rating})")
@@ -398,5 +376,3 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
             print("Feedback salvo com sucesso.")
         except Exception as e:
             print(f"Erro ao salvar feedback: {e}")
-
-    # --- FIM DA NOVA FUNÇÃO ---

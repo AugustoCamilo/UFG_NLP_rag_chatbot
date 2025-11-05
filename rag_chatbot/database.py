@@ -24,7 +24,6 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # --- ESQUEMA DA TABELA ATUALIZADO ---
     # Tabela para histórico de chat
     cursor.execute(
         """
@@ -52,7 +51,6 @@ def init_db():
     )
     """
     )
-    # --- FIM DA ATUALIZAÇÃO ---
 
     # Tabela para feedback (inalterada)
     cursor.execute(
