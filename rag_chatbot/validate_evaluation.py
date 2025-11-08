@@ -1,4 +1,69 @@
 # validate_evaluation.py
+"""
+Módulo de Dashboard de Avaliação de Métricas (Frontend de Teste).
+
+Este script é uma aplicação Streamlit independente, projetada para
+*ler* e *visualizar* os dados de avaliação que foram salvos
+pelo script `validate_vector_db.py`.
+
+Enquanto `validate_vector_db.py` é a ferramenta de *entrada* de dados
+(onde o avaliador humano submete os testes), este script é
+a ferramenta de *análise* (o dashboard onde os resultados
+agregados são exibidos).
+
+Ele se conecta ao mesmo banco de dados (`chat_solution.db`)
+e foca na leitura das tabelas `validation_runs` e
+`validation_retrieved_chunks`.
+
+---
+### Funcionalidades Principais (Modos)
+---
+
+A aplicação é dividida em cinco modos principais, selecionáveis
+na barra lateral:
+
+1.  **Resumo das Métricas (HR, MRR & P@K):**
+    * Executa a função `run_metrics_summary`.
+    * Calcula as médias (`AVG`) das três métricas principais
+        (Hit Rate, MRR, Precisão@K).
+    * Agrupa os resultados por `search_type`, permitindo uma
+        comparação direta de performance entre a busca
+        'vector_only' e 'reranked'.
+    * Exibe os resultados em um `st.dataframe`.
+
+2.  **Listar Avaliações Detalhadas:**
+    * Executa a função `run_list_evaluations`.
+    * Exibe *cada rodada* de avaliação individualmente.
+    * Para cada rodada, exibe a Query, as três métricas
+        calculadas (usando `st.metric`) e, em seguida,
+        consulta e exibe os chunks que foram retornados.
+    * Destaca visualmente os chunks marcados como corretos
+        (verde/vermelho).
+    * *Nota de Implementação:* Esta função inclui conversão
+        de tipo explícita (ex: `float(score)`) para
+        garantir que os dados lidos do SQLite sejam
+        corretamente formatados.
+
+3.  **Exportar Avaliações (XML):**
+    * Executa a função `run_export_xml`.
+    * Lê *todos* os dados das tabelas `validation_runs` e
+        `validation_retrieved_chunks`.
+    * Constrói um arquivo XML estruturado contendo todos os dados
+        de avaliação para análise externa ou backup.
+
+4.  **Importar Avaliações (XML):** (NOVO)
+    * Executa a função `run_import_xml`.
+    * Permite o upload de um arquivo XML (gerado pelo Modo 3).
+    * Faz o parse do XML, verifica se o 'timestamp' de cada rodada
+        já existe no banco, e insere *apenas* os registros novos,
+        ignorando duplicados. Ao final, exibe um resumo.
+
+5.  **Encerrar Servidor:**
+    * Uma função de conveniência (`run_shutdown`) que chama
+        `os._exit(0)` para parar o processo do Streamlit.
+"""
+
+
 import streamlit as st
 import sqlite3
 import os
@@ -29,8 +94,8 @@ def connect_to_db():
         st.stop()
 
     try:
-        conn = sqlite3.connect(db_path, check_same_thread=False)
-        conn.text_factory = str
+        conn = sqlite3.connect(db_path, check_same_thread=False)  #
+        conn.text_factory = str  #
         st.sidebar.success(f"Conectado ao DB.")
         return conn
     except Exception as e:
@@ -43,13 +108,13 @@ def run_metrics_summary(conn):
     st.subheader("Modo 1: Resumo das Métricas de Avaliação")  #
     st.info(
         "Calcula o Hit Rate, MRR e Precisão@K médios " "com base nas avaliações salvas."
-    )
+    )  #
 
-    if st.button("Calcular Resumo de Métricas"):
-        with st.spinner("Calculando métricas..."):
+    if st.button("Calcular Resumo de Métricas"):  #
+        with st.spinner("Calculando métricas..."):  #
             try:
 
-                cursor = conn.cursor()
+                cursor = conn.cursor()  #
                 cursor.execute(
                     """
                     SELECT 
@@ -61,14 +126,14 @@ def run_metrics_summary(conn):
                     FROM validation_runs
                     GROUP BY search_type
                     """
-                )
-                rows = cursor.fetchall()
+                )  #
+                rows = cursor.fetchall()  #
 
-                if not rows:
+                if not rows:  #
                     st.warning("Nenhuma avaliação encontrada no banco de dados.")
                     return
 
-                st.success(f"Métricas calculadas para {len(rows)} tipo(s) de busca:")
+                st.success(f"Métricas calculadas para {len(rows)} tipo(s) de busca:")  #
 
                 data = [
                     {
@@ -80,33 +145,33 @@ def run_metrics_summary(conn):
                     }
                     for row in rows
                 ]  #
-                st.dataframe(data, use_container_width=True)
+                st.dataframe(data, use_container_width=True)  #
 
-                st.markdown("---")
-                st.header("Interpretação")
+                st.markdown("---")  #
+                st.header("Interpretação")  #
                 st.markdown(
                     """
                     - **Hit Rate (Taxa de Acerto):** A porcentagem de vezes que *pelo menos um* chunk correto foi retornado. (Maior é melhor)
                     - **MRR (Mean Reciprocal Rank):** A média da "pontuação de ranking" do *primeiro* chunk correto. (Maior é melhor, 1.0 é perfeito)
                     - **Precisão@K Média:** A proporção média de chunks corretos por rodada (ex: 0.66 = 2 de 3 chunks estavam certos). Mede a "pureza" do resultado. (Maior é melhor)
                     """
-                )
+                )  #
 
             except Exception as e:
-                st.error(f"Erro ao calcular métricas: {e}")
+                st.error(f"Erro ao calcular métricas: {e}")  #
 
 
 def run_list_evaluations(conn):
     """Modo 2: Listar Avaliações Detalhadas"""
-    st.subheader("Modo 2: Listar Avaliações Detalhadas")
+    st.subheader("Modo 2: Listar Avaliações Detalhadas")  #
     st.info(
         "Exibe cada rodada de validação e os chunks que foram marcados como corretos."
-    )
+    )  #
 
-    if st.button("Carregar Todas as Avaliações"):
-        with st.spinner("Consultando avaliações..."):
+    if st.button("Carregar Todas as Avaliações"):  #
+        with st.spinner("Consultando avaliações..."):  #
             try:
-                cursor = conn.cursor()
+                cursor = conn.cursor()  #
 
                 # Query para buscar todas as rodadas
                 cursor.execute(
@@ -116,15 +181,15 @@ def run_list_evaluations(conn):
                     FROM validation_runs
                     ORDER BY timestamp DESC
                     """
-                )
-                runs = cursor.fetchall()
+                )  #
+                runs = cursor.fetchall()  #
 
-                if not runs:
+                if not runs:  #
                     st.warning("Nenhuma avaliação (rodada) encontrada.")
                     return
 
                 # --- REQUISITO 1: Manter o total ---
-                st.success(f"Total de rodadas de avaliação: {len(runs)}")
+                st.success(f"Total de rodadas de avaliação: {len(runs)}")  #
 
                 # --- REQUISITO 2: Tabela de Resumo por Tipo ---
                 cursor.execute(
@@ -133,22 +198,22 @@ def run_list_evaluations(conn):
                     FROM validation_runs
                     GROUP BY search_type
                     """
-                )
-                summary_rows = cursor.fetchall()
+                )  #
+                summary_rows = cursor.fetchall()  #
 
-                if summary_rows:
+                if summary_rows:  #
                     summary_data = [
                         {
                             "TIPO DE BUSCA": row[0],
                             "TOTAL DE AVALIAÇÕES": row[1],
                         }
                         for row in summary_rows
-                    ]
-                    st.markdown("**Total de Avaliações por Tipo:**")
-                    st.dataframe(summary_data, use_container_width=True)
+                    ]  #
+                    st.markdown("**Total de Avaliações por Tipo:**")  #
+                    st.dataframe(summary_data, use_container_width=True)  #
 
-                st.divider()
-                st.markdown("### Detalhamento das Rodadas")
+                st.divider()  #
+                st.markdown("### Detalhamento das Rodadas")  #
 
                 # Query para buscar os chunks (prepara para consulta)
                 chunk_query = """
@@ -163,63 +228,63 @@ def run_list_evaluations(conn):
                     (run_id, ts, query, s_type, hr, mrr, p_at_k) = run
 
                     # Converte os valores para os tipos corretos
-                    run_id = int(run_id)
-                    query = str(query)
-                    s_type = str(s_type)
-                    hr = int(hr)
-                    mrr = float(mrr)
-                    p_at_k = float(p_at_k)
+                    run_id = int(run_id)  #
+                    query = str(query)  #
+                    s_type = str(s_type)  #
+                    hr = int(hr)  #
+                    mrr = float(mrr)  #
+                    p_at_k = float(p_at_k)  #
 
-                    hr_text = "✅ Sucesso" if hr == 1 else "❌ Falha"
+                    hr_text = "✅ Sucesso" if hr == 1 else "❌ Falha"  #
 
-                    with st.container(border=True):
+                    with st.container(border=True):  #
                         # Linha de ID (mantida)
                         st.markdown(
                             f"**ID da Rodada: {run_id}** | {ts} | **Tipo: {s_type}**"
-                        )
+                        )  #
 
                         # --- REQUISITO 3: Destaque da Query ---
-                        st.markdown("**Query:**")
+                        st.markdown("**Query:**")  #
                         st.markdown(f"> *{query}*")  # Usando blockquote e itálico
 
                         # --- REQUISITO 4: Destaque das Métricas ---
-                        st.markdown("**Métricas da Rodada:**")
-                        col1, col2, col3 = st.columns(3)
+                        st.markdown("**Métricas da Rodada:**")  #
+                        col1, col2, col3 = st.columns(3)  #
                         col1.metric(
                             label="Taxa de Acerto (Hit Rate)",
                             value=hr_text,
                             help="Indica se pelo menos um chunk relevante foi encontrado nesta rodada.",
-                        )
-                        col2.metric(label="MRR (Pontuação)", value=f"{mrr:.4f}")
-                        col3.metric(label="Precisão@K", value=f"{p_at_k:.4f}")
+                        )  #
+                        col2.metric(label="MRR (Pontuação)", value=f"{mrr:.4f}")  #
+                        col3.metric(label="Precisão@K", value=f"{p_at_k:.4f}")  #
 
-                        st.markdown("**Chunks Retornados:**")
+                        st.markdown("**Chunks Retornados:**")  #
 
                         # Busca os chunks para esta rodada
-                        cursor.execute(chunk_query, (run_id,))
-                        chunks = cursor.fetchall()
+                        cursor.execute(chunk_query, (run_id,))  #
+                        chunks = cursor.fetchall()  #
 
-                        for chunk in chunks:
-                            (rank, content, source, page, score, is_correct) = chunk
+                        for chunk in chunks:  #
+                            (rank, content, source, page, score, is_correct) = chunk  #
 
-                            rank = int(rank)
-                            content = str(content)
-                            source = str(source)
+                            rank = int(rank)  #
+                            content = str(content)  #
+                            source = str(source)  #
                             score = float(
                                 score
                             )  # O diagnóstico provou que isso é um float
-                            is_correct = int(is_correct)
+                            is_correct = int(is_correct)  #
 
-                            page_str = str(page) if page is not None else "N/A"
+                            page_str = str(page) if page is not None else "N/A"  #
 
                             # --- REQUISITO 5: Destaque do "Correto" ---
-                            correct_text = "SIM" if is_correct == 1 else "NÃO"
-                            correct_color = "green" if is_correct == 1 else "red"
+                            correct_text = "SIM" if is_correct == 1 else "NÃO"  #
+                            correct_color = "green" if is_correct == 1 else "red"  #
 
                             st.markdown(
                                 f"  **{rank}.** <font color='{correct_color}'>**(Correto: {correct_text})**</font> | [Score: {score:.4f}] - *{source}, p.{page}*",
                                 unsafe_allow_html=True,
-                            )
+                            )  #
                             st.text(f"     {content[:150]}...")  #
 
             except Exception as e:
@@ -231,7 +296,6 @@ def run_list_evaluations(conn):
 
 def run_export_xml(conn):
     """Modo 3: Exportar Avaliações para XML"""
-    # (Esta função permanece inalterada)
     st.subheader("Modo 3: Exportar Avaliações (XML)")  #
     st.info(
         "Exporta um XML completo contendo todas as rodadas de validação e "
@@ -314,10 +378,189 @@ def run_export_xml(conn):
                 st.error(f"\nErro ao salvar o arquivo XML: {e}")  #
 
 
+# --- FUNÇÃO DE IMPORTAÇÃO ATUALIZADA ---
+
+
+def _safe_get_text(element, tag, default=None):
+    """Tenta encontrar um sub-elemento e obter seu texto, retornando um padrão se falhar."""
+    found = element.find(tag)  #
+    if found is not None and found.text is not None:  #
+        return found.text
+    return default
+
+
+def run_import_xml(conn):
+    """Modo 4: Importar Avaliações de um arquivo XML"""
+    st.subheader("Modo 4: Importar Avaliações (XML)")  #
+    st.info(
+        "Faça o upload de um arquivo 'avaliacoes_exportadas.xml' "
+        "para adicionar os dados ao banco de dados atual."
+    )  #
+    st.warning(
+        "O sistema irá verificar o 'timestamp' e ignorar "
+        "automaticamente qualquer registro que já exista no banco."
+    )
+
+    uploaded_file = st.file_uploader(
+        "Selecione o arquivo 'avaliacoes_exportadas.xml'", type=["xml"]
+    )  #
+
+    if uploaded_file is not None:
+        if st.button("Iniciar Importação"):  #
+
+            # --- INÍCIO DA ALTERAÇÃO ---
+            # Contadores para o resumo
+            runs_imported = 0
+            runs_skipped = 0
+            chunks_imported = 0
+            total_runs_in_xml = 0
+            file_name = uploaded_file.name
+            # --- FIM DA ALTERAÇÃO ---
+
+            try:
+                # Parse o XML
+                tree = ET.parse(uploaded_file)  #
+                root = tree.getroot()  #
+
+                cursor = conn.cursor()  #
+
+                # Inicia a transação
+                cursor.execute("BEGIN")  #
+
+                all_runs_in_xml = root.findall("validation_run")  #
+                total_runs_in_xml = len(all_runs_in_xml)
+
+                # Itera sobre cada rodada de validação no XML
+                for run in all_runs_in_xml:
+
+                    # 1. Verificar se o timestamp já existe
+                    run_timestamp = _safe_get_text(run, "timestamp")
+
+                    if not run_timestamp:
+                        # Se não houver timestamp no XML, não podemos
+                        # verificar duplicidade, melhor pular.
+                        runs_skipped += 1
+                        continue
+
+                    cursor.execute(
+                        "SELECT 1 FROM validation_runs WHERE timestamp = ?",
+                        (run_timestamp,),
+                    )
+                    exists = cursor.fetchone()
+
+                    if exists:
+                        # Timestamp encontrado, registro é duplicado.
+                        runs_skipped += 1
+                        continue
+
+                    # --- Se não existe, importa ---
+                    runs_imported += 1
+
+                    # 2. Inserir na tabela 'validation_runs'
+                    # Usamos o timestamp original do XML
+                    query = _safe_get_text(run, "query", "")  #
+                    search_type = _safe_get_text(run, "search_type", "unknown")  #
+                    # Converte para os tipos corretos
+                    hr_eval = float(_safe_get_text(run, "hit_rate_eval", 0.0))  #
+                    mrr_eval = float(_safe_get_text(run, "mrr_eval", 0.0))  #
+                    p_at_k_eval = float(
+                        _safe_get_text(run, "precision_at_k_eval", 0.0)
+                    )  #
+
+                    cursor.execute(
+                        """
+                        INSERT INTO validation_runs 
+                        (timestamp, query, search_type, hit_rate_eval, mrr_eval, precision_at_k_eval)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            run_timestamp,
+                            query,
+                            search_type,
+                            hr_eval,
+                            mrr_eval,
+                            p_at_k_eval,
+                        ),
+                    )
+
+                    # Obtém o ID da rodada que acabamos de inserir
+                    new_run_id = cursor.lastrowid  #
+
+                    # 3. Inserir os chunks associados
+                    chunks_element = run.find("retrieved_chunks")  #
+                    if chunks_element is not None:
+                        for chunk in chunks_element.findall("chunk"):  #
+                            rank = int(_safe_get_text(chunk, "rank", 0))  #
+                            content = _safe_get_text(chunk, "chunk_content", "")  #
+                            source = _safe_get_text(chunk, "source", "N/A")  #
+                            page = _safe_get_text(chunk, "page")  #
+                            score = float(_safe_get_text(chunk, "score", 0.0))  #
+                            is_correct = int(
+                                _safe_get_text(chunk, "is_correct_eval", 0)
+                            )  #
+
+                            # Trata 'page' que pode ser 'None' (string) ou numérico
+                            page_int = None  #
+                            if page is not None and page.lower() != "none":  #
+                                try:
+                                    page_int = int(float(page))  #
+                                except (ValueError, TypeError):
+                                    page_int = None  # Deixa nulo se a conversão falhar
+
+                            cursor.execute(
+                                """
+                                INSERT INTO validation_retrieved_chunks
+                                (run_id, rank, chunk_content, source, page, score, is_correct_eval)
+                                VALUES (?, ?, ?, ?, ?, ?, ?)
+                                """,
+                                (
+                                    new_run_id,
+                                    rank,
+                                    content,
+                                    source,
+                                    page_int,
+                                    score,
+                                    is_correct,
+                                ),
+                            )  #
+                            chunks_imported += 1
+
+                # Completa a transação
+                conn.commit()  #
+
+                # --- INÍCIO DA ALTERAÇÃO (Resumo) ---
+                st.success("Importação concluída!")
+                st.markdown(f"**Resumo da Importação (Arquivo: `{file_name}`)**")
+
+                # Exibe o total do arquivo
+                st.metric(
+                    label="Total de Validações no Arquivo", value=total_runs_in_xml
+                )
+
+                # Colunas para importados vs. ignorados
+                col1, col2 = st.columns(2)
+                col1.metric(label="Rodadas Importadas (Novas)", value=runs_imported)
+                col2.metric(label="Rodadas Ignoradas (Duplicadas)", value=runs_skipped)
+
+                # Informação adicional sobre chunks
+                st.info(
+                    f"Total de {chunks_imported} chunks associados foram importados."
+                )
+                # --- FIM DA ALTERAÇÃO ---
+
+            except Exception as e:
+                # Desfaz em caso de erro
+                conn.rollback()  #
+                st.error(f"Erro durante a importação: {e}")
+                st.error("Nenhum dado foi importado.")
+
+
+# --- FIM DA FUNÇÃO ATUALIZADA ---
+
+
 def run_shutdown():
-    """Modo 4: Encerrar"""
-    # (Esta função permanece inalterada)
-    st.subheader("Modo 4: Encerrar Servidor")  #
+    """Modo 5: Encerrar"""  # <-- Título do docstring precisa ser atualizado
+    st.subheader("Modo 5: Encerrar Servidor")  # <-- Label atualizado para 5
     st.warning("Clicar neste botão encerrará este servidor Streamlit.")  #
 
     if st.button("Encerrar Aplicação"):  #
@@ -328,7 +571,7 @@ def run_shutdown():
 
 def main():
     st.set_page_config(page_title="Auditoria de Avaliação", layout="wide")  #
-    st.title("Ferramenta de Auditoria de Métricas (HR & MRR)")  #
+    st.title("Ferenta de Auditoria de Métricas (HR, MRR & Precisão@K)")  #
     st.caption(
         "Esta interface consulta as tabelas 'validation_runs' do 'chat_solution.db'."
     )  #
@@ -336,12 +579,16 @@ def main():
     conn = connect_to_db()  #
 
     st.sidebar.title("Opções de Auditoria")  #
+
+    # --- Menu de Opções ATUALIZADO ---
     opcoes = [
-        "1. Resumo das Métricas (HR & MRR)",
+        "1. Resumo das Métricas (HR, MRR & P@K)",
         "2. Listar Avaliações Detalhadas",
         "3. Exportar Avaliações (XML)",
-        "4. Encerrar Servidor",
+        "4. Importar Avaliações (XML)",  # <-- NOVO
+        "5. Encerrar Servidor",  # <-- Renumerado
     ]  #
+
     modo = st.sidebar.radio(
         "Selecione uma operação:", opcoes, label_visibility="collapsed"
     )  #
@@ -352,8 +599,13 @@ def main():
         run_list_evaluations(conn)  #
     elif modo == opcoes[2]:  #
         run_export_xml(conn)  #
+
+    # --- Roteamento ATUALIZADO ---
     elif modo == opcoes[3]:  #
+        run_import_xml(conn)  # <-- NOVO
+    elif modo == opcoes[4]:  #
         run_shutdown()  #
+    # --- FIM DAS ALTERAÇÕES ---
 
 
 if __name__ == "__main__":

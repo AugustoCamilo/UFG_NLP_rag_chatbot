@@ -1,4 +1,74 @@
 # vector_retriever.py
+"""
+Módulo Central de Recuperação de Informação (Retriever).
+
+Esta classe (`VectorRetriever`) é o componente principal do RAG,
+responsável por carregar os modelos de busca e executar a
+recuperação de contexto.
+
+Ela é inicializada uma vez (`@st.cache_resource`) e
+utilizada tanto pelo `rag_chain.py` (em produção) quanto
+pelo `validate_vector_db.py` (para avaliação).
+
+---
+### Arquitetura de Recuperação (Duas Etapas)
+---
+
+O `VectorRetriever` implementa uma estratégia de busca sofisticada
+em duas etapas (Recall e Re-Ranking) para garantir tanto
+velocidade quanto precisão.
+
+
+1.  **Etapa 1: Recall (Busca Vetorial Ampla)**
+    * Utiliza o `ChromaDB` (via `similarity_search_with_score`)
+        para fazer uma busca vetorial rápida.
+    * O objetivo é "lembrar" (recall) um conjunto amplo de
+        chunks candidatos (`SEARCH_K_RAW`, ex: 20) que
+        sejam semanticamente próximos da pergunta.
+    * Esta etapa é rápida, mas pode conter "ruído" (chunks
+        próximos, mas não perfeitamente relevantes).
+
+2.  **Etapa 2: Re-Ranking (Busca de Precisão)**
+    * Utiliza um modelo `CrossEncoder` (`self.reranker`),
+        que é mais lento, porém muito mais preciso.
+    * O Cross-Encoder não compara a pergunta com os chunks
+        individualmente; ele compara a *pergunta e o chunk juntos* (`[pergunta, chunk_conteudo]`) para dar um score
+        de relevância muito mais acurado.
+    * Ele re-classifica os 20 chunks candidatos e seleciona
+        apenas os `SEARCH_K_FINAL` (ex: 3) melhores,
+        garantindo alta precisão no contexto final enviado ao LLM.
+
+---
+### Métodos Principais
+---
+
+* **`__init__(self)`:**
+    * Carrega o modelo de embedding (`EMBEDDING_MODEL_NAME`).
+    * Carrega o `ChromaDB` do `VECTOR_DB_DIR`.
+    * Carrega o modelo CrossEncoder (`RERANKER_MODEL_NAME`) na
+        memória para a Etapa 2.
+
+* **`retrieve_context_with_scores(self, query)`:**
+    * Método principal que implementa o fluxo de "Etapa 1 + Etapa 2"
+        (Recall + Re-Ranking).
+    * Usado pelo `rag_chain.py` e pelo modo "COM Re-Ranking"
+        do `validate_vector_db.py`.
+
+* **`retrieve_context_vector_search_only(self, query)`:**
+    * Executa *apenas* a Etapa 1 (Recall).
+    * Busca diretamente os `SEARCH_K_FINAL` melhores
+        resultados da busca vetorial pura.
+    * Usado pelo `validate_vector_db.py` para o modo
+        "SÓ Vetorial", permitindo uma comparação A/B direta
+        da eficácia do Re-Ranker.
+
+* **`get_all_chunks(self)`:**
+    * Uma função utilitária que expõe o método `.get()`
+        do ChromaDB, usada pelos scripts de validação para
+        listar e exportar todo o conteúdo do banco de vetores.
+"""
+
+
 import os
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings

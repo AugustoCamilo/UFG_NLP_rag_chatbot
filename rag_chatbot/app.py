@@ -1,4 +1,33 @@
 # app.py
+"""
+Ponto de Entrada Principal (Frontend) da Aplicação de Chat RAG.
+
+Este script utiliza o Streamlit para construir a interface web do chatbot.
+Suas principais responsabilidades são:
+
+1.  **Gerenciamento de Sessão:** Garante que cada usuário tenha um ID de sessão
+    único (`session_id`), permitindo o isolamento do histórico de conversa.
+2.  **Inicialização do Backend:** Carrega uma instância da `RAGChain` (definida
+    em `rag_chain.py`), passando o `session_id` para que o backend possa
+    acessar o histórico correto.
+3.  **Renderização do Histórico:** Ao (re)carregar a página, busca o histórico
+    de mensagens do banco de dados (via `chain.get_history_for_display`) e
+    o exibe na tela usando `st.chat_message`.
+4.  **Captura de Nova Pergunta:** Usa `st.chat_input` para capturar a nova
+    pergunta do usuário.
+5.  **Geração de Resposta:** Envia o novo prompt para o backend
+    (`chain.generate_response`), exibe um spinner ("Buscando...") e, em
+    seguida, exibe a resposta do assistente.
+6.  **Coleta de Feedback:**
+    * Exibe botões (👍/👎) para cada resposta do assistente.
+    * Utiliza `st.session_state.feedback` para desabilitar os botões
+        após o clique.
+    * Chama `chain.save_feedback` (via callback `handle_feedback`) para
+        persistir a avaliação no banco de dados.
+7.  **Controle da Aplicação:** Fornece um botão "Sair" na barra lateral que
+    encerra forçadamente o processo do servidor Streamlit (`os._exit(0)`).
+"""
+
 import streamlit as st
 import uuid
 from streamlit.components.v1 import html

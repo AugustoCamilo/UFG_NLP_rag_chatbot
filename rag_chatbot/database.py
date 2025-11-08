@@ -1,4 +1,52 @@
 # database.py
+"""
+Módulo de Inicialização do Banco de Dados SQLite.
+
+Este script é responsável por definir e inicializar a estrutura completa
+do banco de dados (`chat_solution.db`) usado pela aplicação.
+
+Ele é executado tanto pelo `app.py` (para garantir que o banco de produção
+exista) quanto pelos scripts de validação (`validate_vector_db.py`,
+`validate_evaluation.py`).
+
+O comando `CREATE TABLE IF NOT EXISTS` é usado para garantir que
+o script possa ser executado com segurança sem apagar dados existentes,
+apenas criando as tabelas que estiverem faltando.
+
+---
+### Estrutura do Schema (Tabelas)
+---
+
+O banco é dividido em duas seções principais:
+
+#### 1. Tabelas de Produção (Usadas pelo `app.py` e `rag_chain.py`):
+
+* **`chat_history`:**
+    * Armazena cada interação (pergunta/resposta) de todas as sessões
+        de usuário.
+    * Inclui métricas de performance (duração, tokens, caracteres)
+        para cada chamada ao LLM.
+* **`feedback`:**
+    * Armazena o feedback do usuário (like/dislike).
+    * É vinculada à `chat_history` através da `message_id`
+        (chave estrangeira).
+
+#### 2. Tabelas de Avaliação (Usadas pelos scripts de validação):
+
+* **`validation_runs`:**
+    * Armazena o "resumo" de cada rodada de teste manual executada
+        no `validate_vector_db.py`.
+    * Contém a query, o tipo de busca (vetorial vs. re-ranking) e
+        as métricas de alto nível calculadas (Hit Rate, MRR, Precisão@K).
+* **`validation_retrieved_chunks`:**
+    * Armazena *cada chunk individual* que foi retornado durante uma
+        rodada de validação.
+    * É vinculada à `validation_runs` pela `run_id`.
+    * Registra o `score` e se o avaliador marcou aquele
+        chunk como correto (`is_correct_eval`).
+"""
+
+
 import sqlite3
 import os
 

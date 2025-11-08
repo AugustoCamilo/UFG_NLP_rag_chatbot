@@ -44,6 +44,43 @@ class RAGChain:
     1. VectorRetriever (Chroma + Re-Ranker)
     2. Google Gemini LLM
     3. Histórico do Chat (SQLite)
+
+    ---
+    ### Arquitetura e Gerenciamento de Estado (Histórico da Conversa)
+
+    Esta classe implementa um RAG **Stateful** (com memória). O contexto da
+    conversa é mantido através de um banco de dados SQLite (`chat_solution.db`),
+    garantindo que o LLM considere as interações passadas ao formular
+    uma nova resposta.
+
+    **O fluxo de manutenção do histórico por `session_id` ocorre da seguinte forma:**
+
+    1.  **Carregamento (Nó `load_history`):**
+        * Quando uma nova pergunta é recebida (`generate_response`), o `LangGraph`
+            inicia no nó `load_history`.
+        * Este nó consulta a tabela `chat_history` no `chat_solution.db`
+            buscando *todas* as entradas (`user_message`, `bot_response`)
+            associadas ao `session_id` do usuário.
+        * As interações passadas são formatadas como objetos `HumanMessage` e
+            `AIMessage` e armazenadas no estado (`state["history"]`).
+
+    2.  **Geração (Nó `generate`):**
+        * O nó `generate` recebe o estado, que agora contém o
+            histórico completo da sessão.
+        * Ele monta o prompt final para o LLM na seguinte ordem:
+            1.  `SystemMessage` (O prompt do sistema/persona)
+            2.  `state["history"]` (O histórico completo da conversa)
+            3.  `HumanMessage` (O contexto RAG [chunks] + a nova pergunta)
+        * O LLM (`self.model.invoke`) recebe, assim, o contexto completo
+            do diálogo.
+
+    3.  **Persistência (Função `save_message`):**
+        * Após o LLM gerar a resposta (`answer`), a função `generate`
+            chama `self.save_message`.
+        * Esta função insere a nova interação (pergunta atual + resposta
+            do bot) na tabela `chat_history`, associada ao `session_id`,
+            garantindo que ela seja carregada na próxima rodada.
+    ---
     """
 
     def __init__(self, session_id: str):
@@ -183,6 +220,13 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
             HumanMessage(content=f"Contexto: {docs_content}\n\nPergunta: {user_msg}")
         )  #
 
+        # 1. Calcula os tokens do prompt ANTES de enviar
+        try:
+            user_tokens = self.model.get_num_tokens_from_messages(messages)
+        except Exception as e:
+            print(f"Aviso: Falha ao calcular tokens do prompt: {e}")
+            user_tokens = 0  # Define como 0 se a contagem falhar
+
         try:
             response = self.model.invoke(messages)  #
 
@@ -204,19 +248,12 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                 response_end_time - request_start_time
             ).total_seconds()  #
 
-            # --- INÍCIO DA CORREÇÃO ---
-            # Extrai tokens
-            user_tokens = 0  # Tokens do prompt
-            bot_tokens = 0  # Tokens da resposta
-
-            if response.response_metadata:  #
-                # A chave correta para o Gemini é 'usage_metadata'
-                usage_metadata = response.response_metadata.get("usage_metadata", {})
-
-                # As chaves corretas são 'prompt_token_count' e 'candidates_token_count'
-                user_tokens = usage_metadata.get("prompt_token_count", 0)
-                bot_tokens = usage_metadata.get("candidates_token_count", 0)
-            # --- FIM DA CORREÇÃO ---
+            # 2. Calcula os tokens da resposta DEPOIS de receber
+            try:
+                bot_tokens = self.model.get_num_tokens(answer)
+            except Exception as e:
+                print(f"Aviso: Falha ao calcular tokens da resposta: {e}")
+                bot_tokens = 0  # Define como 0 se a contagem falhar
 
             # Salva a interação no histórico com os novos dados
             new_message_id = self.save_message(

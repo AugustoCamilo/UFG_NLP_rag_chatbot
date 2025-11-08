@@ -1,122 +1,166 @@
-# Solução de Chatbot RAG com Gemini, Re-Ranking Avançado e Ferramentas de Auditoria
+# Solução de Chatbot RAG com Gemini, Re-Ranking Avançado e Suíte de Avaliação de Métricas
 
-Este projeto implementa uma aplicação web completa de um chatbot baseado em Geração Aumentada por Recuperação (RAG). Ele permite que os usuários conversem sobre um conjunto de documentos PDF personalizados, fornecendo respostas contextuais e precisas, com a capacidade de coletar feedback sobre as respostas geradas.
+Este projeto implementa uma aplicação web completa de um chatbot RAG (Geração Aumentada por Recuperação). Ele permite que os usuários conversem sobre um conjunto de documentos PDF personalizados, fornecendo respostas contextuais e precisas, com a capacidade de coletar feedback sobre as respostas geradas.
+
+O diferencial desta solução é a sua **Suíte de Avaliação e Auditoria**, um conjunto de ferramentas web dedicadas que permitem a uma equipe de avaliadores testar, medir (com métricas como **Hit Rate**, **MRR** e **Precisão@K**), e consolidar relatórios de performance (via Import/Export XML), criando um ciclo de melhoria contínua (CI/CD) para a qualidade do RAG.
 
 A solução utiliza uma arquitetura moderna que combina:
-* Um LLM de alta performance (Google Gemini).
-* Um banco de dados vetorial local (ChromaDB) para armazenamento eficiente de embeddings.
-* Um pipeline de recuperação sofisticado de dois estágios (Recall + Re-ranking) para maximizar a relevância do contexto recuperado.
-* Um banco de dados SQLite para persistir o histórico das conversas e o feedback dos usuários.
-* Ferramentas web dedicadas para auditoria e validação da base vetorial e do histórico de chat.
+
+  * Um LLM de alta performance (Google Gemini).
+  * Um banco de dados vetorial local (ChromaDB) para armazenamento de embeddings.
+  * Um pipeline de recuperação sofisticado de dois estágios (Recall + Re-ranking) para maximizar a relevância.
+  * Um banco de dados SQLite para persistir o histórico das conversas, feedbacks e **dados de avaliação de métricas**.
 
 ## Principais Funcionalidades
 
-* **Ingestão de Dados Otimizada:**
-    * Processa arquivos PDF usando `PyMuPDFLoader`.
-    * Limpa automaticamente rodapés comuns usando Expressões Regulares (Regex) durante a ingestão.
-    * Divide os documentos limpos em *chunks* (pedaços) otimizados usando `RecursiveCharacterTextSplitter`.
-* **Armazenamento Vetorial:**
-    * Utiliza o **ChromaDB** para criar e persistir um banco de dados de embeddings localmente.
-* **Recuperação Híbrida (2-Estágios):**
-    1.  **Recall (Busca Vetorial Rápida):** Usa um modelo Bi-Encoder (`all-MiniLM-L6-v2`) para encontrar rapidamente os `SEARCH_K_RAW` (padrão 20) documentos semanticamente mais *similares* à pergunta do usuário.
-    2.  **Precision (Re-Ranking Inteligente):** Reavalia os resultados do Recall usando um modelo CrossEncoder (`cross-encoder/ms-marco-MiniLM-L6-v2`) para reordená-los com base na relevância semântica e selecionar os `SEARCH_K_FINAL` (padrão 3) documentos mais relevantes para a pergunta.
-* **Geração de Resposta:**
-    * Utiliza a API do **Google Gemini** (configurável, padrão `gemini-2.5-flash`) para gerar respostas fluentes e precisas, baseando-se *exclusivamente* no contexto recuperado e no histórico da conversa.
-    * Implementa um *system prompt* detalhado com persona, restrições de conhecimento e regras situacionais (saudações, resposta não encontrada).
-* **Interface Web:**
-    * Interface de chat amigável construída com **Streamlit** (`app.py`).
-    * Foco automático na caixa de entrada de texto para melhor usabilidade.
-    * Barra lateral com botão para encerrar a aplicação.
-* **Memória e Feedback:**
-    * Armazena o histórico completo da conversa (incluindo timestamps detalhados, contagem de tokens/caracteres e métricas de duração) em um banco de dados **SQLite** (`database/chat_solution.db`).
-    * Permite que os usuários avaliem as respostas do bot (👍/👎).
-    * Armazena o feedback na tabela `feedback` do banco SQLite.
-    * Exibe uma mensagem de agradecimento (`st.toast`) após o feedback.
-* **Ferramentas de Auditoria:**
-    * **`validate_vector_db.py`:** Interface web (Streamlit) para validar a base de vetores ChromaDB. Permite testar a busca com re-ranking, listar todos os chunks e exportá-los para XML.
-    * **`validate_history_db.py`:** Interface web (Streamlit) para auditar o histórico de chat do SQLite. Permite listar sessões, buscar conversas por ID, visualizar o histórico completo, visualizar feedbacks e exportar o histórico para CSV.
+  * **Ingestão de Dados Otimizada:** Processa arquivos PDF (`PyMuPDFLoader`), limpa rodapés customizáveis (Regex) e divide em *chunks* otimizados (`RecursiveCharacterTextSplitter`).
+  * **Armazenamento Vetorial:** Utiliza o **ChromaDB** para criar e persistir um banco de dados de embeddings localmente.
+  * **Recuperação Híbrida (2-Estágios):**
+    1.  **Recall (Busca Vetorial Rápida):** Usa um modelo Bi-Encoder (`all-MiniLM-L6-v2`) para encontrar rapidamente os `SEARCH_K_RAW` (padrão 20) documentos semanticamente similares.
+    2.  **Precision (Re-Ranking Inteligente):** Reavalia os resultados do Recall usando um modelo CrossEncoder (`cross-encoder/ms-marco-MiniLM-L6-v2`) para reordená-los com base na relevância e selecionar os `SEARCH_K_FINAL` (padrão 3) documentos mais relevantes.
+  * **Geração de Resposta:** Utiliza a API do **Google Gemini** para gerar respostas fluentes, baseando-se no contexto recuperado e no histórico da conversa.
+  * **Interface Web (`app.py`):** Interface de chat principal para o usuário final, construída com **Streamlit**.
+  * **Memória e Feedback:** Armazena o histórico completo da conversa (incluindo métricas de performance e tokens) e o feedback do usuário (👍/👎) no banco **SQLite**.
 
-## Arquitetura da Solução
+### Suíte de Avaliação e Auditoria
 
-* **Interface Web (Frontend/Backend):**
-    * **Tecnologia:** Streamlit
-    * **Versão:** `1.50.0`
-    * **Propósito:** Interface do usuário (janela de chat) e das Ferramentas de Auditoria.
-    * **Arquivo(s):** `app.py`, `validate_vector_db.py`, `validate_history_db.py`
-* **Orquestração RAG:**
-    * **Tecnologia:** LangChain / LangGraph
-    * **Versão:** `1.0.2` / `1.0.1`
-    * **Propósito:** Conecta os componentes do pipeline RAG (Retrieval -> Generation).
-    * **Arquivo(s):** `rag_chain.py`
-* **LLM (Geração):**
-    * **Tecnologia:** Google Gemini (via `langchain-google-genai`)
-    * **Versão:** `3.0.0`
-    * **Propósito:** Geração das respostas do chatbot.
-    * **Arquivo(s):** `rag_chain.py`, `config.py`
-* **Banco Vetorial:**
-    * **Tecnologia:** ChromaDB (via `langchain-chroma`)
-    * **Versão:** `1.0.0`
-    * **Propósito:** Armazenamento local e persistente dos embeddings dos chunks.
-    * **Arquivo(s):** `ingest.py`, `vector_retriever.py`, `config.py`
-* **Embeddings (Recall):**
-    * **Tecnologia:** `sentence-transformers` / `all-MiniLM-L6-v2`
-    * **Versão:** `5.1.2`
-    * **Propósito:** Modelo Bi-Encoder para criar vetores e realizar a busca inicial rápida.
-    * **Arquivo(s):** `ingest.py`, `vector_retriever.py`, `config.py`
-* **Re-Ranking (Precision):**
-    * **Tecnologia:** `sentence-transformers` / `cross-encoder/ms-marco-MiniLM-L6-v2`
-    * **Versão:** `5.1.2`
-    * **Propósito:** Modelo CrossEncoder para reordenar resultados com base na relevância.
-    * **Arquivo(s):** `vector_retriever.py`, `config.py`
-* **Banco de Dados (App):**
-    * **Tecnologia:** SQLite
-    * **Versão:** (Nativo do Python)
-    * **Propósito:** Armazenamento do histórico de chat, métricas e feedback.
-    * **Arquivo(s):** `database.py`, `rag_chain.py`, `validate_history_db.py`
-* **Ingestão de PDF:**
-    * **Tecnologia:** `PyMuPDF` (via `langchain`)
-    * **Versão:** `1.26.5`
-    * **Propósito:** Extração eficiente de texto de arquivos PDF.
-    * **Arquivo(s):** `ingest.py`
-* **Divisão de Texto:**
-    * **Tecnologia:** `langchain-text-splitters`
-    * **Versão:** `1.0.0`
-    * **Propósito:** Fragmentação do texto extraído em chunks.
-    * **Arquivo(s):** `ingest.py`
-* **Utilitários:**
-    * **Tecnologia:** `python-dotenv`, `tqdm`
-    * **Versão:** `1.1.1`, `4.67.1`
-    * **Propósito:** Carregamento de variáveis de ambiente, barras de progresso.
-    * **Arquivo(s):** Diversos
+O sistema inclui três aplicações web independentes para validação e auditoria:
 
-## 1. Instalação e Configuração
+1.  **`validate_vector_db.py` (Coleta de Avaliação):**
+
+      * Uma interface para o "Avaliador Humano" testar a performance do retriever (Modo Vetorial vs. Modo Re-Ranking).
+      * O avaliador marca os chunks relevantes (para Hit Rate/Precisão) e o melhor chunk (para MRR).
+      * **Salva** os resultados da avaliação (queries, chunks, scores, e métricas calculadas) no banco de dados SQLite (`validation_runs`, `validation_retrieved_chunks`).
+
+2.  **`validate_evaluation.py` (Dashboard de Métricas):**
+
+      * A ferramenta central de *análise* que **lê** os dados de avaliação salvos.
+      * **Resumo de Métricas:** Apresenta um dashboard que compara `vector_only` vs. `reranked` lado a lado, com as médias de **Hit Rate**, **MRR** e **Precisão@K**.
+      * **Lista Detalhada:** Permite ver cada rodada de teste individualmente, com suas métricas e chunks.
+      * **Exportar/Importar XML:** Permite que equipes exportem seus resultados de avaliação e importem os resultados de colegas, consolidando os dados. O sistema ignora duplicatas automaticamente durante a importação (baseado no timestamp).
+
+3.  **`validate_history_db.py` (Auditoria de Produção):**
+
+      * Um dashboard de "BI" que **lê** o histórico de uso do `app.py` (tabelas `chat_history` e `feedback`).
+      * Permite listar todas as sessões, ver transcrições completas e auditar o feedback (👍/👎) dado pelos usuários finais.
+
+-----
+
+## Arquitetura e Fluxo de Dados
+
+O sistema é modular, com dependências claras entre os scripts.
+
+### 1\. Componentes Principais (Produção)
+
+  * **`app.py` (Frontend)**
+      * Renderiza a UI do chat e gerencia o `session_id`.
+      * Depende de: `rag_chain.py` (para gerar respostas e salvar feedback).
+  * **`rag_chain.py` (Backend Lógico)**
+      * Orquestra o fluxo RAG (histórico, recuperação, geração) usando LangGraph.
+      * Depende de: `vector_retriever.py` (para buscar contexto), `database.py` (para ler/escrever histórico e feedback), `config.py` (para o LLM).
+  * **`vector_retriever.py` (Módulo de Recuperação)**
+      * Implementa a lógica de Recall (Chroma) e Re-Ranking (CrossEncoder).
+      * Depende de: `config.py` (para nomes de modelos e parâmetros K), `/vector_db` (para ler o ChromaDB).
+  * **`database.py` (Schema do Banco)**
+      * Define a estrutura de *todas* as tabelas do SQLite (Produção e Avaliação).
+      * Depende de: `sqlite3`.
+  * **`config.py` (Configuração)**
+      * Centraliza todos os caminhos, chaves de API e nomes de modelos.
+      * Não tem dependências de outros módulos do projeto.
+
+### 2\. Scripts de Ingestão e Ferramentas
+
+  * **`ingest.py` (Ingestão)**
+      * Script de linha de comando para popular o banco de vetores.
+      * Depende de: `config.py` (para caminhos e modelos), `/docs` (lê PDFs), `/vector_db` (escreve/sobrescreve o ChromaDB).
+  * **`validate_vector_db.py` (Coleta de Avaliação)**
+      * App Streamlit para *escrever* dados de avaliação.
+      * Depende de: `vector_retriever.py` (para rodar as buscas) e `database.py` (para salvar os resultados).
+  * **`validate_evaluation.py` (Dashboard de Métricas)**
+      * App Streamlit para *ler, analisar, exportar e importar* dados de avaliação.
+      * Depende de: `database.py` (para ler/escrever na tabela `validation_runs`).
+  * **`validate_history_db.py` (Auditoria de Produção)**
+      * App Streamlit para *ler* o histórico de produção.
+      * Depende de: `database.py` (para ler as tabelas `chat_history` e `feedback`).
+
+-----
+
+## Tecnologias e Dependências
+
+A solução utiliza as seguintes bibliotecas, conforme definido no `requirements.txt`:
+
+```
+# Framework da Interface Web
+streamlit==1.50.0
+
+# Frameworks principais do LangChain
+langchain==1.0.2
+langchain-core==1.0.1
+langgraph==1.0.1
+
+# Módulos e integrações do LangChain
+langchain-community==0.4
+langchain-chroma==1.0.0
+langchain-google-genai==3.0.0
+langchain-huggingface==1.0.0
+langchain-text-splitters==1.0.0
+
+# Modelos de Embedding e Re-Ranking
+sentence-transformers==5.1.2
+
+# Carregamento de PDF (requerido pelo PyMuPDFLoader)
+PyMuPDF==1.26.5
+
+# Utilitários
+python-dotenv==1.1.1
+tqdm==4.67.1
+```
+
+-----
+
+## 1\. Instalação e Configuração
 
 Siga estes passos para configurar o ambiente e executar a solução.
 
 ### 1.1. Pré-requisitos
 
-* **Python 3.10+** (Recomendado o uso de um ambiente virtual `venv` ou `conda`).
-* **Chave de API do Google:** Necessária para usar o modelo Gemini. Obtenha a sua no [Google AI Studio](https://aistudio.google.com/app/apikey).
+  * **Python 3.10+** (Recomendado o uso de um ambiente virtual `venv` ou `conda`).
+  * **Chave de API do Google:** Necessária para usar o modelo Gemini. Obtenha a sua no [Google AI Studio](https://aistudio.google.com/app/apikey).
 
 ### 1.2. Criação do Ambiente Virtual (Recomendado)
 
-Abra seu terminal na pasta raiz do projeto.
+Abra seu terminal na pasta raiz do projeto. Escolha a opção (`venv` ou `conda`) de sua preferência.
+
+-----
+
+**Opção A: Usando `venv` (Padrão do Python)**
 
 ```bash
-# Exemplo usando venv (substitua por conda se preferir)
-# 1. Crie o ambiente
-python -m venv venv
+# 1. Crie o ambiente (usando o nome 'rag_solution')
+python -m venv rag_solution
 
 # 2. Ative o ambiente
 # Windows
-.\venv\Scripts\activate
+.\rag_solution\Scripts\activate
 # macOS/Linux
-source venv/bin/activate
-````
+source rag_solution/bin/activate
+```
+
+-----
+
+**Opção B: Usando `conda` (Anaconda)**
+
+```bash
+# 1. Crie o ambiente (usando o nome 'rag_solution' e especificando Python 3.10+)
+conda create -n rag_solution python=3.10
+
+# 2. Ative o ambiente
+conda activate rag_solution
+```
 
 ### 1.3. Instalação das Dependências
 
-Com o ambiente virtual ativo, instale todas as bibliotecas listadas no `requirements.txt`:
+Com o ambiente virtual (`rag_solution`) ativo, instale todas as bibliotecas listadas no `requirements.txt`:
 
 ```bash
 pip install -r requirements.txt
@@ -134,11 +178,11 @@ pip install -r requirements.txt
     GEMINI_API_KEY="SUA_CHAVE_AQUI"
     ```
 
-    O arquivo `config.py` carregará esta chave automaticamente.
+-----
 
-## 2\. Como Executar a Solução
+## 2\. Como Executar a Solução (Produção)
 
-Siga a sequência abaixo para preparar e iniciar o chatbot.
+Siga a sequência abaixo para preparar e iniciar o chatbot principal.
 
 ### Passo 1: Adicionar Documentos
 
@@ -146,7 +190,7 @@ Coloque os arquivos `.pdf` que servirão como base de conhecimento dentro da pas
 
 ### Passo 2: Inicializar o Banco de Dados do Histórico
 
-Execute este comando **uma única vez** para criar a pasta `/database` e o arquivo `chat_solution.db` com as tabelas `chat_history` e `feedback`.
+Execute este comando **uma única vez** para criar a pasta `/database` e o arquivo `chat_solution.db` com todas as tabelas (produção e avaliação).
 
 ```bash
 python database.py
@@ -172,15 +216,17 @@ Este comando inicia o servidor Streamlit para a interface principal do chatbot.
 streamlit run app.py
 ```
 
-Aguarde o carregamento dos modelos. O aplicativo será aberto automaticamente no seu navegador ou fornecerá um URL (geralmente `http://localhost:8501`).
+Aguarde o carregamento dos modelos. O aplicativo será aberto automaticamente no seu navegador (geralmente `http://localhost:8501`).
 
-## 3\. Ferramentas de Auditoria (Web)
+-----
 
-O projeto inclui duas interfaces web (Streamlit) dedicadas para validação e auditoria dos bancos de dados. Execute-as em terminais separados conforme necessário.
+## 3\. Suíte de Avaliação e Auditoria (Execução)
 
-### 3.1. `validate_vector_db.py`: Auditoria da Base Vetorial
+O projeto inclui três aplicações web (Streamlit) dedicadas para validação e auditoria. Execute-as em terminais separados conforme necessário.
 
-Esta ferramenta permite inspecionar o conteúdo e o desempenho da base de vetores (ChromaDB) criada pelo `ingest.py`.
+### 3.1. `validate_vector_db.py`: Coleta de Avaliação Manual
+
+Esta ferramenta permite **criar** os dados de avaliação. Você testa queries, avalia os resultados (marcando checkboxes e radio buttons) e salva as métricas no banco de dados.
 
 **Como Executar:**
 
@@ -190,14 +236,31 @@ streamlit run validate_vector_db.py
 
 **Funcionalidades:**
 
-  * **Testar Busca (Re-Ranking):** Insira uma consulta e veja os chunks mais relevantes recuperados pelo `vector_retriever`, incluindo os scores de relevância.
-  * **Listar Todos os Chunks:** Exibe o início do conteúdo de todos os chunks armazenados no banco.
-  * **Exportar Chunks para XML:** Gera um arquivo `chunks_exportados.xml` na pasta raiz com o conteúdo completo e metadados de todos os chunks.
-  * **Encerrar Servidor:** Botão para parar a execução desta ferramenta de validação.
+  * **Testar Busca (SÓ Vetorial):** Testa a busca vetorial pura.
+  * **Testar Busca (COM Re-Ranking):** Testa o pipeline completo com re-ranking.
+  * **Formulário de Avaliação:** Permite ao avaliador calcular HR, MRR e P@K para cada query.
+  * **Listar/Exportar Chunks:** Ferramentas de utilidade para inspecionar o ChromaDB.
 
-### 3.2. `validate_history_db.py`: Auditoria do Histórico de Chat
+### 3.2. `validate_evaluation.py`: Dashboard de Métricas de Avaliação
 
-Esta ferramenta permite consultar e analisar o histórico de conversas e feedbacks armazenados no banco de dados SQLite (`chat_solution.db`).
+Esta ferramenta permite **analisar** os dados coletados pela ferramenta anterior. É o seu principal dashboard para medir a performance do RAG.
+
+**Como Executar:**
+
+```bash
+streamlit run validate_evaluation.py
+```
+
+**Funcionalidades:**
+
+  * **Resumo das Métricas:** Compara o desempenho (HR, MRR, P@K) de "Vetorial" vs. "Re-Ranking".
+  * **Listar Avaliações Detalhada:** Permite ver cada teste individual que foi salvo.
+  * **Exportar Avaliações (XML):** Cria um backup ou arquivo de compartilhamento com todos os dados de avaliação.
+  * **Importar Avaliações (XML):** Permite consolidar dados de avaliação de outros membros da equipe, ignorando duplicatas.
+
+### 3.3. `validate_history_db.py`: Dashboard de Auditoria de Produção
+
+Esta ferramenta permite analisar o **uso real** do seu chatbot (`app.py`), lendo o histórico de produção.
 
 **Como Executar:**
 
@@ -207,12 +270,12 @@ streamlit run validate_history_db.py
 
 **Funcionalidades:**
 
-  * **Listar Todas as Sessões:** Mostra um resumo de todas as conversas (sessões), incluindo contagem de mensagens, duração média e última atividade.
-  * **Buscar por Sessão:** Permite visualizar a transcrição completa de uma conversa específica, fornecendo o ID da Sessão.
-  * **Ver Histórico Completo:** Exibe todas as mensagens de todas as sessões (pode ser lento para bancos grandes).
-  * **Ver Avaliações (Feedback):** Lista todos os feedbacks (👍/👎) dados pelos usuários, mostrando a mensagem associada.
-  * **Exportar Histórico para CSV:** Gera um arquivo `historico_chat_exportado.csv` na pasta raiz com todos os dados da tabela `chat_history`.
-  * **Encerrar Servidor:** Botão para parar a execução desta ferramenta de auditoria.
+  * **Listar Todas as Sessões:** Mostra um resumo de todas as conversas (sessões).
+  * **Buscar por Sessão:** Permite visualizar a transcrição completa de uma conversa específica.
+  * **Ver Avaliações (Feedback):** Lista todos os feedbacks (👍/👎) dados pelos usuários finais, mostrando a mensagem associada.
+  * **Exportar Histórico para CSV:** Gera um arquivo CSV com todos os dados da tabela `chat_history`.
+
+-----
 
 ## Estrutura do Projeto
 
@@ -221,17 +284,18 @@ streamlit run validate_history_db.py
 |
 |-- .env                     # (Você cria) Armazena a GEMINI_API_KEY
 |-- config.py                # Configurações centrais (caminhos, nomes de modelos, etc.)
-|-- requirements.txt         # Dependências Python (com versões fixadas)
+|-- requirements.txt         # Dependências Python
 |
 |-- app.py                   # Aplicação principal do Chatbot (Streamlit UI)
-|-- rag_chain.py             # Lógica principal do RAG (LangGraph, LLM, Histórico, Feedback)
+|-- rag_chain.py             # Lógica principal do RAG (LangGraph, LLM, Histórico)
 |-- vector_retriever.py      # Classe para busca vetorial e re-ranking (Chroma + CrossEncoder)
-|-- database.py              # Gerenciamento do schema do banco de dados SQLite (histórico/feedback)
+|-- database.py              # Gerenciamento do schema do banco de dados SQLite (todas as tabelas)
 |
 |-- ingest.py                # Script para processar PDFs e criar/atualizar o VectorDB (Chroma)
 |
-|-- validate_vector_db.py    # Ferramenta de Auditoria Web para o VectorDB (Streamlit UI)
-|-- validate_history_db.py   # Ferramenta de Auditoria Web para o Histórico/Feedback (Streamlit UI)
+|-- validate_vector_db.py    # Ferramenta de Coleta de Avaliação (Streamlit UI)
+|-- validate_evaluation.py   # Ferramenta de Análise de Métricas (Streamlit UI)
+|-- validate_history_db.py   # Ferramenta de Auditoria de Produção (Streamlit UI)
 |
 |-- /docs/                   # Pasta para colocar os arquivos .pdf de entrada
 |-- /database/               # Pasta onde o banco SQLite (chat_solution.db) é salvo
@@ -239,9 +303,14 @@ streamlit run validate_history_db.py
 |-- /vector_db/              # Pasta onde o ChromaDB (embeddings) é salvo
 |
 |-- README.md                # Este arquivo
-|-- chunks_exportados.xml    # (Gerado por validate_vector_db.py) Exportação dos chunks
-|-- historico_chat_exportado.csv # (Gerado por validate_history_db.py) Exportação do histórico
 ```
 
-```
-```
+-----
+
+## Nota sobre o Desenvolvimento e Colaboração com IA
+
+Este projeto representa um fluxo de trabalho moderno de desenvolvimento assistido por Inteligência Artificial.
+
+A arquitetura do sistema, a definição de todas as regras de negócio, os requisitos funcionais, o fluxo de dados e o processo de depuração e validação (QA) foram concebidos e dirigidos pelo desenvolvedor humano.
+
+A geração da sintaxe de código (Python, Streamlit, SQL, etc.), a documentação inicial (*docstrings*) e as refatorações de código foram executadas em colaboração direta com o **Google Gemini**, que atuou como um assistente de programação (*pair programmer*). O fluxo de trabalho consistiu no desenvolvedor solicitando as funcionalidades em linguagem natural e, em seguida, validando, testando e corrigindo o código gerado pelo LLM.

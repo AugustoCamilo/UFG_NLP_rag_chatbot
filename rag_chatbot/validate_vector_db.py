@@ -1,4 +1,77 @@
 # validate_vector_db.py
+"""
+Módulo de Frontend para Avaliação Manual do Retriever (Entrada de Dados).
+
+Esta aplicação Streamlit é a principal ferramenta do avaliador humano para
+testar a qualidade do sistema de recuperação (Retrieval) e *criar* os
+dados de "verdade de campo" (ground truth).
+
+Enquanto o `validate_evaluation.py` é o *dashboard de
+análise* (que lê os dados), este script é a *ferramenta de
+entrada* (que escreve os dados).
+
+Ele se conecta ao VectorDB (Chroma) e ao banco de
+avaliação (SQLite).
+
+---
+### Funcionalidades Principais (Modos)
+---
+
+A aplicação é dividida em cinco modos principais:
+
+1.  **Testar Busca (SÓ Vetorial):**
+    * Executa `run_search_test_no_rerank`.
+    * Testa a performance do "Recall" puro, chamando
+        `retriever.retrieve_context_vector_search_only`
+        para buscar os K_FINAL chunks.
+
+2.  **Testar Busca (COM Re-Ranking):**
+    * Executa `run_search_test`.
+    * Testa a performance do "Recall + Precisão", chamando
+        `retriever.retrieve_context_with_scores` para
+        buscar K_RAW chunks, re-ranquear, e exibir
+        os K_FINAL melhores.
+
+3.  **Listar Todos os Chunks:**
+    * Executa `run_list_all`.
+    * Uma ferramenta de utilidade para inspecionar o conteúdo
+        bruto do banco de vetores ChromaDB (via `retriever.get_all_chunks`).
+
+4.  **Exportar Chunks para XML:**
+    * Executa `run_export_xml`.
+    * Exporta o conteúdo bruto do ChromaDB.
+
+5.  **Encerrar Servidor:**
+    * Executa `run_shutdown` para parar o servidor.
+
+---
+### Fluxo de Avaliação (Modos 1 e 2)
+---
+
+O fluxo principal de avaliação é o coração deste script:
+
+1.  **Busca:** O usuário insere uma query e executa uma busca (vetorial ou
+    re-ranking).
+2.  **Exibição (`display_search_results`):** A interface
+    exibe os chunks encontrados e apresenta um formulário de avaliação.
+3.  **Coleta de Métricas (Formulário):**
+    * **Checkboxes (Relevância):** O avaliador marca *todos* os chunks
+        corretos. (Usado para calcular Hit Rate e Precisão@K).
+    * **Radio Buttons (MRR):** O avaliador marca o *melhor* chunk
+        (o primeiro mais relevante).
+4.  **Salvamento (`save_evaluation_to_db`):**
+    * Quando o formulário é enviado, esta função calcula as três
+        métricas (Hit Rate, MRR, Precisão@K).
+    * Ela então salva a query e as métricas na tabela `validation_runs`.
+    * Salva cada chunk individual, seu score, e se foi marcado
+        como correto (`is_correct_eval`) na tabela
+        `validation_retrieved_chunks`.
+    * *Nota:* Esta função converte os scores (`numpy.float`) para
+        `float` nativo do Python antes de salvar, para evitar
+        corrupção de dados (BLOBs) no SQLite.
+"""
+
+
 import streamlit as st
 import os
 import sys

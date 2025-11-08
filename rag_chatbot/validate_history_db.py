@@ -1,4 +1,62 @@
 # validate_history_db.py
+"""
+Módulo de Dashboard de Auditoria do Histórico de Produção.
+
+Esta aplicação Streamlit é uma ferramenta de "Business Intelligence" (BI)
+focada em analisar o uso real do chatbot (o frontend `app.py`).
+
+Ele se conecta ao `chat_solution.db` e foca na leitura das
+tabelas `chat_history` e `feedback` para responder perguntas como:
+- "Quantas pessoas usaram o bot?"
+- "Qual foi a conversa completa de um usuário específico?"
+- "Quais respostas receberam feedback negativo?"
+
+---
+### Funcionalidades Principais (Modos)
+---
+
+A aplicação é dividida em seis modos principais, selecionáveis
+na barra lateral:
+
+1.  **Listar Todas as Sessões:**
+    * Executa `run_list_sessions`.
+    * Agrupa a tabela `chat_history` por `session_id`.
+    * Fornece um resumo de alto nível de quantas conversas únicas
+        aconteceram, quantas mensagens elas tiveram e qual foi a
+        duração média.
+
+2.  **Buscar por Sessão:**
+    * Executa `run_search_by_session`.
+    * Permite que o administrador insira um `session_id` (obtido no Modo 1)
+        para ver a transcrição completa daquela conversa específica.
+    * Exibe métricas de performance (tokens, duração) para cada
+        mensagem na sessão.
+
+3.  **Ver Histórico Completo:**
+    * Executa `run_list_all`.
+    * Carrega e exibe *todas as mensagens de todas as sessões* em
+        ordem cronológica. Útil para uma visão geral ou
+        para depuração de baixo nível.
+
+4.  **Ver Avaliações (Feedback):**
+    * Executa `run_list_feedback`.
+    * Faz um `JOIN` entre as tabelas `feedback` e `chat_history`.
+    * Exibe todas as avaliações (👍/👎) junto com a pergunta
+        e a resposta que receberam a avaliação, permitindo uma
+        análise qualitativa imediata de respostas problemáticas.
+
+5.  **Exportar Histórico para CSV:**
+    * Executa `run_export_csv`.
+    * Exporta a tabela `chat_history` inteira para um arquivo CSV
+        (`historico_chat_exportado.csv`) para análise
+        externa em ferramentas como Excel ou Power BI.
+
+6.  **Encerrar Servidor:**
+    * Uma função de conveniência (`run_shutdown`) que chama
+        `os._exit(0)` para parar o processo do Streamlit.
+"""
+
+
 import streamlit as st
 import sqlite3
 import os
