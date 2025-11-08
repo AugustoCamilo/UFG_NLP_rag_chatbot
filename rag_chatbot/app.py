@@ -154,7 +154,7 @@ for msg_id, user_msg, bot_msg, rating in messages:
 
 
 # 4. Gerenciar nova entrada do usuário
-prompt = st.chat_input("Faça sua pergunta sobre os documentos...")
+prompt = st.chat_input("Faça sua pergunta sobre o Programa Quita Goiás...")
 if prompt:
     # Exibe a pergunta do usuário
     with st.chat_message("user"):
