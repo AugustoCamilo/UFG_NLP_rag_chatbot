@@ -95,7 +95,6 @@ def init_db():
     )  #
 
     # --- Tabela de Feedback (Produção) ---
-    # (Inalterada)
     cursor.execute(
         """
     CREATE TABLE IF NOT EXISTS feedback (
@@ -104,10 +103,15 @@ def init_db():
         rating TEXT NOT NULL, -- 'like' ou 'dislike'
         comment TEXT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (message_id) REFERENCES chat_history (id)
+        
+        FOREIGN KEY (message_id) REFERENCES chat_history (id),
+        
+        -- Garante que só possa existir UMA avaliação por message_id
+        UNIQUE(message_id)
+        
     )
     """
-    )  #
+    )
 
     # --- INÍCIO DAS TABELAS DE AVALIAÇÃO ---
 

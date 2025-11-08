@@ -69,45 +69,42 @@ from datetime import datetime
 import database as history_db
 
 
-@st.cache_resource
+# --- INÍCIO DA ALTERAÇÃO ---
+# REMOVIDO: @st.cache_resource
+# Não podemos cachear a conexão, pois ela fica "stale" (vencida)
+# e não vê as escritas feitas pelo app.py (outro processo).
 def connect_to_db():
     """
-    Conecta ao banco de dados SQLite do histórico e o armazena
-    no cache do Streamlit.
+    Conecta ao banco de dados SQLite do histórico.
+    Esta função agora é chamada por cada modo, garantindo uma conexão nova.
     """
-    st.write("Conectando ao banco de dados de histórico...")
-
-    # Usa o DB_PATH do arquivo database.py
     db_path = history_db.DB_PATH
 
     if not os.path.exists(db_path):
         st.error(f"Erro: Arquivo do banco de dados não encontrado em '{db_path}'")
         st.error("Por favor, execute 'python database.py' primeiro para criá-lo.")
         st.stop()
-
     try:
-
-        # Adiciona check_same_thread=False para permitir que
-        # o cache do Streamlit funcione com SQLite.
         conn = sqlite3.connect(db_path, check_same_thread=False)
-
-        st.sidebar.success(f"Conectado ao DB.")
         return conn
     except Exception as e:
         st.error(f"Ocorreu um erro ao conectar ao banco de dados: {e}")
         st.stop()
 
 
-def run_list_sessions(conn):
-    """Lógica da UI para o Modo 1: Listar Todas as Sessões"""
+def run_list_sessions():
+    """Modo 1: Listar Todas as Sessões"""
     st.subheader("Modo 1: Listar Todas as Sessões")
     st.info("Exibe um resumo de todas as conversas únicas, agrupadas por ID de Sessão.")
 
     if st.button("Carregar Resumo das Sessões"):
         with st.spinner("Consultando sessões..."):
+
+            # --- Bloco de conexão/fechamento ---
+            conn = None
             try:
+                conn = connect_to_db()  # Abre uma nova conexão
                 cursor = conn.cursor()
-                # Query de list_sessions
                 cursor.execute(
                     """
                     SELECT 
@@ -121,14 +118,12 @@ def run_list_sessions(conn):
                 """
                 )
                 rows = cursor.fetchall()
-
+                # ... (resto da lógica de exibição do dataframe) ...
                 if not rows:
                     st.warning("Nenhuma sessão encontrada no histórico.")
                     return
 
                 st.success(f"Total de sessões únicas encontradas: {len(rows)}")
-
-                # Prepara os dados para o DataFrame
                 data = [
                     {
                         "ID DA SESSÃO": row[0],
@@ -142,10 +137,14 @@ def run_list_sessions(conn):
 
             except Exception as e:
                 st.error(f"Erro ao listar sessões: {e}")
+            finally:
+                if conn:
+                    conn.close()  # Fecha a conexão
+            # --- Fim do bloco ---
 
 
-def run_search_by_session(conn):
-    """Lógica da UI para o Modo 2: Buscar por Sessão"""
+def run_search_by_session():
+    """Modo 2: Buscar por Sessão"""
     st.subheader("Modo 2: Buscar Histórico por Sessão")
     st.info("Digite um ID de Sessão (obtido no Modo 1) para ver uma conversa completa.")
 
@@ -158,9 +157,12 @@ def run_search_by_session(conn):
     if submit_button and session_id:
         st.write(f"Buscando pela Sessão: {session_id}")
         with st.spinner("Consultando histórico da sessão..."):
+
+            # --- Bloco de conexão/fechamento ---
+            conn = None
             try:
+                conn = connect_to_db()  # Abre uma nova conexão
                 cursor = conn.cursor()
-                # Query de search_by_session
                 cursor.execute(
                     """
                     SELECT id, user_message, bot_response, 
@@ -174,18 +176,15 @@ def run_search_by_session(conn):
                     (session_id.strip(),),
                 )
                 rows = cursor.fetchall()
-
+                # ... (resto da lógica de exibição) ...
                 if not rows:
                     st.warning(
                         f"Nenhum histórico encontrado para a sessão: '{session_id}'"
                     )
                     return
-
                 st.success(
                     f"Total de mensagens encontradas para esta sessão: {len(rows)}"
                 )
-
-                # Exibe as mensagens (lógica de read_db_history.py)
                 for row in rows:
                     (
                         id,
@@ -214,10 +213,14 @@ def run_search_by_session(conn):
 
             except Exception as e:
                 st.error(f"Erro ao buscar pela sessão: {e}")
+            finally:
+                if conn:
+                    conn.close()  # Fecha a conexão
+            # --- Fim do bloco ---
 
 
 def run_list_all(conn):
-    """Lógica da UI para o Modo 3: Ver Histórico Completo"""
+    """Modo 3: Ver Histórico Completo"""
     st.subheader("Modo 3: Ver Histórico Completo")
     st.warning(
         "Atenção: Isso pode carregar um grande volume de dados se o banco for grande."
@@ -225,9 +228,12 @@ def run_list_all(conn):
 
     if st.button("Carregar TODO o histórico"):
         with st.spinner("Consultando todo o histórico..."):
+
+            # --- Bloco de conexão/fechamento ---
+            conn = None
             try:
+                conn = connect_to_db()  # Abre uma nova conexão
                 cursor = conn.cursor()
-                # Query de read_all_history
                 cursor.execute(
                     """
                     SELECT id, session_id, user_message, bot_response, 
@@ -239,14 +245,11 @@ def run_list_all(conn):
                 """
                 )
                 rows = cursor.fetchall()
-
+                # ... (resto da lógica de exibição) ...
                 if not rows:
                     st.warning("O banco de dados de histórico está vazio.")
                     return
-
                 st.success(f"Total de mensagens encontradas: {len(rows)}")
-
-                # Exibe as mensagens (lógica de read_db_history.py)
                 for row in rows:
                     (
                         id,
@@ -278,19 +281,25 @@ def run_list_all(conn):
 
             except Exception as e:
                 st.error(f"Erro ao ler o histórico: {e}")
+            finally:
+                if conn:
+                    conn.close()  # Fecha a conexão
+            # --- Fim do bloco ---
 
 
-def run_list_feedback(conn):
-    """Lógica da UI para o Modo 4: Ver Avaliações (Feedback) - NOVO"""
+def run_list_feedback():
+    """Modo 4: Ver Avaliações (Feedback)"""
     st.subheader("Modo 4: Ver Avaliações (Feedback)")
     st.info("Exibe todas as avaliações (like/dislike) dadas pelos usuários.")
 
     if st.button("Carregar Todas as Avaliações"):
         with st.spinner("Consultando avaliações..."):
+
+            # --- Bloco de conexão/fechamento ---
+            conn = None
             try:
+                conn = connect_to_db()  # Abre uma nova conexão
                 cursor = conn.cursor()
-                #
-                # Query para buscar feedbacks com o contexto da conversa
                 cursor.execute(
                     """
                     SELECT 
@@ -329,9 +338,7 @@ def run_list_feedback(conn):
                         user_msg,
                         bot_msg,
                     ) = row
-
                     icon = "👍" if rating == "like" else "👎"
-
                     with st.container(border=True):
                         st.markdown(
                             f"**Avaliação: {icon} (ID: {fb_id})** | Data: {fb_time}"
@@ -339,16 +346,19 @@ def run_list_feedback(conn):
                         st.caption(f"Sessão: {session_id} | ID da Mensagem: {msg_id}")
                         if comment:
                             st.write(f"Comentário: {comment}")
-
                         st.text(f"USUÁRIO: {user_msg}")
                         st.text(f"ASSISTENTE: {bot_msg}")
 
             except Exception as e:
                 st.error(f"Erro ao ler o histórico de feedback: {e}")
+            finally:
+                if conn:
+                    conn.close()  # Fecha a conexão
+            # --- Fim do bloco ---
 
 
-def run_export_csv(conn):
-    """Lógica da UI para o Modo 5: Exportar Histórico para CSV"""
+def run_export_csv():
+    """Modo 5: Exportar Histórico para CSV"""
     st.subheader("Modo 5: Exportar Histórico para CSV")
     st.info("O arquivo será salvo na pasta raiz do projeto.")
 
@@ -358,14 +368,17 @@ def run_export_csv(conn):
         output_path = os.path.join(SCRIPT_DIR, output_filename)
 
         with st.spinner("Exportando histórico para CSV..."):
+
+            # --- Bloco de conexão/fechamento ---
+            conn = None
             try:
+                conn = connect_to_db()  # Abre uma nova conexão
                 cursor = conn.cursor()
-                # Query de export_history_to_csv
                 cursor.execute(
                     "SELECT * FROM chat_history ORDER BY request_start_time ASC"
                 )
-
                 rows = cursor.fetchall()
+
                 if not rows:
                     st.error("Nada para exportar, o histórico está vazio.")
                     return
@@ -382,10 +395,14 @@ def run_export_csv(conn):
 
             except Exception as e:
                 st.error(f"\nErro ao salvar o arquivo CSV: {e}")
+            finally:
+                if conn:
+                    conn.close()  # Fecha a conexão
+            # --- Fim do bloco ---
 
 
 def run_shutdown():
-    """Lógica da UI para o Modo 6: Encerrar"""
+    """Modo 6: Encerrar"""
     st.subheader("Modo 6: Encerrar Servidor")
     st.warning("Clicar neste botão encerrará este servidor Streamlit.")
 
@@ -401,8 +418,10 @@ def main():
     st.title("Ferramenta de Auditoria do Histórico de Chat (SQLite)")
     st.caption("Esta interface consulta o banco de dados 'chat_solution.db'.")
 
-    # Inicializa a conexão com o DB (usando o cache)
-    conn = connect_to_db()
+    # --- INÍCIO DA ALTERAÇÃO ---
+    # Removida a chamada 'conn = connect_to_db()' daqui.
+    # Cada função 'run_...' agora gerencia sua própria conexão.
+    # --- FIM DA ALTERAÇÃO ---
 
     # --- Barra Lateral de Navegação ---
     st.sidebar.title("Opções de Auditoria")
@@ -420,19 +439,19 @@ def main():
 
     # --- Exibe a página correta baseada na seleção ---
     if modo == opcoes[0]:
-        run_list_sessions(conn)
+        run_list_sessions()  # Chamada sem 'conn'
 
     elif modo == opcoes[1]:
-        run_search_by_session(conn)
+        run_search_by_session()  # Chamada sem 'conn'
 
     elif modo == opcoes[2]:
-        run_list_all(conn)
+        run_list_all()  # Chamada sem 'conn' (Ops, esqueci de remover o arg)
 
     elif modo == opcoes[3]:
-        run_list_feedback(conn)
+        run_list_feedback()  # Chamada sem 'conn'
 
     elif modo == opcoes[4]:
-        run_export_csv(conn)
+        run_export_csv()  # Chamada sem 'conn'
 
     elif modo == opcoes[5]:
         run_shutdown()

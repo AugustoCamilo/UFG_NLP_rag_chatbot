@@ -277,7 +277,82 @@ streamlit run validate_history_db.py
 
 -----
 
-## Estrutura do Projeto
+## 4\. Fluxo de Trabalho: Coletando Métricas (Criando o Gabarito)
+
+A parte mais importante da avaliação de um RAG é a criação de um "gabarito" (dataset de *ground truth*) de alta qualidade. Este gabarito consiste em um conjunto de perguntas-padrão (queries) e o julgamento humano sobre os resultados que o sistema retorna para elas.
+
+O dashboard `validate_evaluation.py` só é útil após a coleta desses dados, que é feita com o `validate_vector_db.py`.
+
+### Procedimento de Coleta
+
+Para construir um gabarito robusto para comparar "Vetorial" vs. "Re-Ranking", o avaliador humano deve seguir estes passos:
+
+1.  **Executar a Ferramenta:** Inicie a ferramenta de coleta de avaliação.
+    ```bash
+    streamlit run validate_vector_db.py
+    ```
+2.  **Preparar a Query:** Tenha uma pergunta de teste em mente (ex: "Quais os descontos para pagamento à vista?").
+3.  **Testar o Modo 1 (Vetorial):** Selecione "Testar Busca (SÓ Vetorial)" e execute a busca. O sistema exibirá os **K\_FINAL** (ex: 3) resultados da busca vetorial pura.
+4.  **Realizar o Julgamento (Gabarito):**
+      * **Checkboxes (Hit Rate / Precisão@K):** O avaliador deve ler a query e marcar *todos* os chunks que, em sua opinião, são relevantes para responder à pergunta.
+      * **Radio Buttons (MRR):** O avaliador deve selecionar o *único e melhor* chunk que responde à pergunta. Se nenhum for bom, deve selecionar "Nenhuma (MRR = 0)".
+5.  **Salvar a Avaliação:** Clique em "Salvar Avaliação". O sistema irá calcular as três métricas (HR, MRR, P@K) com base nos seus cliques e salvará essa rodada no banco de dados.
+6.  **Testar o Modo 2 (Re-Ranking):** Selecione "Testar Busca (COM Re-Ranking)". Insira a **mesma query** do Passo 2. O sistema exibirá os K\_FINAL resultados *após* o processo de re-ranking.
+7.  **Realizar o Julgamento (Gabarito):** Repita o Passo 4, julgando este novo conjunto de resultados.
+8.  **Salvar a Avaliação:** Clique em "Salvar Avaliação" novamente.
+9.  **Repetir:** Volte ao Passo 2 com uma nova pergunta.
+
+Ao repetir esse processo para dezenas de queries, você construirá um dataset rico que permitirá ao `validate_evaluation.py` calcular estatisticamente qual dos dois métodos é superior.
+
+### Exemplos de Cálculo de Métricas (K=3)
+
+Assuma que o sistema está configurado para retornar **K=3** resultados.
+
+-----
+
+**Exemplo 1: Resultado "Perfeito"**
+
+  * **Query:** "O que é transação tributária?"
+  * **Resultados:** O sistema retorna 3 chunks.
+  * **Julgamento do Avaliador:**
+      * **Checkboxes:** Chunk 1 (define o termo) e Chunk 3 (dá um exemplo) são marcados como relevantes.
+      * **Radio:** O Chunk 1 é selecionado como a "MELHOR" resposta.
+  * **Métricas Salvas:**
+      * `hit_rate_eval` = **1** (porque *pelo menos um* foi marcado)
+      * `mrr_eval` = **1.0** (porque o melhor estava na posição 1; `1/1`)
+      * `precision_at_k_eval` = **0.66** (porque *dois* foram marcados; `2/3`)
+
+-----
+
+**Exemplo 2: Resultado "Bom, mas Mal Ranqueado"**
+
+  * **Query:** "Quais os descontos para pagamento à vista?"
+  * **Resultados:** O sistema retorna 3 chunks. O Chunk 1 fala sobre parcelamento, o Chunk 2 fala sobre juros, e o Chunk 3 fala sobre desconto à vista.
+  * **Julgamento do Avaliador:**
+      * **Checkboxes:** Apenas o Chunk 3 é marcado como relevante.
+      * **Radio:** O Chunk 3 é selecionado como a "MELHOR" resposta.
+  * **Métricas Salvas:**
+      * `hit_rate_eval` = **1** (porque *pelo menos um* foi marcado)
+      * `mrr_eval` = **0.33** (porque o melhor estava na posição 3; `1/3`)
+      * `precision_at_k_eval` = **0.33** (porque *um* foi marcado; `1/3`)
+
+-----
+
+**Exemplo 3: Resultado "Falha Total (Miss)"**
+
+  * **Query:** "Qual o CNPJ da Procuradoria?" (Assumindo que esta informação não está nos documentos)
+  * **Resultados:** O sistema retorna 3 chunks que mencionam "Procuradoria", mas nenhum contém o CNPJ.
+  * **Julgamento do Avaliador:**
+      * **Checkboxes:** Nenhum chunk é marcado.
+      * **Radio:** A opção "Nenhuma (MRR = 0)" é selecionada.
+  * **Métricas Salvas:**
+      * `hit_rate_eval` = **0** (porque *nenhum* foi marcado)
+      * `mrr_eval` = **0.0** (porque "Nenhuma" foi selecionada)
+      * `precision_at_k_eval` = **0.0** (porque *zero* foram marcados; `0/3`)
+
+-----
+
+## 5\. Estrutura do Projeto
 
 ```
 /rag_chatbot
@@ -307,7 +382,7 @@ streamlit run validate_history_db.py
 
 -----
 
-## Nota sobre o Desenvolvimento e Colaboração com IA
+## 6\. Nota sobre o Desenvolvimento e Colaboração com IA
 
 Este projeto representa um fluxo de trabalho moderno de desenvolvimento assistido por Inteligência Artificial.
 
