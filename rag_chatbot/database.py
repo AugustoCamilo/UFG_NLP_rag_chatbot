@@ -61,7 +61,7 @@ def init_db():
     """
     )  #
 
-    # --- INÍCIO DAS NOVAS TABELAS DE AVALIAÇÃO ---
+    # --- INÍCIO DAS TABELAS DE AVALIAÇÃO ---
 
     # Tabela 1: Armazena cada "Rodada de Validação"
     cursor.execute(
@@ -73,13 +73,14 @@ def init_db():
         search_type TEXT NOT NULL, -- 'vector_only' ou 'reranked'
         
         -- Métricas calculadas
-        hit_rate_eval INTEGER, -- 0 (Erro) ou 1 (Acerto)
-        mrr_eval REAL          -- 0, 1, 0.5, 0.33, etc.
+        hit_rate_eval INTEGER,      -- 0 (Erro) ou 1 (Acerto)
+        mrr_eval REAL,              -- 0, 1, 0.5, 0.33, etc.
+        precision_at_k_eval REAL  -- (Ex: 0.66 para 2/3 acertos)
     )
     """
-    )
+    )  #
 
-    # Tabela 2: Armazena os chunks que foram retornados em cada rodada
+    # Tabela 2: validation_retrieved_chunks (inalterada)
     cursor.execute(
         """
     CREATE TABLE IF NOT EXISTS validation_retrieved_chunks (
@@ -96,13 +97,13 @@ def init_db():
     )
     """
     )
-    # --- FIM DAS NOVAS TABELAS ---
+    # --- FIM DAS TABELAS DE AVALIAÇÃO ---
 
-    conn.commit()  #
-    conn.close()  #
+    conn.commit()
+    conn.close()
 
-    print(f"Banco de dados inicializado com sucesso em: {DB_PATH}")  #
+    print(f"Banco de dados inicializado com sucesso em: {DB_PATH}")
 
 
 if __name__ == "__main__":
-    init_db()  #
+    init_db()

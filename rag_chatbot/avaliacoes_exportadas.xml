@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dados_avaliacoes>
+  <!-- Exportação gerada em: 2025-11-08 17:09:37. Total de rodadas: 3 -->
+  <validation_run>
+    <id>1</id>
+    <timestamp>2025-11-08 20:07:28</timestamp>
+    <query>quita goias</query>
+    <search_type>vector_only</search_type>
+    <hit_rate_eval>1</hit_rate_eval>
+    <mrr_eval>1.0</mrr_eval>
+    <precision_at_k_eval>1.0</precision_at_k_eval>
+    <retrieved_chunks>
+      <chunk>
+        <id>1</id>
+        <run_id>1</run_id>
+        <rank>1</rank>
+        <chunk_content>Home    Destaque    Quita Goiás: PGE-GO lança primeiro edital do programa de transação
+tributária com descontos de até 70% em dívidas
+Quita Goiás: PGE-GO lança primeiro edital do
+programa de transação tributária com
+descontos de até 70% em dívidas
+ Última Atualização em 22 de outubro de 2025
+ Categoria Destaque
+A partir desta segunda-feira (20/10), contribuintes goianos já podem negociar suas dívidas
+tributárias com o Estado de Goiás com até 70% de desconto sobre juros e multas e prazo de
+até 145 meses para pagamento.
+INSTITUCIONAL
+CARTA DE SERVIÇOS
+ACESSO RÁPIDO 
+
+GOVERNANÇA 
+
+ACESSO À INFORMAÇÃO
+FALE CONOSCO</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\reportagem.pdf</source>
+        <page>0</page>
+        <score>0.7823576927185059</score>
+        <is_correct_eval>1</is_correct_eval>
+      </chunk>
+      <chunk>
+        <id>2</id>
+        <run_id>1</run_id>
+        <rank>2</rank>
+        <chunk_content>Perguntas e Respostas Simplificadas sobre a Transação 
+Tributária (Quita Goiás)
+1. O que é a Transação Tributária?
+R: A Transação Tributária é um acordo feito entre o Estado de Goiás (Governo), representado pela 
+Procuradoria-Geral do Estado (PGE), e você, o contribuinte, para encerrar disputas e resolver a 
+cobrança de dívidas de impostos (créditos tributários) que já estão inscritas na Dívida Ativa. O 
+programa é também conhecido como Quita Goiás.
+2. Quem pode fazer este acordo?
+R: Podem realizar a transação o Estado de Goiás (incluindo suas autarquias e outras entidades), 
+representado pela PGE, e os devedores (você ou sua empresa).
+3. A Transação é um direito que eu tenho?
+R: Não, o acordo não é um direito garantido. Para que seu pedido seja aceito, a PGE fará uma 
+análise de conveniência e oportunidade, verificando se você cumpriu todas as regras e exigências 
+previstas.
+4. Quais dívidas eu posso incluir no acordo?</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\faq_linguagem_simples.pdf</source>
+        <page>0</page>
+        <score>1.0714188814163208</score>
+        <is_correct_eval>1</is_correct_eval>
+      </chunk>
+      <chunk>
+        <id>3</id>
+        <run_id>1</run_id>
+        <rank>3</rank>
+        <chunk_content>ser quitada até o 5º (quinto) dia útil contado da data de sua geração, respeitando o limite do último 
+dia útil do mês correspondente.
+Pergunta: O que acontece se eu não pagar a primeira parcela no prazo?
+Resposta: O não pagamento da parcela única ou da primeira parcela no prazo de vencimento enseja 
+a não celebração do acordo de transação, não se operando nenhum efeito jurídico, embora a 
+assinatura do termo já implique a confissão irrevogável e irretratável dos débitos.
+--
+Pergunta: O que é a Transação Tributária? Resposta: É um acordo firmado entre o Estado de Goiás 
+(representado pela Procuradoria-Geral do Estado - PGE) e você, contribuinte, para resolver e 
+encerrar disputas relativas à cobrança de dívidas tributárias que já estão inscritas em Dívida 
+Ativa.
+Pergunta: Quem pode fazer este acordo? Resposta: Podem realizar a transação o Estado de Goiás, 
+suas autarquias e outras entidades estaduais, representados pela PGE, e os devedores (você ou sua 
+empresa).</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\faq.pdf</source>
+        <page>5</page>
+        <score>1.079288363456726</score>
+        <is_correct_eval>1</is_correct_eval>
+      </chunk>
+    </retrieved_chunks>
+  </validation_run>
+  <validation_run>
+    <id>2</id>
+    <timestamp>2025-11-08 20:08:05</timestamp>
+    <query>posso fazer a transação?</query>
+    <search_type>vector_only</search_type>
+    <hit_rate_eval>1</hit_rate_eval>
+    <mrr_eval>0.5</mrr_eval>
+    <precision_at_k_eval>0.6666666666666666</precision_at_k_eval>
+    <retrieved_chunks>
+      <chunk>
+        <id>4</id>
+        <run_id>2</run_id>
+        <rank>1</rank>
+        <chunk_content>suas autarquias e outras entidades estaduais, representados pela PGE, e os devedores (você ou sua 
+empresa).
+Pergunta: A Transação é um direito que eu tenho? Resposta: Não. A transação não é um direito 
+garantido do contribuinte. O Estado de Goiás (PGE) fará um juízo de conveniência e oportunidade e 
+o deferimento do pedido dependerá da verificação de que você cumpriu todas as exigências 
+previstas nas regras.</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\faq.pdf</source>
+        <page>5</page>
+        <score>0.7826833724975586</score>
+        <is_correct_eval>1</is_correct_eval>
+      </chunk>
+      <chunk>
+        <id>5</id>
+        <run_id>2</run_id>
+        <rank>2</rank>
+        <chunk_content>Perguntas e Respostas Simplificadas sobre a Transação 
+Tributária (Quita Goiás)
+1. O que é a Transação Tributária?
+R: A Transação Tributária é um acordo feito entre o Estado de Goiás (Governo), representado pela 
+Procuradoria-Geral do Estado (PGE), e você, o contribuinte, para encerrar disputas e resolver a 
+cobrança de dívidas de impostos (créditos tributários) que já estão inscritas na Dívida Ativa. O 
+programa é também conhecido como Quita Goiás.
+2. Quem pode fazer este acordo?
+R: Podem realizar a transação o Estado de Goiás (incluindo suas autarquias e outras entidades), 
+representado pela PGE, e os devedores (você ou sua empresa).
+3. A Transação é um direito que eu tenho?
+R: Não, o acordo não é um direito garantido. Para que seu pedido seja aceito, a PGE fará uma 
+análise de conveniência e oportunidade, verificando se você cumpriu todas as regras e exigências 
+previstas.
+4. Quais dívidas eu posso incluir no acordo?</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\faq_linguagem_simples.pdf</source>
+        <page>0</page>
+        <score>0.8436226844787598</score>
+        <is_correct_eval>1</is_correct_eval>
+      </chunk>
+      <chunk>
+        <id>6</id>
+        <run_id>2</run_id>
+        <rank>3</rank>
+        <chunk_content>Art. 29. Tratando-se de transação que envolva valor igual ou superior
+a R$ 50.000.000,00 (cinquenta milhões de reais), o termo de transação será
+subscrito pelo Procurador-Geral do Estado, mediante parecer prévio.
+CAPÍTULO IV
+TRANSAÇÃO POR ADESÃO NO CONTENCIOSO TRIBUTÁRIO DE RELEVANTE E
+DISSEMINADA CONTROVÉRSIA JURÍDICA
+Art. 30. O Estado de Goiás, as suas autarquias e outras entidades
+estaduais representadas pela Procuradoria-Geral do Estado poderão propor
+transação, por adesão, aos devedores com litígios tributários decorrentes de
+relevante e disseminada controvérsia jurídica.
+§ 1º A proposta de transação e a eventual adesão por parte do sujeito
+passivo não poderão ser invocadas como fundamento jurídico ou prognose de
+sucesso da tese sustentada por qualquer das partes e serão compreendidas,
+exclusivamente, como medida vantajosa diante das concessões recíprocas.
+§ 2º A proposta de transação deverá, preferencialmente, versar sobre</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\PORTARIA-No-55-GAB-DE-10-DE-FEVEREIRO-DE-2025.pdf</source>
+        <page>11</page>
+        <score>0.9251618385314941</score>
+        <is_correct_eval>0</is_correct_eval>
+      </chunk>
+    </retrieved_chunks>
+  </validation_run>
+  <validation_run>
+    <id>3</id>
+    <timestamp>2025-11-08 20:08:53</timestamp>
+    <query>quita goias</query>
+    <search_type>reranked</search_type>
+    <hit_rate_eval>1</hit_rate_eval>
+    <mrr_eval>1.0</mrr_eval>
+    <precision_at_k_eval>1.0</precision_at_k_eval>
+    <retrieved_chunks>
+      <chunk>
+        <id>7</id>
+        <run_id>3</run_id>
+        <rank>1</rank>
+        <chunk_content>Home    Destaque    Quita Goiás: PGE-GO lança primeiro edital do programa de transação
+tributária com descontos de até 70% em dívidas
+Quita Goiás: PGE-GO lança primeiro edital do
+programa de transação tributária com
+descontos de até 70% em dívidas
+ Última Atualização em 22 de outubro de 2025
+ Categoria Destaque
+A partir desta segunda-feira (20/10), contribuintes goianos já podem negociar suas dívidas
+tributárias com o Estado de Goiás com até 70% de desconto sobre juros e multas e prazo de
+até 145 meses para pagamento.
+INSTITUCIONAL
+CARTA DE SERVIÇOS
+ACESSO RÁPIDO 
+
+GOVERNANÇA 
+
+ACESSO À INFORMAÇÃO
+FALE CONOSCO</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\reportagem.pdf</source>
+        <page>0</page>
+        <score>b'\xb2.\xc8@'</score>
+        <is_correct_eval>1</is_correct_eval>
+      </chunk>
+      <chunk>
+        <id>8</id>
+        <run_id>3</run_id>
+        <rank>2</rank>
+        <chunk_content>Recuperação da dívida ativa
+O Quita Goiás representa também um avanço na recuperação de créditos do Estado.
+Atualmente, a dívida ativa goiana, registro dos contribuintes inadimplentes, soma cerca de R$
+40 bilhões, conforme o painel de dados da dívida ativa.
+De acordo com o procurador-geral, o programa deve contribuir para reduzir esse montante,
+ao permitir que contribuintes em dificuldade regularizem sua situação fiscal com condições
+mais acessíveis.
+“O volume de processos tributários no Poder Judiciário é crescente, mas a cobrança judicial
+tem baixa eficácia na recuperação de créditos da dívida ativa. Diversos órgãos, como o
+Conselho Nacional de Justiça (CNJ), recomendam a transação tributária como uma alternativa
+eficiente, por dispensar a intervenção judicial e reduzir a litigiosidade”, explica Arruda.</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\reportagem.pdf</source>
+        <page>2</page>
+        <score>b'\xe8N\xaa@'</score>
+        <is_correct_eval>1</is_correct_eval>
+      </chunk>
+      <chunk>
+        <id>9</id>
+        <run_id>3</run_id>
+        <rank>3</rank>
+        <chunk_content>eventuais ações judiciais relacionadas.
+Sobre o Quita Goiás
+Coordenado pela PGE-GO, o Quita Goiás é um programa de transação tributária instituído
+pela Lei Complementar nº 197/2024 e busca facilitar a resolução consensual de conflitos
+tributários, sem necessidade de judicialização.
+A iniciativa permite uma redução de até 70% no valor total da dívida para pessoas físicas,
+microempresas e empresas de pequeno porte, com a possibilidade de parcelamento em até
+145 vezes. Para outras pessoas jurídicas, o desconto pode chegar a 65%, com parcelamento
+em até 120 vezes.
+“O programa é um mecanismo crucial para facilitar o cumprimento das obrigações tributárias
+e reduzir o volume de litígios, permitindo uma solução mais eficiente e consensual para as
+dívidas”, destaca o procurador-geral do Estado, Rafael Arruda.</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\reportagem.pdf</source>
+        <page>1</page>
+        <score>b'\x988\xa2@'</score>
+        <is_correct_eval>1</is_correct_eval>
+      </chunk>
+    </retrieved_chunks>
+  </validation_run>
+</dados_avaliacoes>

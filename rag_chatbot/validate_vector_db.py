@@ -34,41 +34,65 @@ def initialize_retriever():
         st.stop()
 
 
-# --- FUNÇÃO DE SALVAMENTO ATUALIZADA ---
+# --- FUNÇÃO DE SALVAMENTO ---
 def save_evaluation_to_db(query, search_type, results_map, hit_rate_evals, mrr_score):
     """
-    Salva a consulta, os chunks e as avaliações (Hit Rate e MRR) no banco.
+    Salva a consulta, os chunks e as avaliações (Hit Rate, MRR e Precisão@K)
+    no banco.
     'hit_rate_evals' (dict): {1: True, 2: False, ...} - dos checkboxes
     'mrr_score' (float): A pontuação MRR já calculada
     """
     conn = None
     try:
-        conn = sqlite3.connect(history_db.DB_PATH)
+        conn = sqlite3.connect(history_db.DB_PATH)  #
         cursor = conn.cursor()
 
-        # 1. Calcular Métrica 1: Hit Rate
-        # Se qualquer valor no dicionário for True, o Hit Rate é 1.
-        hit_rate = 1 if any(hit_rate_evals.values()) else 0
+        # 1. Calcular Métrica 1: Hit Rate (Binário, 1/0)
+        hit_rate = 1 if any(hit_rate_evals.values()) else 0  #
 
         # 2. Calcular Métrica 2: MRR
-        # O valor vem diretamente do 'mrr_score'
-        mrr = mrr_score
+        mrr = float(mrr_score)
 
-        # 3. Inserir na tabela 'validation_runs'
+        # --- INÍCIO DA ALTERAÇÃO ---
+        # 3. Calcular Métrica 3: Precisão@K
+
+        # K é o número total de resultados mostrados (ex: 3)
+        k = len(results_map)
+
+        # hit_count é a contagem de checkboxes marcados
+        hit_count = sum(bool(v) for v in hit_rate_evals.values())
+
+        # Precisão = (Chunks Corretos) / (Total de Chunks Mostrados)
+        precision = (hit_count / k) if k > 0 else 0.0
+        # Força para float nativo
+        precision = float(precision)
+
+        # 4. Inserir na tabela 'validation_runs'
         cursor.execute(
             """
-            INSERT INTO validation_runs (query, search_type, hit_rate_eval, mrr_eval)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO validation_runs (
+                query, search_type, 
+                hit_rate_eval, mrr_eval, precision_at_k_eval
+            )
+            VALUES (?, ?, ?, ?, ?)
             """,
-            (query, search_type, hit_rate, mrr),
-        )
+            (
+                query,
+                search_type,
+                hit_rate,
+                mrr,
+                precision,
+            ),  # <-- 'precision' adicionado
+        )  #
 
-        run_id = cursor.lastrowid
+        run_id = cursor.lastrowid  #
 
-        # 4. Inserir cada chunk na tabela 'validation_retrieved_chunks'
+        # 5. Inserir cada chunk... (lógica inalterada)
         for rank, (doc, score) in results_map.items():
-            # O 'is_correct_eval' é baseado nos CHECKBOXES (Hit Rate)
             is_correct = 1 if hit_rate_evals.get(rank, False) else 0
+            # Garante que o score (que é numpy.float)
+            # seja salvo como um float nativo do Python.
+            score_float = float(score)
 
             cursor.execute(
                 """
@@ -82,18 +106,18 @@ def save_evaluation_to_db(query, search_type, results_map, hit_rate_evals, mrr_s
                     doc.page_content,
                     doc.metadata.get("source", "N/A"),
                     doc.metadata.get("page", None),
-                    score,
+                    score_float,
                     is_correct,
                 ),
-            )
+            )  #
 
-        conn.commit()
-        st.success(f"Avaliação salva com sucesso! (ID da Rodada: {run_id})")
+        conn.commit()  #
+        st.success(f"Avaliação salva com sucesso! (ID da Rodada: {run_id})")  #
 
     except Exception as e:
         if conn:
-            conn.rollback()
-        st.error(f"Erro ao salvar avaliação no banco de dados: {e}")
+            conn.rollback()  #
+        st.error(f"Erro ao salvar avaliação no banco de dados: {e}")  #
     finally:
         if conn:
             conn.close()
@@ -131,13 +155,16 @@ def display_search_results(query, search_type, results_with_scores):
 
     st.divider()
 
-    # --- Formulário de Avaliação ATUALIZADO ---
+    # --- Formulário de Avaliação  ---
     st.subheader("Avaliar Resultados")
 
     with st.form(key=f"eval_form_{search_type}"):
 
-        # --- 1. Métrica 1: Hit Rate (Checkboxes) ---
-        st.info("Métrica 1 (Hit Rate): Marque TODOS os chunks que são relevantes.")
+        # 1. Métrica 1: Hit Rate (Checkboxes)
+        st.info(
+            "Avaliação de Relevância (Hit Rate / Precisão@K): "
+            "Marque TODOS os chunks que são relevantes."
+        )
         evaluations_hit_rate = {}
         for rank in results_map.keys():
             evaluations_hit_rate[rank] = st.checkbox(
@@ -146,9 +173,9 @@ def display_search_results(query, search_type, results_with_scores):
 
         st.divider()
 
-        # --- 2. Métrica 2: MRR (Radio Buttons) ---
+        # 2. Métrica 2: MRR (Radio Buttons)
         st.info(
-            "Métrica 2 (MRR): Selecione a **MELHOR** resposta "
+            "MRR (Mean Reciprocal Rank): Selecione a MELHOR resposta "
             "(a que melhor responde à pergunta)."
         )
 

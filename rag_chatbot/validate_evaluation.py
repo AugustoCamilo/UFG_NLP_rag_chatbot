@@ -29,7 +29,8 @@ def connect_to_db():
         st.stop()
 
     try:
-        conn = sqlite3.connect(db_path, check_same_thread=False)  #
+        conn = sqlite3.connect(db_path, check_same_thread=False)
+        conn.text_factory = str
         st.sidebar.success(f"Conectado ao DB.")
         return conn
     except Exception as e:
@@ -41,88 +42,113 @@ def run_metrics_summary(conn):
     """Modo 1: Resumo das Métricas de Avaliação"""
     st.subheader("Modo 1: Resumo das Métricas de Avaliação")  #
     st.info(
-        "Calcula o Hit Rate (Taxa de Acerto) e o MRR (Mean Reciprocal Rank) médios "
-        "com base nas avaliações salvas."
-    )  #
+        "Calcula o Hit Rate, MRR e Precisão@K médios " "com base nas avaliações salvas."
+    )
 
-    if st.button("Calcular Resumo de Métricas"):  #
-        with st.spinner("Calculando métricas..."):  #
+    if st.button("Calcular Resumo de Métricas"):
+        with st.spinner("Calculando métricas..."):
             try:
-                # Query para calcular as métricas médias, agrupadas por tipo de busca
-                cursor = conn.cursor()  #
+
+                cursor = conn.cursor()
                 cursor.execute(
                     """
                     SELECT 
                         search_type,
                         COUNT(*) as total_runs,
                         AVG(hit_rate_eval) as avg_hit_rate,
-                        AVG(mrr_eval) as avg_mrr
+                        AVG(mrr_eval) as avg_mrr,
+                        AVG(precision_at_k_eval) as avg_precision
                     FROM validation_runs
                     GROUP BY search_type
                     """
-                )  #
-                rows = cursor.fetchall()  #
+                )
+                rows = cursor.fetchall()
 
-                if not rows:  #
+                if not rows:
                     st.warning("Nenhuma avaliação encontrada no banco de dados.")
                     return
 
-                st.success(f"Métricas calculadas para {len(rows)} tipo(s) de busca:")  #
+                st.success(f"Métricas calculadas para {len(rows)} tipo(s) de busca:")
 
-                # Prepara os dados para o DataFrame
                 data = [
                     {
                         "TIPO DE BUSCA": row[0],
                         "TOTAL DE TESTES": row[1],
-                        "HIT RATE MÉDIO (%)": f"{row[2] * 100:.2f}%",
+                        "TAXA DE ACERTO (Hit Rate %)": f"{float(row[2]) * 100:.2f}%",
                         "MRR MÉDIO": f"{row[3]:.4f}",
+                        "PRECISÃO@K MÉDIA": f"{row[4]:.4f}",
                     }
                     for row in rows
                 ]  #
-                st.dataframe(data, use_container_width=True)  #
+                st.dataframe(data, use_container_width=True)
 
-                st.markdown("---")  #
-                st.header("Interpretação")  #
+                st.markdown("---")
+                st.header("Interpretação")
                 st.markdown(
                     """
                     - **Hit Rate (Taxa de Acerto):** A porcentagem de vezes que *pelo menos um* chunk correto foi retornado. (Maior é melhor)
                     - **MRR (Mean Reciprocal Rank):** A média da "pontuação de ranking" do *primeiro* chunk correto. (Maior é melhor, 1.0 é perfeito)
-                    
-                    Use este painel para comparar qual método (`vector_only` vs `reranked`) 
-                    está entregando os melhores resultados.
+                    - **Precisão@K Média:** A proporção média de chunks corretos por rodada (ex: 0.66 = 2 de 3 chunks estavam certos). Mede a "pureza" do resultado. (Maior é melhor)
                     """
-                )  #
+                )
 
             except Exception as e:
-                st.error(f"Erro ao calcular métricas: {e}")  #
+                st.error(f"Erro ao calcular métricas: {e}")
 
 
 def run_list_evaluations(conn):
     """Modo 2: Listar Avaliações Detalhadas"""
-    st.subheader("Modo 2: Listar Avaliações Detalhadas")  #
+    st.subheader("Modo 2: Listar Avaliações Detalhadas")
     st.info(
         "Exibe cada rodada de validação e os chunks que foram marcados como corretos."
-    )  #
+    )
 
-    if st.button("Carregar Todas as Avaliações"):  #
-        with st.spinner("Consultando avaliações..."):  #
+    if st.button("Carregar Todas as Avaliações"):
+        with st.spinner("Consultando avaliações..."):
             try:
-                cursor = conn.cursor()  #
+                cursor = conn.cursor()
+
                 # Query para buscar todas as rodadas
                 cursor.execute(
                     """
-                    SELECT id, timestamp, query, search_type, hit_rate_eval, mrr_eval
+                    SELECT id, timestamp, query, search_type, 
+                           hit_rate_eval, mrr_eval, precision_at_k_eval
                     FROM validation_runs
                     ORDER BY timestamp DESC
                     """
-                )  #
-                runs = cursor.fetchall()  #
+                )
+                runs = cursor.fetchall()
 
-                if not runs:  #
+                if not runs:
                     st.warning("Nenhuma avaliação (rodada) encontrada.")
                     return
 
-                st.success(f"Total de rodadas de avaliação: {len(runs)}")  #
+                # --- REQUISITO 1: Manter o total ---
+                st.success(f"Total de rodadas de avaliação: {len(runs)}")
+
+                # --- REQUISITO 2: Tabela de Resumo por Tipo ---
+                cursor.execute(
+                    """
+                    SELECT search_type, COUNT(*) as total_runs
+                    FROM validation_runs
+                    GROUP BY search_type
+                    """
+                )
+                summary_rows = cursor.fetchall()
+
+                if summary_rows:
+                    summary_data = [
+                        {
+                            "TIPO DE BUSCA": row[0],
+                            "TOTAL DE AVALIAÇÕES": row[1],
+                        }
+                        for row in summary_rows
+                    ]
+                    st.markdown("**Total de Avaliações por Tipo:**")
+                    st.dataframe(summary_data, use_container_width=True)
+
+                st.divider()
+                st.markdown("### Detalhamento das Rodadas")
 
                 # Query para buscar os chunks (prepara para consulta)
                 chunk_query = """
@@ -134,44 +160,74 @@ def run_list_evaluations(conn):
 
                 # Exibe cada rodada
                 for run in runs:  #
-                    (run_id, ts, query, s_type, hr, mrr) = run
-                    hr_icon = "✅" if hr == 1 else "❌"  #
+                    (run_id, ts, query, s_type, hr, mrr, p_at_k) = run
 
-                    with st.container(border=True):  #
+                    # Converte os valores para os tipos corretos
+                    run_id = int(run_id)
+                    query = str(query)
+                    s_type = str(s_type)
+                    hr = int(hr)
+                    mrr = float(mrr)
+                    p_at_k = float(p_at_k)
+
+                    hr_text = "✅ Sucesso" if hr == 1 else "❌ Falha"
+
+                    with st.container(border=True):
+                        # Linha de ID (mantida)
                         st.markdown(
                             f"**ID da Rodada: {run_id}** | {ts} | **Tipo: {s_type}**"
-                        )  #
-                        st.write(f"**Query:** {query}")  #
-                        st.caption(
-                            f"**Métricas:** Hit Rate: {hr_icon} (Valor: {hr}) | MRR: {mrr:.4f}"
-                        )  #
+                        )
 
-                        st.markdown("**Chunks Retornados:**")  #
+                        # --- REQUISITO 3: Destaque da Query ---
+                        st.markdown("**Query:**")
+                        st.markdown(f"> *{query}*")  # Usando blockquote e itálico
+
+                        # --- REQUISITO 4: Destaque das Métricas ---
+                        st.markdown("**Métricas da Rodada:**")
+                        col1, col2, col3 = st.columns(3)
+                        col1.metric(label="Hit Rate (Acerto?)", value=f"{hr_text} ")
+                        col2.metric(label="MRR (Pontuação)", value=f"{mrr:.4f}")
+                        col3.metric(label="Precisão@K", value=f"{p_at_k:.4f}")
+
+                        st.markdown("**Chunks Retornados:**")
 
                         # Busca os chunks para esta rodada
-                        cursor.execute(chunk_query, (run_id,))  #
-                        chunks = cursor.fetchall()  #
+                        cursor.execute(chunk_query, (run_id,))
+                        chunks = cursor.fetchall()
 
-                        for chunk in chunks:  #
+                        for chunk in chunks:
                             (rank, content, source, page, score, is_correct) = chunk
 
-                            # --- INÍCIO DA ALTERAÇÃO ---
-                            # Converte 1/0 para "SIM"/"NÃO"
-                            correct_text = "SIM" if is_correct == 1 else "NÃO"
-                            # --- FIM DA ALTERAÇÃO ---
+                            rank = int(rank)
+                            content = str(content)
+                            source = str(source)
+                            score = float(
+                                score
+                            )  # O diagnóstico provou que isso é um float
+                            is_correct = int(is_correct)
 
-                            st.text(
-                                # --- ALTERAÇÃO AQUI ---
-                                f"  {rank}. (Correto: {correct_text}) [Score: {score:.4f}] - {source}, p.{page}"
-                            )  #
+                            page_str = str(page) if page is not None else "N/A"
+
+                            # --- REQUISITO 5: Destaque do "Correto" ---
+                            correct_text = "SIM" if is_correct == 1 else "NÃO"
+                            correct_color = "green" if is_correct == 1 else "red"
+
+                            st.markdown(
+                                f"  **{rank}.** <font color='{correct_color}'>**(Correto: {correct_text})**</font> | [Score: {score:.4f}] - *{source}, p.{page}*",
+                                unsafe_allow_html=True,
+                            )
                             st.text(f"     {content[:150]}...")  #
 
             except Exception as e:
                 st.error(f"Erro ao listar avaliações: {e}")  #
 
 
+# --- FIM DA FUNÇÃO ATUALIZADA ---
+
+
 def run_export_xml(conn):
     """Modo 3: Exportar Avaliações para XML"""
+    # (Esta função permanece inalterada)
     st.subheader("Modo 3: Exportar Avaliações (XML)")  #
     st.info(
         "Exporta um XML completo contendo todas as rodadas de validação e "
@@ -256,6 +312,7 @@ def run_export_xml(conn):
 
 def run_shutdown():
     """Modo 4: Encerrar"""
+    # (Esta função permanece inalterada)
     st.subheader("Modo 4: Encerrar Servidor")  #
     st.warning("Clicar neste botão encerrará este servidor Streamlit.")  #
 
