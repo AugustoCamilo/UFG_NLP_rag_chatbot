@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <dados_avaliacoes>
-  <!-- Exportação gerada em: 2025-11-08 17:09:37. Total de rodadas: 3 -->
+  <!-- Exportação gerada em: 2025-11-08 17:45:01. Total de rodadas: 4 -->
   <validation_run>
     <id>1</id>
-    <timestamp>2025-11-08 20:07:28</timestamp>
+    <timestamp>2025-11-08 20:20:59</timestamp>
     <query>quita goias</query>
-    <search_type>vector_only</search_type>
+    <search_type>reranked</search_type>
     <hit_rate_eval>1</hit_rate_eval>
-    <mrr_eval>1.0</mrr_eval>
+    <mrr_eval>0.5</mrr_eval>
     <precision_at_k_eval>1.0</precision_at_k_eval>
     <retrieved_chunks>
       <chunk>
@@ -34,36 +34,105 @@ ACESSO À INFORMAÇÃO
 FALE CONOSCO</chunk_content>
         <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\reportagem.pdf</source>
         <page>0</page>
-        <score>0.7823576927185059</score>
+        <score>6.25570011138916</score>
         <is_correct_eval>1</is_correct_eval>
       </chunk>
       <chunk>
         <id>2</id>
         <run_id>1</run_id>
         <rank>2</rank>
-        <chunk_content>Perguntas e Respostas Simplificadas sobre a Transação 
-Tributária (Quita Goiás)
-1. O que é a Transação Tributária?
-R: A Transação Tributária é um acordo feito entre o Estado de Goiás (Governo), representado pela 
-Procuradoria-Geral do Estado (PGE), e você, o contribuinte, para encerrar disputas e resolver a 
-cobrança de dívidas de impostos (créditos tributários) que já estão inscritas na Dívida Ativa. O 
-programa é também conhecido como Quita Goiás.
-2. Quem pode fazer este acordo?
-R: Podem realizar a transação o Estado de Goiás (incluindo suas autarquias e outras entidades), 
-representado pela PGE, e os devedores (você ou sua empresa).
-3. A Transação é um direito que eu tenho?
-R: Não, o acordo não é um direito garantido. Para que seu pedido seja aceito, a PGE fará uma 
-análise de conveniência e oportunidade, verificando se você cumpriu todas as regras e exigências 
-previstas.
-4. Quais dívidas eu posso incluir no acordo?</chunk_content>
-        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\faq_linguagem_simples.pdf</source>
-        <page>0</page>
-        <score>1.0714188814163208</score>
+        <chunk_content>Recuperação da dívida ativa
+O Quita Goiás representa também um avanço na recuperação de créditos do Estado.
+Atualmente, a dívida ativa goiana, registro dos contribuintes inadimplentes, soma cerca de R$
+40 bilhões, conforme o painel de dados da dívida ativa.
+De acordo com o procurador-geral, o programa deve contribuir para reduzir esse montante,
+ao permitir que contribuintes em dificuldade regularizem sua situação fiscal com condições
+mais acessíveis.
+“O volume de processos tributários no Poder Judiciário é crescente, mas a cobrança judicial
+tem baixa eficácia na recuperação de créditos da dívida ativa. Diversos órgãos, como o
+Conselho Nacional de Justiça (CNJ), recomendam a transação tributária como uma alternativa
+eficiente, por dispensar a intervenção judicial e reduzir a litigiosidade”, explica Arruda.</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\reportagem.pdf</source>
+        <page>2</page>
+        <score>5.322132110595703</score>
         <is_correct_eval>1</is_correct_eval>
       </chunk>
       <chunk>
         <id>3</id>
         <run_id>1</run_id>
+        <rank>3</rank>
+        <chunk_content>eventuais ações judiciais relacionadas.
+Sobre o Quita Goiás
+Coordenado pela PGE-GO, o Quita Goiás é um programa de transação tributária instituído
+pela Lei Complementar nº 197/2024 e busca facilitar a resolução consensual de conflitos
+tributários, sem necessidade de judicialização.
+A iniciativa permite uma redução de até 70% no valor total da dívida para pessoas físicas,
+microempresas e empresas de pequeno porte, com a possibilidade de parcelamento em até
+145 vezes. Para outras pessoas jurídicas, o desconto pode chegar a 65%, com parcelamento
+em até 120 vezes.
+“O programa é um mecanismo crucial para facilitar o cumprimento das obrigações tributárias
+e reduzir o volume de litígios, permitindo uma solução mais eficiente e consensual para as
+dívidas”, destaca o procurador-geral do Estado, Rafael Arruda.</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\reportagem.pdf</source>
+        <page>1</page>
+        <score>5.069408416748047</score>
+        <is_correct_eval>1</is_correct_eval>
+      </chunk>
+    </retrieved_chunks>
+  </validation_run>
+  <validation_run>
+    <id>2</id>
+    <timestamp>2025-11-08 20:35:54</timestamp>
+    <query>verde limão</query>
+    <search_type>reranked</search_type>
+    <hit_rate_eval>0</hit_rate_eval>
+    <mrr_eval>0.0</mrr_eval>
+    <precision_at_k_eval>0.0</precision_at_k_eval>
+    <retrieved_chunks>
+      <chunk>
+        <id>4</id>
+        <run_id>2</run_id>
+        <rank>1</rank>
+        <chunk_content>É importante saber que a transação não pode reduzir o montante principal (o valor original do 
+tributo). Os descontos são aplicados somente sobre as multas, juros e outros acréscimos legais.
+Pergunta: Posso usar precatórios para pagar a dívida? Resposta: Sim. A transação pode prever a 
+utilização de precatórios do Estado de Goiás, sejam seus ou de terceiros, para amortizar o saldo 
+devedor negociado, desde que observadas as condições específicas da lei e do edital.
+Pergunta: Quais dívidas são proibidas de entrar na transação? Resposta: São vedadas, por exemplo: 
+1) Dívidas que não estão inscritas em Dívida Ativa. 2) Dívidas em que o acordo reduza o valor 
+principal (o imposto original). 3) Dívidas que já estão totalmente garantidas por depósito, seguro 
+ou fiança, e o Estado já ganhou a discussão na Justiça com decisão final (trânsito em julgado).</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\faq.pdf</source>
+        <page>6</page>
+        <score>-10.55689811706543</score>
+        <is_correct_eval>0</is_correct_eval>
+      </chunk>
+      <chunk>
+        <id>5</id>
+        <run_id>2</run_id>
+        <rank>2</rank>
+        <chunk_content>8. O desconto é sobre o valor total da dívida, incluindo o imposto original?
+R: Não. É importante saber que a transação não pode reduzir o montante principal (o valor 
+original do tributo). Os descontos são aplicados somente sobre as multas, os juros e outros 
+acréscimos legais.
+9. Posso usar precatórios para pagar a dívida?
+R: Sim. Você pode usar precatórios do Estado de Goiás (seus ou de terceiros) para reduzir o 
+saldo devedor da transação, desde que o edital preveja essa possibilidade e que as condições da lei 
+específica sejam seguidas.
+10. Quais dívidas são proibidas de entrar na transação?
+R: É proibido (vedado) fazer um acordo sobre:
+1. Dívidas que ainda não estão inscritas na Dívida Ativa. 
+2. Dívidas em que o acordo reduza o valor principal (o imposto original) do crédito. 
+3. Dívidas que já estão totalmente garantidas por depósito, seguro ou fiança, e o Estado já 
+ganhou o processo judicial sobre o mérito (com decisão final transitada em julgado).</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\faq_linguagem_simples.pdf</source>
+        <page>1</page>
+        <score>-10.652244567871094</score>
+        <is_correct_eval>0</is_correct_eval>
+      </chunk>
+      <chunk>
+        <id>6</id>
+        <run_id>2</run_id>
         <rank>3</rank>
         <chunk_content>ser quitada até o 5º (quinto) dia útil contado da data de sua geração, respeitando o limite do último 
 dia útil do mês correspondente.
@@ -81,160 +150,189 @@ suas autarquias e outras entidades estaduais, representados pela PGE, e os deved
 empresa).</chunk_content>
         <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\faq.pdf</source>
         <page>5</page>
-        <score>1.079288363456726</score>
-        <is_correct_eval>1</is_correct_eval>
-      </chunk>
-    </retrieved_chunks>
-  </validation_run>
-  <validation_run>
-    <id>2</id>
-    <timestamp>2025-11-08 20:08:05</timestamp>
-    <query>posso fazer a transação?</query>
-    <search_type>vector_only</search_type>
-    <hit_rate_eval>1</hit_rate_eval>
-    <mrr_eval>0.5</mrr_eval>
-    <precision_at_k_eval>0.6666666666666666</precision_at_k_eval>
-    <retrieved_chunks>
-      <chunk>
-        <id>4</id>
-        <run_id>2</run_id>
-        <rank>1</rank>
-        <chunk_content>suas autarquias e outras entidades estaduais, representados pela PGE, e os devedores (você ou sua 
-empresa).
-Pergunta: A Transação é um direito que eu tenho? Resposta: Não. A transação não é um direito 
-garantido do contribuinte. O Estado de Goiás (PGE) fará um juízo de conveniência e oportunidade e 
-o deferimento do pedido dependerá da verificação de que você cumpriu todas as exigências 
-previstas nas regras.</chunk_content>
-        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\faq.pdf</source>
-        <page>5</page>
-        <score>0.7826833724975586</score>
-        <is_correct_eval>1</is_correct_eval>
-      </chunk>
-      <chunk>
-        <id>5</id>
-        <run_id>2</run_id>
-        <rank>2</rank>
-        <chunk_content>Perguntas e Respostas Simplificadas sobre a Transação 
-Tributária (Quita Goiás)
-1. O que é a Transação Tributária?
-R: A Transação Tributária é um acordo feito entre o Estado de Goiás (Governo), representado pela 
-Procuradoria-Geral do Estado (PGE), e você, o contribuinte, para encerrar disputas e resolver a 
-cobrança de dívidas de impostos (créditos tributários) que já estão inscritas na Dívida Ativa. O 
-programa é também conhecido como Quita Goiás.
-2. Quem pode fazer este acordo?
-R: Podem realizar a transação o Estado de Goiás (incluindo suas autarquias e outras entidades), 
-representado pela PGE, e os devedores (você ou sua empresa).
-3. A Transação é um direito que eu tenho?
-R: Não, o acordo não é um direito garantido. Para que seu pedido seja aceito, a PGE fará uma 
-análise de conveniência e oportunidade, verificando se você cumpriu todas as regras e exigências 
-previstas.
-4. Quais dívidas eu posso incluir no acordo?</chunk_content>
-        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\faq_linguagem_simples.pdf</source>
-        <page>0</page>
-        <score>0.8436226844787598</score>
-        <is_correct_eval>1</is_correct_eval>
-      </chunk>
-      <chunk>
-        <id>6</id>
-        <run_id>2</run_id>
-        <rank>3</rank>
-        <chunk_content>Art. 29. Tratando-se de transação que envolva valor igual ou superior
-a R$ 50.000.000,00 (cinquenta milhões de reais), o termo de transação será
-subscrito pelo Procurador-Geral do Estado, mediante parecer prévio.
-CAPÍTULO IV
-TRANSAÇÃO POR ADESÃO NO CONTENCIOSO TRIBUTÁRIO DE RELEVANTE E
-DISSEMINADA CONTROVÉRSIA JURÍDICA
-Art. 30. O Estado de Goiás, as suas autarquias e outras entidades
-estaduais representadas pela Procuradoria-Geral do Estado poderão propor
-transação, por adesão, aos devedores com litígios tributários decorrentes de
-relevante e disseminada controvérsia jurídica.
-§ 1º A proposta de transação e a eventual adesão por parte do sujeito
-passivo não poderão ser invocadas como fundamento jurídico ou prognose de
-sucesso da tese sustentada por qualquer das partes e serão compreendidas,
-exclusivamente, como medida vantajosa diante das concessões recíprocas.
-§ 2º A proposta de transação deverá, preferencialmente, versar sobre</chunk_content>
-        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\PORTARIA-No-55-GAB-DE-10-DE-FEVEREIRO-DE-2025.pdf</source>
-        <page>11</page>
-        <score>0.9251618385314941</score>
+        <score>-10.693788528442383</score>
         <is_correct_eval>0</is_correct_eval>
       </chunk>
     </retrieved_chunks>
   </validation_run>
   <validation_run>
     <id>3</id>
-    <timestamp>2025-11-08 20:08:53</timestamp>
-    <query>quita goias</query>
-    <search_type>reranked</search_type>
+    <timestamp>2025-11-08 20:43:20</timestamp>
+    <query>Qual é o objeto específico do Edital de Transação Tributária nº 01/2025 e qual o valor remanescente mínimo para inclusão de créditos?</query>
+    <search_type>vector_only</search_type>
     <hit_rate_eval>1</hit_rate_eval>
-    <mrr_eval>1.0</mrr_eval>
-    <precision_at_k_eval>1.0</precision_at_k_eval>
+    <mrr_eval>0.3333333333333333</mrr_eval>
+    <precision_at_k_eval>0.3333333333333333</precision_at_k_eval>
     <retrieved_chunks>
       <chunk>
         <id>7</id>
         <run_id>3</run_id>
         <rank>1</rank>
-        <chunk_content>Home    Destaque    Quita Goiás: PGE-GO lança primeiro edital do programa de transação
-tributária com descontos de até 70% em dívidas
-Quita Goiás: PGE-GO lança primeiro edital do
-programa de transação tributária com
-descontos de até 70% em dívidas
- Última Atualização em 22 de outubro de 2025
- Categoria Destaque
-A partir desta segunda-feira (20/10), contribuintes goianos já podem negociar suas dívidas
-tributárias com o Estado de Goiás com até 70% de desconto sobre juros e multas e prazo de
-até 145 meses para pagamento.
-INSTITUCIONAL
-CARTA DE SERVIÇOS
-ACESSO RÁPIDO 
-
-GOVERNANÇA 
-
-ACESSO À INFORMAÇÃO
-FALE CONOSCO</chunk_content>
-        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\reportagem.pdf</source>
-        <page>0</page>
-        <score>b'\xb2.\xc8@'</score>
-        <is_correct_eval>1</is_correct_eval>
+        <chunk_content>deste Edital;
+V - impliquem concessão de prazo de quitação dos créditos superior a
+120 (cento e vinte) meses, ressalvado o disposto no art. 4º deste Edital;
+VI - resultem na cumulação das reduções oferecidas na transação com
+quaisquer outras asseguradas na legislação em relação aos créditos abrangidos na
+negociação;
+VII - tenham por objeto dívida garantida integralmente, cuja discussão
+de mérito já tenha transitado em julgado favoravelmente ao ente público;
+VIII - tenham por objeto débitos de devedor com transação rescindida
+nos últimos 2 (dois) anos contados da data de rescisão;
+IX - resultem em saldo a pagar ao proponente;
+X - resultem, direta ou indiretamente, em regime especial,
+diferenciado ou individual de tributação.
+Art. 4º A redução máxima de que trata o art. 3º, inciso IV, deste Edital,
+será de até 70% (setenta por cento), ampliando-se o prazo máximo de quitação de
+que trata o art. 3º, inciso V, deste Edital, para até 145 (cento e quarenta e cinco)</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\EDITAL-DE-TRANSACAO-TRIBUTARIA-No-012025.pdf</source>
+        <page>1</page>
+        <score>0.5593832731246948</score>
+        <is_correct_eval>0</is_correct_eval>
       </chunk>
       <chunk>
         <id>8</id>
         <run_id>3</run_id>
         <rank>2</rank>
-        <chunk_content>Recuperação da dívida ativa
-O Quita Goiás representa também um avanço na recuperação de créditos do Estado.
-Atualmente, a dívida ativa goiana, registro dos contribuintes inadimplentes, soma cerca de R$
-40 bilhões, conforme o painel de dados da dívida ativa.
-De acordo com o procurador-geral, o programa deve contribuir para reduzir esse montante,
-ao permitir que contribuintes em dificuldade regularizem sua situação fiscal com condições
-mais acessíveis.
-“O volume de processos tributários no Poder Judiciário é crescente, mas a cobrança judicial
-tem baixa eficácia na recuperação de créditos da dívida ativa. Diversos órgãos, como o
-Conselho Nacional de Justiça (CNJ), recomendam a transação tributária como uma alternativa
-eficiente, por dispensar a intervenção judicial e reduzir a litigiosidade”, explica Arruda.</chunk_content>
-        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\reportagem.pdf</source>
-        <page>2</page>
-        <score>b'\xe8N\xaa@'</score>
-        <is_correct_eval>1</is_correct_eval>
+        <chunk_content>autorização prevista no § 2º deste artigo.
+§ 6º O levantamento de valores depositados pelo contribuinte que
+excederem ao valor líquido transacionado ocorrerá apenas se não existirem outros
+créditos tributários da Fazenda Pública estadual inscritos em dívida ativa.
+§ 7º As garantias apresentadas no procedimento de transação
+tributária e aceitas pela Procuradoria-Geral do Estado, nos termos desta Portaria,
+deverão ser igualmente ofertadas ou transferidas para os autos das respectivas
+execuções fiscais, quando for o caso.
+§ 8º Caso não seja possível realizar o levantamento no momento da
+celebração da transação, os valores serão recolhidos para amortização do valor
+remanescente do crédito.
+Seção III
+Das concessões
+Art. 7º As modalidades de transação previstas nesta Portaria poderão
+envolver, a exclusivo critério da Procuradoria-Geral do Estado, e observados os
+limites previstos na legislação de regência da transação:</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\PORTARIA-No-55-GAB-DE-10-DE-FEVEREIRO-DE-2025.pdf</source>
+        <page>4</page>
+        <score>0.5848551392555237</score>
+        <is_correct_eval>0</is_correct_eval>
       </chunk>
       <chunk>
         <id>9</id>
         <run_id>3</run_id>
         <rank>3</rank>
-        <chunk_content>eventuais ações judiciais relacionadas.
-Sobre o Quita Goiás
-Coordenado pela PGE-GO, o Quita Goiás é um programa de transação tributária instituído
-pela Lei Complementar nº 197/2024 e busca facilitar a resolução consensual de conflitos
-tributários, sem necessidade de judicialização.
-A iniciativa permite uma redução de até 70% no valor total da dívida para pessoas físicas,
-microempresas e empresas de pequeno porte, com a possibilidade de parcelamento em até
-145 vezes. Para outras pessoas jurídicas, o desconto pode chegar a 65%, com parcelamento
-em até 120 vezes.
-“O programa é um mecanismo crucial para facilitar o cumprimento das obrigações tributárias
-e reduzir o volume de litígios, permitindo uma solução mais eficiente e consensual para as
-dívidas”, destaca o procurador-geral do Estado, Rafael Arruda.</chunk_content>
-        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\reportagem.pdf</source>
-        <page>1</page>
-        <score>b'\x988\xa2@'</score>
+        <chunk_content>transação de créditos tributários inscritos em dívida ativa por adesão à proposta da
+Procuradoria-Geral do Estado.
+DO OBJETO
+Art. 1º A transação de créditos tributários inscritos em dívida ativa do
+Estado de Goiás, irrecuperáveis e de difícil recuperação, de valor remanescente
+superior a R$ 500.000,00 (quinhentos mil reais), será realizada conforme o art. 17
+da Portaria nº 55-GAB, de 10 de fevereiro de 2025, desta Procuradoria-Geral do
+Estado.
+§ 1º Os créditos indicados no art. 1º, caput, deste Edital, serão
+classiﬁcados de acordo com o grau de recuperabilidade da dívida, apurado por
+segmentação, na forma deﬁnida pela Secretaria de Estado da Economia,
+consideradas, dentre outras, as seguintes dimensões:
+I - faixa de valor do PAT;
+II - tipo de exequibilidade;
+III - idade do auto de infração;
+IV - situação cadastral;
+V - status do ajuizamento;
+VI - faixa de valor da dívida;
+VII - solidariedade.</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\EDITAL-DE-TRANSACAO-TRIBUTARIA-No-012025.pdf</source>
+        <page>0</page>
+        <score>0.6048470735549927</score>
+        <is_correct_eval>1</is_correct_eval>
+      </chunk>
+    </retrieved_chunks>
+  </validation_run>
+  <validation_run>
+    <id>4</id>
+    <timestamp>2025-11-08 20:44:00</timestamp>
+    <query>Qual é o objeto específico do Edital de Transação Tributária nº 01/2025 e qual o valor remanescente mínimo para inclusão de créditos?</query>
+    <search_type>reranked</search_type>
+    <hit_rate_eval>1</hit_rate_eval>
+    <mrr_eval>1.0</mrr_eval>
+    <precision_at_k_eval>0.6666666666666666</precision_at_k_eval>
+    <retrieved_chunks>
+      <chunk>
+        <id>10</id>
+        <run_id>4</run_id>
+        <rank>1</rank>
+        <chunk_content>transação de créditos tributários inscritos em dívida ativa por adesão à proposta da
+Procuradoria-Geral do Estado.
+DO OBJETO
+Art. 1º A transação de créditos tributários inscritos em dívida ativa do
+Estado de Goiás, irrecuperáveis e de difícil recuperação, de valor remanescente
+superior a R$ 500.000,00 (quinhentos mil reais), será realizada conforme o art. 17
+da Portaria nº 55-GAB, de 10 de fevereiro de 2025, desta Procuradoria-Geral do
+Estado.
+§ 1º Os créditos indicados no art. 1º, caput, deste Edital, serão
+classiﬁcados de acordo com o grau de recuperabilidade da dívida, apurado por
+segmentação, na forma deﬁnida pela Secretaria de Estado da Economia,
+consideradas, dentre outras, as seguintes dimensões:
+I - faixa de valor do PAT;
+II - tipo de exequibilidade;
+III - idade do auto de infração;
+IV - situação cadastral;
+V - status do ajuizamento;
+VI - faixa de valor da dívida;
+VII - solidariedade.</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\EDITAL-DE-TRANSACAO-TRIBUTARIA-No-012025.pdf</source>
+        <page>0</page>
+        <score>4.139893531799316</score>
+        <is_correct_eval>1</is_correct_eval>
+      </chunk>
+      <chunk>
+        <id>11</id>
+        <run_id>4</run_id>
+        <rank>2</rank>
+        <chunk_content>Art. 30. Na hipótese de oferecimento de depósitos ou bloqueios
+judiciais, a extinção do crédito tributário transacionado ﬁca condicionada ao
+levantamento e à imputação dos valores até o limite do valor líquido do crédito
+transacionado remanescente.
+DA RESCISÃO
+Art. 31. A transação celebrada nos termos deste Edital será rescindida
+nas seguintes hipóteses:
+I 
+– 
+descumprimento 
+das 
+disposições 
+legais, 
+regulamentares,
+especialmente da Portaria nº 55/GAB, de 10 de fevereiro de 2025, e das condições,
+cláusulas e/ou compromissos previstos neste Edital, ou no termo de transação,
+inclusive em relação às garantias e aos deveres processuais previstos na Seção III do
+Capítulo II do Livro III da Lei federal nº 13.105, de 16 de março de 2015 (Código de
+Processo Civil), observado o disposto no art. 24, incisos XII e XV, deste Edital;
+II – atraso no pagamento de mais de 3 (três) parcelas, sucessivas ou
+não, ou de qualquer das parcelas após 30 (trinta) dias corridos da data final do prazo</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\EDITAL-DE-TRANSACAO-TRIBUTARIA-No-012025.pdf</source>
+        <page>8</page>
+        <score>3.8681089878082275</score>
+        <is_correct_eval>0</is_correct_eval>
+      </chunk>
+      <chunk>
+        <id>12</id>
+        <run_id>4</run_id>
+        <rank>3</rank>
+        <chunk_content>dos incisos I a IV do art. 927 do CPC.
+§ 3º Será indeferida a solicitação de adesão que não importar extinção do litígio
+judicial, ressalvadas as hipóteses em que for demonstrada a inequívoca cindibilidade do objeto.
+Art. 19.  São vedadas:
+I – a celebração de nova transação relativa ao mesmo crédito tributário; e
+II – a proposta de transação com efeito prospectivo de que resulte, direta ou
+indiretamente, regime especial, diferenciado ou individual de tributação. 
+Seção IV
+ Da Transação por Adesão no Contencioso de Pequeno Valor 
+Art. 20. Considera-se de pequeno valor o contencioso cujo montante não supere
+o limite de alçada fixado para o ajuizamento do respectivo executivo fiscal, nos termos do art. 24
+desta Lei Complementar.
+Art. 21. A transação relativa a crédito de pequeno valor poderá ser realizada para
+débitos inscritos em dívida ativa há mais de 2 (dois) anos na data de publicação do edital.
+Art. 22. A transação de que trata esta Seção poderá contemplar, isolada ou</chunk_content>
+        <source>C:\Users\augus\Documents\GitHub\UFG_NLP_rag_chatbot\rag_chatbot\docs\Lei-Complementar-197.pdf</source>
+        <page>8</page>
+        <score>2.9181525707244873</score>
         <is_correct_eval>1</is_correct_eval>
       </chunk>
     </retrieved_chunks>

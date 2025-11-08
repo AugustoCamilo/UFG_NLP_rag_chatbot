@@ -185,7 +185,11 @@ def run_list_evaluations(conn):
                         # --- REQUISITO 4: Destaque das Métricas ---
                         st.markdown("**Métricas da Rodada:**")
                         col1, col2, col3 = st.columns(3)
-                        col1.metric(label="Hit Rate (Acerto?)", value=f"{hr_text} ")
+                        col1.metric(
+                            label="Taxa de Acerto (Hit Rate)",
+                            value=hr_text,
+                            help="Indica se pelo menos um chunk relevante foi encontrado nesta rodada.",
+                        )
                         col2.metric(label="MRR (Pontuação)", value=f"{mrr:.4f}")
                         col3.metric(label="Precisão@K", value=f"{p_at_k:.4f}")
 
