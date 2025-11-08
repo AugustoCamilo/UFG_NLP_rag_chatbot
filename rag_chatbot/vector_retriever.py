@@ -113,11 +113,13 @@ class VectorRetriever:
         Executa APENAS a busca vetorial (Recall) e retorna os resultados
         brutos ordenados por distância.
         """
-        print(f"Iniciando Etapa 1 (Recall APENAS) para: '{query}'")
+        print(
+            f"Iniciando Etapa 1 (Recall APENAS, k={config.SEARCH_K_FINAL}) para: '{query}'"
+        )
         try:
-            # Busca os K_RAW (ex: 20) chunks mais próximos
+            # Busca diretamente os K_FINAL (ex: 3) chunks mais próximos
             results_with_scores = self.vectordb.similarity_search_with_score(
-                query, k=config.SEARCH_K_RAW
+                query, k=config.SEARCH_K_FINAL
             )
 
             if not results_with_scores:
@@ -125,13 +127,15 @@ class VectorRetriever:
                 return []
 
             # Ordena por score (distância - MENOR é MELHOR para Chroma)
-            results_with_scores.sort(key=lambda x: x[1])
+            # Embora o Chroma já retorne ordenado, esta é uma garantia.
+            results_with_scores.sort(key=lambda x: x[1])  #
 
             print(
                 f"Etapa 1 (Recall) concluída. {len(results_with_scores)} chunks recuperados."
             )
-            # Retorna apenas os K_FINAL (ex: 3) melhores para comparação
-            return results_with_scores[: config.SEARCH_K_FINAL]
+
+            # Retorna a lista (que já tem tamanho K_FINAL), sem fatiar
+            return results_with_scores
 
         except Exception as e:
             print(f"Erro durante a busca vetorial: {e}")

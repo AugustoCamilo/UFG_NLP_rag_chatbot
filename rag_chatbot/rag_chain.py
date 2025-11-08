@@ -208,7 +208,7 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
             # Extrai tokens
             user_tokens = 0  # Tokens do prompt
             bot_tokens = 0  # Tokens da resposta
-            print(response.response_metadata)  #
+
             if response.response_metadata:  #
                 # A chave correta para o Gemini é 'usage_metadata'
                 usage_metadata = response.response_metadata.get("usage_metadata", {})
