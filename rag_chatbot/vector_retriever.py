@@ -4,7 +4,7 @@ from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from sentence_transformers import CrossEncoder
 from langchain_core.documents import Document
-from typing import List, Tuple  # <-- ATUALIZADO
+from typing import List, Tuple
 
 # Importar o arquivo de configuração
 import config
@@ -19,7 +19,7 @@ class VectorRetriever:
     def __init__(self):
         print("Inicializando o VectorRetriever...")
 
-        if not os.path.exists(config.VECTOR_DB_DIR):
+        if not os.path.exists(config.VECTOR_DB_DIR):  #
             print(
                 f"Erro: Diretório do banco de vetores não encontrado em '{config.VECTOR_DB_DIR}'"
             )
@@ -31,22 +31,22 @@ class VectorRetriever:
             print("Carregando modelo de embedding...")
             self.embeddings = HuggingFaceEmbeddings(
                 model_name=config.EMBEDDING_MODEL_NAME
-            )
+            )  #
 
             # 2. Carregar o banco de vetores Chroma
             print(f"Carregando banco de vetores de '{config.VECTOR_DB_DIR}'...")
             self.vectordb = Chroma(
                 persist_directory=config.VECTOR_DB_DIR,
                 embedding_function=self.embeddings,
-            )
+            )  #
 
             # 3. Carregar o modelo de Re-Ranker (CrossEncoder)
             print("Carregando modelo de Re-Ranking (Cross-Encoder)...")
-            self.reranker = CrossEncoder(config.RERANKER_MODEL_NAME)
+            self.reranker = CrossEncoder(config.RERANKER_MODEL_NAME)  #
             print("VectorRetriever inicializado com sucesso.")
 
         except Exception as e:
-            print(f"Ocorreu um erro ao inicializar o VectorRetriever: {e}")
+            print(f"Ocorreu um erro ao inicializar o VectorRetriever: {e}")  #
             raise
 
     def retrieve_context(self, query: str) -> List[Document]:
@@ -54,9 +54,9 @@ class VectorRetriever:
         Executa a busca e o re-ranking e retorna apenas a lista de Documentos.
         Mantido para compatibilidade com o rag_chain.py.
         """
-        results_with_scores = self.retrieve_context_with_scores(query)
+        results_with_scores = self.retrieve_context_with_scores(query)  #
         # Extrai apenas os documentos da tupla
-        return [doc for doc, score in results_with_scores]
+        return [doc for doc, score in results_with_scores]  #
 
     def retrieve_context_with_scores(self, query: str) -> List[Tuple[Document, float]]:
         """
@@ -67,9 +67,9 @@ class VectorRetriever:
         # ETAPA 1: RECALL (Busca Vetorial Rápida)
         results_with_scores = self.vectordb.similarity_search_with_score(
             query, k=config.SEARCH_K_RAW
-        )
+        )  #
 
-        if not results_with_scores:
+        if not results_with_scores:  #
             print("Nenhum resultado encontrado na busca vetorial.")
             return []
 
@@ -79,31 +79,65 @@ class VectorRetriever:
         # ETAPA 2: RE-RANKING (Reclassificação Inteligente)
         try:
             # 1. Criar pares de [pergunta, chunk]
-            pairs = [[query, doc.page_content] for doc, score in results_with_scores]
+            pairs = [[query, doc.page_content] for doc, score in results_with_scores]  #
 
             # 2. Obter os novos scores do Re-Ranker
-            rerank_scores = self.reranker.predict(pairs)
+            rerank_scores = self.reranker.predict(pairs)  #
 
             # 3. Combinar os documentos com seus novos scores
-            reranked_results = list(zip(results_with_scores, rerank_scores))
+            reranked_results = list(zip(results_with_scores, rerank_scores))  #
 
             # 4. Ordenar pelos novos scores (MAIOR é MELHOR)
-            reranked_results.sort(key=lambda x: x[1], reverse=True)
+            reranked_results.sort(key=lambda x: x[1], reverse=True)  #
 
             # 5. Pegar o Top-K final
-            top_k_results = reranked_results[: config.SEARCH_K_FINAL]
+            top_k_results = reranked_results[: config.SEARCH_K_FINAL]  #
 
             # 6. Formatar a saída para (Documento, score_relevancia)
             final_results = [
                 (doc, rerank_score) for (doc, old_score), rerank_score in top_k_results
-            ]
+            ]  #
 
             print(f"Etapa 2 concluída. {len(final_results)} chunks selecionados.")
             return final_results
 
         except Exception as e:
-            print(f"Erro durante o Re-Ranking: {e}")
+            print(f"Erro durante o Re-Ranking: {e}")  #
             return []
+
+    # --- INÍCIO DA NOVA FUNÇÃO ---
+    def retrieve_context_vector_search_only(
+        self, query: str
+    ) -> List[Tuple[Document, float]]:
+        """
+        Executa APENAS a busca vetorial (Recall) e retorna os resultados
+        brutos ordenados por distância.
+        """
+        print(f"Iniciando Etapa 1 (Recall APENAS) para: '{query}'")
+        try:
+            # Busca os K_RAW (ex: 20) chunks mais próximos
+            results_with_scores = self.vectordb.similarity_search_with_score(
+                query, k=config.SEARCH_K_RAW
+            )
+
+            if not results_with_scores:
+                print("Nenhum resultado encontrado na busca vetorial.")
+                return []
+
+            # Ordena por score (distância - MENOR é MELHOR para Chroma)
+            results_with_scores.sort(key=lambda x: x[1])
+
+            print(
+                f"Etapa 1 (Recall) concluída. {len(results_with_scores)} chunks recuperados."
+            )
+            # Retorna apenas os K_FINAL (ex: 3) melhores para comparação
+            return results_with_scores[: config.SEARCH_K_FINAL]
+
+        except Exception as e:
+            print(f"Erro durante a busca vetorial: {e}")
+            return []
+
+    # --- FIM DA NOVA FUNÇÃO ---
 
     def get_all_chunks(self) -> dict:
         """
@@ -111,5 +145,5 @@ class VectorRetriever:
         Usado pelo read_db_vector.py para listar e exportar chunks.
         """
         if self.vectordb:
-            return self.vectordb.get()
+            return self.vectordb.get()  #
         return {"documents": [], "metadatas": []}

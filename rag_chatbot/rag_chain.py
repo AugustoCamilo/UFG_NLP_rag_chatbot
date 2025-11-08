@@ -1,8 +1,8 @@
 # rag_chain.py
 import os
 import sqlite3
-from typing import List, TypedDict, Optional  # <-- ATUALIZADO
-from datetime import datetime  # Import necessário
+from typing import List, TypedDict, Optional
+from datetime import datetime
 
 from dotenv import load_dotenv
 from langchain_core.documents import Document
@@ -35,7 +35,7 @@ class RAGState(TypedDict):
     retrieval_end_time: datetime
 
     # ID da mensagem de chat recém-criada
-    new_message_id: Optional[int]  # <-- NOVO
+    new_message_id: Optional[int]
 
 
 class RAGChain:
@@ -54,10 +54,10 @@ class RAGChain:
             model=config.GEMINI_MODEL_NAME,
             api_key=config.GEMINI_API_KEY,
             temperature=0.0,
-        )
+        )  #
 
         # 2. Inicializar nosso retriever com re-ranking
-        self.retriever = VectorRetriever()
+        self.retriever = VectorRetriever()  #
 
         # 3. Definir o prompt do sistema
         self.system_prompt = """<prompt_de_sistema>
@@ -103,31 +103,31 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
         </acao>
     </regra>
 </regras_situacionais>
-</prompt_de_sistema>"""
+</prompt_de_sistema>"""  #
 
         # 4. Construir o grafo (LangGraph)
-        graph = StateGraph(RAGState)
-        graph.add_node("load_history", self.load_history)
-        graph.add_node("retrieve", self.retrieve)
-        graph.add_node("generate", self.generate)
+        graph = StateGraph(RAGState)  #
+        graph.add_node("load_history", self.load_history)  #
+        graph.add_node("retrieve", self.retrieve)  #
+        graph.add_node("generate", self.generate)  #
 
-        graph.add_edge(START, "load_history")
-        graph.add_edge("load_history", "retrieve")
-        graph.add_edge("retrieve", "generate")
+        graph.add_edge(START, "load_history")  #
+        graph.add_edge("load_history", "retrieve")  #
+        graph.add_edge("retrieve", "generate")  #
 
-        self.graph = graph.compile()
+        self.graph = graph.compile()  #
 
     def _get_db_connection(self):
         """Helper para conectar ao banco SQLite."""
-        return sqlite3.connect(history_db.DB_PATH)
+        return sqlite3.connect(history_db.DB_PATH)  #
 
     def load_history(self, state: RAGState) -> RAGState:
         """Carrega o histórico do chat do banco SQLite."""
         print(f"Carregando histórico para session_id: {self.session_id}")
-        messages = []
+        messages = []  #
         try:
-            conn = self._get_db_connection()
-            cursor = conn.cursor()
+            conn = self._get_db_connection()  #
+            cursor = conn.cursor()  #
             cursor.execute(
                 """
                 SELECT user_message, bot_response
@@ -136,83 +136,87 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                 ORDER BY request_start_time ASC
                 """,
                 (self.session_id,),
-            )
-            for row in cursor.fetchall():
-                messages.append(HumanMessage(content=row[0]))
-                messages.append(AIMessage(content=row[1]))
-            conn.close()
+            )  #
+            for row in cursor.fetchall():  #
+                messages.append(HumanMessage(content=row[0]))  #
+                messages.append(AIMessage(content=row[1]))  #
+            conn.close()  #
         except Exception as e:
-            print(f"Erro ao carregar histórico: {e}")
+            print(f"Erro ao carregar histórico: {e}")  #
 
         # Passa o request_start_time para os próximos nós
         return {
             "history": messages,
             "request_start_time": state["request_start_time"],
             "new_message_id": None,  # Garante que seja None no início
-        }
+        }  #
 
     def retrieve(self, state: RAGState) -> RAGState:
         """Recupera o contexto usando o VectorRetriever (com re-ranking)."""
         print("Recuperando contexto...")
-        retrieved_docs = self.retriever.retrieve_context(state["question"])
+        retrieved_docs = self.retriever.retrieve_context(state["question"])  #
 
         # Captura o timestamp de fim da recuperação
-        retrieval_end_time = datetime.now()
+        retrieval_end_time = datetime.now()  #
 
-        return {"context": retrieved_docs, "retrieval_end_time": retrieval_end_time}
+        return {"context": retrieved_docs, "retrieval_end_time": retrieval_end_time}  #
 
     def generate(self, state: RAGState) -> RAGState:
         """Gera a resposta usando a LLM e o contexto."""
         print("Gerando resposta...")
 
         # Obter timestamps do estado
-        request_start_time = state["request_start_time"]
-        retrieval_end_time = state["retrieval_end_time"]
+        request_start_time = state["request_start_time"]  #
+        retrieval_end_time = state["retrieval_end_time"]  #
 
-        user_msg = state["question"]
-        user_chars = len(user_msg)
+        user_msg = state["question"]  #
+        user_chars = len(user_msg)  #
 
         docs_content = "\n\n--- Contexto ---\n\n".join(
             doc.page_content for doc in state["context"]
-        )
+        )  #
 
         # Monta a lista de mensagens
-        messages = [SystemMessage(content=self.system_prompt)]
-        messages.extend(state["history"])
+        messages = [SystemMessage(content=self.system_prompt)]  #
+        messages.extend(state["history"])  #
         messages.append(
             HumanMessage(content=f"Contexto: {docs_content}\n\nPergunta: {user_msg}")
-        )
+        )  #
 
         try:
-            response = self.model.invoke(messages)
+            response = self.model.invoke(messages)  #
 
             # Captura o timestamp final
-            response_end_time = datetime.now()
+            response_end_time = datetime.now()  #
 
             # --- Cálculo de Métricas ---
-            answer = response.content
-            bot_chars = len(answer)
+            answer = response.content  #
+            bot_chars = len(answer)  #
 
             # Calcula durações
             retrieval_duration_sec = (
                 retrieval_end_time - request_start_time
-            ).total_seconds()
+            ).total_seconds()  #
             generation_duration_sec = (
                 response_end_time - retrieval_end_time
-            ).total_seconds()
+            ).total_seconds()  #
             total_duration_sec = (
                 response_end_time - request_start_time
-            ).total_seconds()
+            ).total_seconds()  #
 
+            # --- INÍCIO DA CORREÇÃO ---
             # Extrai tokens
             user_tokens = 0  # Tokens do prompt
             bot_tokens = 0  # Tokens da resposta
+            print(response.response_metadata)  #
+            if response.response_metadata:  #
+                # A chave correta para o Gemini é 'usage_metadata'
+                usage_metadata = response.response_metadata.get("usage_metadata", {})
 
-            if response.response_metadata:
-                token_usage = response.response_metadata.get("token_usage", {})
-                user_tokens = token_usage.get("prompt_tokens", 0)
-                bot_tokens = token_usage.get("completion_tokens", 0)
-            # --- Fim das Métricas ---
+                # As chaves corretas são 'prompt_token_count' e 'candidates_token_count'
+                user_tokens = usage_metadata.get("prompt_token_count", 0)
+                bot_tokens = usage_metadata.get("candidates_token_count", 0)
+            # --- FIM DA CORREÇÃO ---
 
             # Salva a interação no histórico com os novos dados
             new_message_id = self.save_message(
@@ -228,12 +232,12 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                 retrieval_duration_sec,
                 generation_duration_sec,
                 total_duration_sec,
-            )
+            )  #
 
-            return {"answer": answer, "new_message_id": new_message_id}
+            return {"answer": answer, "new_message_id": new_message_id}  #
         except Exception as e:
-            print(f"Erro ao invocar LLM: {e}")
-            return {"answer": "Ocorreu um erro ao processar sua solicitação."}
+            print(f"Erro ao invocar LLM: {e}")  #
+            return {"answer": "Ocorreu um erro ao processar sua solicitação."}  #
 
     # --- FUNÇÃO SAVE_MESSAGE ATUALIZADA PARA RETORNAR O ID ---
     def save_message(
@@ -253,10 +257,10 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
     ) -> Optional[int]:
         """Salva a interação atual no banco SQLite e retorna o ID da nova linha."""
         print(f"Salvando mensagem para session_id: {self.session_id}")
-        new_id = None
+        new_id = None  #
         try:
-            conn = self._get_db_connection()
-            cursor = conn.cursor()
+            conn = self._get_db_connection()  #
+            cursor = conn.cursor()  #
             cursor.execute(
                 """
                 INSERT INTO chat_history (
@@ -283,15 +287,15 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                     generation_duration_sec,
                     total_duration_sec,
                 ),
-            )
+            )  #
             # --- Captura o ID da linha recém-inserida ---
-            new_id = cursor.lastrowid
+            new_id = cursor.lastrowid  #
 
-            conn.commit()
-            conn.close()
+            conn.commit()  #
+            conn.close()  #
 
         except Exception as e:
-            print(f"Erro ao salvar mensagem: {e}")
+            print(f"Erro ao salvar mensagem: {e}")  #
 
         return new_id  # Retorna o ID
 
@@ -302,7 +306,7 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
         """
 
         # Captura o timestamp inicial aqui
-        request_start_time = datetime.now()
+        request_start_time = datetime.now()  #
 
         initial_state = {
             "question": question,
@@ -312,12 +316,12 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
             "request_start_time": request_start_time,  # Passa para o estado
             "retrieval_end_time": request_start_time,  # Inicializa (será sobrescrito)
             "new_message_id": None,  # Inicializa
-        }
+        }  #
         # Invoca o grafo
-        result = self.graph.invoke(initial_state)
+        result = self.graph.invoke(initial_state)  #
 
         # Retorna o dicionário completo
-        return {"answer": result["answer"], "message_id": result["new_message_id"]}
+        return {"answer": result["answer"], "message_id": result["new_message_id"]}  #
 
     def get_history_for_display(self) -> List[tuple]:
         """
@@ -325,10 +329,10 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
         incluindo o ID da mensagem e o feedback existente.
         """
         print(f"Buscando histórico de display para: {self.session_id}")
-        history = []
+        history = []  #
         try:
-            conn = self._get_db_connection()
-            cursor = conn.cursor()
+            conn = self._get_db_connection()  #
+            cursor = conn.cursor()  #
             # Query ATUALIZADA com LEFT JOIN na tabela feedback
             cursor.execute(
                 """
@@ -343,20 +347,20 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                 ORDER BY h.request_start_time ASC
                 """,
                 (self.session_id,),
-            )
-            history = cursor.fetchall()
-            conn.close()
+            )  #
+            history = cursor.fetchall()  #
+            conn.close()  #
         except Exception as e:
-            print(f"Erro ao buscar histórico para display: {e}")
+            print(f"Erro ao buscar histórico para display: {e}")  #
 
-        return history
+        return history  #
 
     def save_feedback(self, message_id: int, rating: str, comment: str = None):
         """Salva o feedback do usuário no banco de dados."""
         print(f"Salvando feedback para message_id: {message_id} (Rating: {rating})")
         try:
-            conn = self._get_db_connection()
-            cursor = conn.cursor()
+            conn = self._get_db_connection()  #
+            cursor = conn.cursor()  #
 
             # Use INSERT OR REPLACE para permitir que o usuário mude de ideia
             # (ou apenas INSERT se preferir que o primeiro clique seja final)
@@ -370,9 +374,9 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                 timestamp = CURRENT_TIMESTAMP
                 """,
                 (message_id, rating, comment),
-            )
-            conn.commit()
-            conn.close()
+            )  #
+            conn.commit()  #
+            conn.close()  #
             print("Feedback salvo com sucesso.")
         except Exception as e:
-            print(f"Erro ao salvar feedback: {e}")
+            print(f"Erro ao salvar feedback: {e}")  #
