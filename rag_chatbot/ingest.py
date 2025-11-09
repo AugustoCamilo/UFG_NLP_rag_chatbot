@@ -37,8 +37,8 @@ O script executa as seguintes etapas na função `process_documents`:
 4.  **Sanitização de Metadados (Segurança):**
     * Durante a limpeza, o script converte o metadado `source` 
         (caminho do arquivo) de um caminho absoluto (ex: 
-        `C:\Users\augus\...`) para um caminho relativo à raiz do 
-        projeto (ex: `docs\meu_arquivo.pdf`).
+        'C:/Users/augus/...') para um caminho relativo à raiz do 
+        projeto (ex: 'docs/meu_arquivo.pdf').
     * Isso é crucial para evitar o vazamento de dados pessoais 
         (estrutura de pastas do usuário) no banco de vetores.
 
