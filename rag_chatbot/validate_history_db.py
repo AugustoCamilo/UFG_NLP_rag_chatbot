@@ -63,10 +63,77 @@ import os
 import sys
 import csv
 from datetime import datetime
+from streamlit.components.v1 import html
 
 # Importar o arquivo de configuração do banco de dados
 # para obter o caminho (DB_PATH)
 import database as history_db
+
+
+def add_print_to_pdf_button():
+    """
+    Adiciona CSS para formatar a página para impressão e um botão
+    discreto que aciona o diálogo de impressão (window.print()).
+    """
+
+    # 1. CSS (O "Canhão" para forçar tudo preto na impressão)
+    print_css = """
+    <style>
+    @media print {
+        /* Esconde elementos da UI */
+        [data-testid="stSidebar"] { display: none; }
+        [data-testid="stHeader"] { display: none; }
+        .no-print { display: none !important; }
+        
+        /* Otimiza o layout */
+        [data-testid="stAppViewContainer"] { padding-top: 0; }
+        
+        /* 1. Força o fundo para branco */
+        body, [data-testid="stAppViewContainer"] {
+            background: #ffffff !important;
+        }
+
+        /* 2. O "Canhão": Força TODO o texto (títulos, etc.) 
+           a ser PRETO. */
+        * {
+            color: #000000 !important;
+        }
+    }
+    </style>
+    """
+    st.markdown(print_css, unsafe_allow_html=True)
+
+    # 2. O Botão (CSS inalterado)
+    button_style = """
+        background-color: transparent;
+        border: none;
+        color: #0068C9; /* Cor azul (padrão de link) */
+        cursor: pointer;
+        font-family: 'Source Sans Pro', sans-serif;
+        font-size: 0.95rem; /* Tamanho de fonte padrão */
+        padding: 0.25rem 0rem; /* Padding vertical leve */
+        margin: 0.5rem 0;
+        text-align: left; /* Alinha à esquerda */
+        opacity: 0.8; /* Ligeiramente transparente */
+        transition: opacity 0.2s;
+    """
+
+    # 3. O HTML do Botão (inalterado)
+    button_html = f"""
+    <button
+        onclick="window.parent.print()"
+        class="no-print"
+        style="{button_style}"
+        onmouseover="this.style.opacity=1"
+        onmouseout="this.style.opacity=0.8"
+        title="Imprimir esta página (Salvar como PDF)"
+    >
+        🖨️ Imprimir página
+    </button>
+    """
+
+    # 4. A Chamada (inalterada)
+    html(button_html, height=50)
 
 
 # --- INÍCIO DA ALTERAÇÃO ---
@@ -219,17 +286,17 @@ def run_search_by_session():
             # --- Fim do bloco ---
 
 
-def run_list_all(conn):
+def run_list_all():  # <-- 1. REMOVIDO 'conn' DAQUI
     """Modo 3: Ver Histórico Completo"""
-    st.subheader("Modo 3: Ver Histórico Completo")
+    st.subheader("Modo 3: Ver Histórico Completo")  #
     st.warning(
         "Atenção: Isso pode carregar um grande volume de dados se o banco for grande."
-    )
+    )  #
 
-    if st.button("Carregar TODO o histórico"):
-        with st.spinner("Consultando todo o histórico..."):
+    if st.button("Carregar TODO o histórico"):  #
+        with st.spinner("Consultando todo o histórico..."):  #
 
-            # --- Bloco de conexão/fechamento ---
+            # --- 2. ADICIONADO O BLOCO DE CONEXÃO ---
             conn = None
             try:
                 conn = connect_to_db()  # Abre uma nova conexão
@@ -243,14 +310,15 @@ def run_list_all(conn):
                     FROM chat_history 
                     ORDER BY request_start_time ASC
                 """
-                )
-                rows = cursor.fetchall()
-                # ... (resto da lógica de exibição) ...
-                if not rows:
-                    st.warning("O banco de dados de histórico está vazio.")
+                )  #
+                rows = cursor.fetchall()  #
+
+                if not rows:  #
+                    st.warning("O banco de dados de histórico está vazio.")  #
                     return
-                st.success(f"Total de mensagens encontradas: {len(rows)}")
-                for row in rows:
+
+                st.success(f"Total de mensagens encontradas: {len(rows)}")  #
+                for row in rows:  #
                     (
                         id,
                         session_id,
@@ -264,27 +332,26 @@ def run_list_all(conn):
                         retr_dur,
                         gen_dur,
                         total_dur,
-                    ) = row
-                    with st.container(border=True):
+                    ) = row  #
+                    with st.container(border=True):  #
                         st.markdown(
                             f"**ID: {id}** | Sessão: {session_id} | Início: {start}"
-                        )
+                        )  #
                         st.caption(
                             f"Duração (s): Total={total_dur:<.2f} (Recup: {retr_dur:<.2f}s, Geração: {gen_dur:<.2f}s)"
-                        )
+                        )  #
                         st.text(
                             f"USUÁRIO (Chars: {u_chars}, Tokens: {u_tokens}): {user_msg}"
-                        )
+                        )  #
                         st.text(
                             f"ASSIST. (Chars: {b_chars}, Tokens: {b_tokens}): {bot_msg}"
-                        )
+                        )  #
 
             except Exception as e:
-                st.error(f"Erro ao ler o histórico: {e}")
+                st.error(f"Erro ao ler o histórico: {e}")  #
             finally:
                 if conn:
                     conn.close()  # Fecha a conexão
-            # --- Fim do bloco ---
 
 
 def run_list_feedback():
@@ -425,6 +492,11 @@ def main():
 
     # --- Barra Lateral de Navegação ---
     st.sidebar.title("Opções de Auditoria")
+
+    st.sidebar.markdown("---")
+    add_print_to_pdf_button()
+    st.sidebar.markdown("---")
+
     opcoes = [
         "1. Listar Todas as Sessões",
         "2. Buscar por Sessão",

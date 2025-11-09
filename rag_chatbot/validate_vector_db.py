@@ -78,14 +78,82 @@ import sys
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 from datetime import datetime
+from streamlit.components.v1 import html
 import config
 import sqlite3
+
 
 # Importa a classe centralizada que faz o trabalho pesado
 from vector_retriever import VectorRetriever
 
 # Importa o caminho do DB para salvar as avaliações
 import database as history_db
+
+
+def add_print_to_pdf_button():
+    """
+    Adiciona CSS para formatar a página para impressão e um botão
+    discreto que aciona o diálogo de impressão (window.print()).
+    """
+
+    # 1. CSS (O "Canhão" para forçar tudo preto na impressão)
+    print_css = """
+    <style>
+    @media print {
+        /* Esconde elementos da UI */
+        [data-testid="stSidebar"] { display: none; }
+        [data-testid="stHeader"] { display: none; }
+        .no-print { display: none !important; }
+        
+        /* Otimiza o layout */
+        [data-testid="stAppViewContainer"] { padding-top: 0; }
+        
+        /* 1. Força o fundo para branco */
+        body, [data-testid="stAppViewContainer"] {
+            background: #ffffff !important;
+        }
+
+        /* 2. O "Canhão": Força TODO o texto (títulos, etc.) 
+           a ser PRETO. */
+        * {
+            color: #000000 !important;
+        }
+    }
+    </style>
+    """
+    st.markdown(print_css, unsafe_allow_html=True)
+
+    # 2. O Botão (CSS inalterado)
+    button_style = """
+        background-color: transparent;
+        border: none;
+        color: #0068C9; /* Cor azul (padrão de link) */
+        cursor: pointer;
+        font-family: 'Source Sans Pro', sans-serif;
+        font-size: 0.95rem; /* Tamanho de fonte padrão */
+        padding: 0.25rem 0rem; /* Padding vertical leve */
+        margin: 0.5rem 0;
+        text-align: left; /* Alinha à esquerda */
+        opacity: 0.8; /* Ligeiramente transparente */
+        transition: opacity 0.2s;
+    """
+
+    # 3. O HTML do Botão (inalterado)
+    button_html = f"""
+    <button
+        onclick="window.parent.print()"
+        class="no-print"
+        style="{button_style}"
+        onmouseover="this.style.opacity=1"
+        onmouseout="this.style.opacity=0.8"
+        title="Imprimir esta página (Salvar como PDF)"
+    >
+        🖨️ Imprimir página
+    </button>
+    """
+
+    # 4. A Chamada (inalterada)
+    html(button_html, height=50)
 
 
 @st.cache_resource
@@ -466,6 +534,11 @@ def main():
     retriever = initialize_retriever()
 
     st.sidebar.title("Opções de Validação")
+
+    st.sidebar.markdown("---")
+    add_print_to_pdf_button()
+    st.sidebar.markdown("---")
+
     opcoes = [
         "1. Testar Busca (SÓ Vetorial)",
         "2. Testar Busca (COM Re-Ranking)",
