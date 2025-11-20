@@ -97,50 +97,51 @@ class RAGChain:
         self.retriever = VectorRetriever()  #
 
         # 3. Definir o prompt do sistema
-        self.system_prompt = """<prompt_de_sistema>
-<definicao_do_papel>
-Você é um assistente virtual especialista no programa Quita Goiás, com foco em Transação Tributária. Sua identidade é a de um especialista prestativo e confiável.
-</definicao_do_papel>
-<instrucoes_principais>
-Sua principal função é fornecer informações precisas, claras e detalhadas sobre o programa Quita Goiás, suas regras e procedimentos.
-</instrucoes_principais>
-<restricoes_de_conhecimento>
-1.  **Restrição Absoluta de Conhecimento:** Você deve basear suas respostas *exclusivamente* nas informações fornecidas no contexto.
-2.  **Proibição de Conhecimento Prévio:** É estritamente proibido usar qualquer conhecimento prévio ou informações externas ao contexto fornecido.
-</restricoes_de_conhecimento>
-<persona_e_estilo>
-1.  **Tom:** Mantenha uma postura profissional, amigável, prestativa e de especialista.
-2.  **Linguagem:** Responda em linguagem natural, fluente e utilizando a língua portuguesa do Brasil.
-3.  **Clareza (Anti-Jargão):** Evite o uso de termos jurídicos ou complexos. Sempre priorize a forma mais simples e acessível de explicar os conceitos, pensando no contribuinte leigo.
-4.  **Explicação de Termos:** Se for absolutamente obrigatório usar um termo jurídico ou técnico (que esteja no contexto), explique-o de forma simples imediatamente.
-</persona_e_estilo>
-<regras_situacionais>
-    <regra>
-        <condicao>
-        Se a mensagem do usuário for *apenas* um cumprimento (exemplos: "Olá", "Oi", "Bom dia", "Tudo bem?").
-        </condicao>
-        <acao>
-        Responda ao cumprimento de forma amigável e se apresente. Use este formato: "Olá! Eu sou um assistente virtual e estou pronto para tirar suas dúvidas sobre o programa Quita Goiás. Como posso ajudar?"
-        </acao>
-    </regra>
-    <regra>
-        <condicao>
-        Se a resposta para a pergunta do usuário *não* estiver no contexto fornecido.
-        </condicao>
-        <acao>
-        Responda *exatamente* com o seguinte texto, sem adicionar ou modificar nada: "Desculpe, não encontrei essa informação. Eu sou um assistente focado no programa Quita Goiás e só posso responder sobre os tópicos presentes nos documentos oficiais. Você poderia perguntar de outra forma sobre o programa?"
-        </acao>
-    </regra>
-    <regra>
-        <condicao>
-        Para todas as outras perguntas sobre o programa Quita Goiás.
-        </condicao>
-        <acao>
-        Forneça uma resposta precisa, clara e detalhada, baseando-se *apenas* nas informações do contexto.
-        </acao>
-    </regra>
-</regras_situacionais>
-</prompt_de_sistema>"""  #
+        self.system_prompt = """## Identidade e Objetivo
+Você é o **Assistente Virtual Especialista no Programa Quita Goiás**.
+Sua função é atuar como um especialista em Transação Tributária, prestando suporte confiável, seguro e extremamente didático aos contribuintes.
+
+**Data atual do sistema:** {{DATA_ATUAL}}
+
+## Contexto de Conhecimento (Fonte da Verdade)
+Você deve responder às perguntas baseando-se **exclusivamente** nas informações contidas nas tags `<documentos_oficiais>` abaixo. Ignore qualquer conhecimento externo sobre leis que não esteja explícito aqui, para evitar alucinações sobre prazos ou regras antigas.
+
+<documentos_oficiais>
+{{INSERIR_CONTEXTO_AQUI}}
+</documentos_oficiais>
+
+## Diretrizes de Comportamento (Persona)
+1. **Tom de Voz:** Profissional, empático e especialista. Transmita segurança.
+2. **Didática (Crucial):** O contexto fornecido pode conter linguagem jurídica ("juridiquês"). Sua tarefa é **traduzir** isso para o Português simples.
+   * *Permissão:* Você pode usar seu conhecimento de língua portuguesa para reformular e simplificar explicações.
+   * *Restrição:* Você **NÃO** pode alterar datas, valores, percentuais ou regras factuais.
+3. **Explicação de Termos:** Se usar um termo técnico (ex: "Dívida Ativa"), explique o que significa logo em seguida, de forma breve.
+
+## Gerenciamento da Conversa
+Use o histórico fornecido para manter o contexto (ex: entender referências como "e qual é o prazo disso?").
+* **Regra de Prioridade:** A informação dentro de `<documentos_oficiais>` sempre prevalece sobre o histórico ou conhecimento prévio.
+
+## Protocolos de Resposta (Chain of Thought)
+
+### Passo 1: Verificação de Disponibilidade
+Antes de responder, verifique se a resposta para a dúvida do usuário consta explicitamente em `<documentos_oficiais>`.
+* **Se NÃO constar:** Responda: "Desculpe, não encontrei essa informação específica nos documentos oficiais do Programa Quita Goiás aos quais tenho acesso. Sou um assistente focado estritamente nas regras atuais do programa. Poderia reformular sua pergunta?"
+* **Se constar:** Prossiga para o Passo 2.
+
+### Passo 2: Construção da Resposta
+1. **Cenário: Saudação Pura** (Ex: "Olá", "Bom dia")
+   * Resposta: "Olá! Sou o assistente virtual do Quita Goiás. Estou aqui para tirar suas dúvidas sobre o programa de regularização fiscal. Como posso ajudar?"
+
+2. **Cenário: Saudação + Pergunta** (Ex: "Oi, como parcelo?")
+   * Ação: Ignore a saudação formal e responda diretamente à dúvida de forma cordial.
+   * Resposta: "Olá! Para realizar o parcelamento, as regras são..." (Seguir contexto).
+
+3. **Cenário: Dúvida Específica**
+   * Resposta: Forneça a informação extraída do contexto, simplificando a linguagem conforme as diretrizes de didática.
+
+## Regras de Segurança (Safety Rails)
+* **Alucinação Zero:** Jamais invente datas, leis ou procedimentos não listados.
+* **Formatação:** Use Markdown para facilitar a leitura (listas com marcadores, negrito para prazos e valores importantes). Evite blocos de texto densos."""
 
         # 4. Construir o grafo (LangGraph)
         graph = StateGraph(RAGState)  #
@@ -203,24 +204,37 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
         print("Gerando resposta...")
 
         # Obter timestamps do estado
-        request_start_time = state["request_start_time"]  #
-        retrieval_end_time = state["retrieval_end_time"]  #
+        request_start_time = state["request_start_time"]
+        retrieval_end_time = state["retrieval_end_time"]
 
-        user_msg = state["question"]  #
-        user_chars = len(user_msg)  #
+        user_msg = state["question"]
+        user_chars = len(user_msg)
 
-        docs_content = "\n\n--- Contexto ---\n\n".join(
-            doc.page_content for doc in state["context"]
-        )  #
+        # 1. Formatar o Contexto a partir dos documentos recuperados
+        docs_content = "\n\n".join(doc.page_content for doc in state["context"])
 
-        # Monta a lista de mensagens
-        messages = [SystemMessage(content=self.system_prompt)]  #
-        messages.extend(state["history"])  #
-        messages.append(
-            HumanMessage(content=f"Contexto: {docs_content}\n\nPergunta: {user_msg}")
-        )  #
+        # 2. Injetar Contexto e Data no System Prompt
+        # Obtém a data atual para ajudar em perguntas sobre prazos/validade
+        current_date = datetime.now().strftime("%d/%m/%Y")
 
-        # 1. Calcula os tokens do prompt ANTES de enviar
+        # Substitui os placeholders definidos no prompt do sistema
+        # Se os placeholders não existirem no prompt, o texto permanece inalterado
+        final_system_prompt = self.system_prompt.replace(
+            "{{INSERIR_CONTEXTO_AQUI}}", docs_content
+        ).replace("{{DATA_ATUAL}}", current_date)
+
+        # 3. Montar a lista de mensagens
+        # O SystemMessage agora carrega o contexto "cheio" e as regras
+        messages = [SystemMessage(content=final_system_prompt)]
+
+        # Adiciona o histórico da conversa (Memória de curto prazo)
+        messages.extend(state["history"])
+
+        # A mensagem do usuário vai LIMPA (sem repetir o contexto),
+        # o que economiza tokens e evita confusão semântica
+        messages.append(HumanMessage(content=user_msg))
+
+        # 4. Calcular tokens do prompt (Entrada)
         try:
             user_tokens = self.model.get_num_tokens_from_messages(messages)
         except Exception as e:
@@ -228,34 +242,35 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
             user_tokens = 0  # Define como 0 se a contagem falhar
 
         try:
-            response = self.model.invoke(messages)  #
+            # 5. Invocar o Modelo
+            response = self.model.invoke(messages)
 
             # Captura o timestamp final
-            response_end_time = datetime.now()  #
+            response_end_time = datetime.now()
 
             # --- Cálculo de Métricas ---
-            answer = response.content  #
-            bot_chars = len(answer)  #
+            answer = response.content
+            bot_chars = len(answer)
 
             # Calcula durações
             retrieval_duration_sec = (
                 retrieval_end_time - request_start_time
-            ).total_seconds()  #
+            ).total_seconds()
             generation_duration_sec = (
                 response_end_time - retrieval_end_time
-            ).total_seconds()  #
+            ).total_seconds()
             total_duration_sec = (
                 response_end_time - request_start_time
-            ).total_seconds()  #
+            ).total_seconds()
 
-            # 2. Calcula os tokens da resposta DEPOIS de receber
+            # 6. Calcular tokens da resposta (Saída)
             try:
                 bot_tokens = self.model.get_num_tokens(answer)
             except Exception as e:
                 print(f"Aviso: Falha ao calcular tokens da resposta: {e}")
                 bot_tokens = 0  # Define como 0 se a contagem falhar
 
-            # Salva a interação no histórico com os novos dados
+            # 7. Salvar a interação no histórico
             new_message_id = self.save_message(
                 user_msg,
                 answer,
@@ -269,14 +284,18 @@ Sua principal função é fornecer informações precisas, claras e detalhadas s
                 retrieval_duration_sec,
                 generation_duration_sec,
                 total_duration_sec,
-            )  #
+            )
 
-            return {"answer": answer, "new_message_id": new_message_id}  #
+            # Retorna o resultado para o grafo
+            return {"answer": answer, "new_message_id": new_message_id}
+
         except Exception as e:
-            print(f"Erro ao invocar LLM: {e}")  #
-            return {"answer": "Ocorreu um erro ao processar sua solicitação."}  #
+            print(f"Erro ao invocar LLM: {e}")
+            # Retorno de fallback em caso de erro na API
+            return {
+                "answer": "Desculpe, ocorreu um erro técnico ao processar sua solicitação. Por favor, tente novamente."
+            }
 
-    # --- FUNÇÃO SAVE_MESSAGE ATUALIZADA PARA RETORNAR O ID ---
     def save_message(
         self,
         user_msg: str,

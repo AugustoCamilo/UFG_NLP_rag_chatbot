@@ -62,6 +62,7 @@ import sqlite3
 import os
 import sys
 import csv
+from ui_utils import add_print_to_pdf_button
 from datetime import datetime
 from streamlit.components.v1 import html
 
@@ -70,76 +71,6 @@ from streamlit.components.v1 import html
 import database as history_db
 
 
-def add_print_to_pdf_button():
-    """
-    Adiciona CSS para formatar a página para impressão e um botão
-    discreto que aciona o diálogo de impressão (window.print()).
-    """
-
-    # 1. CSS (O "Canhão" para forçar tudo preto na impressão)
-    print_css = """
-    <style>
-    @media print {
-        /* Esconde elementos da UI */
-        [data-testid="stSidebar"] { display: none; }
-        [data-testid="stHeader"] { display: none; }
-        .no-print { display: none !important; }
-        
-        /* Otimiza o layout */
-        [data-testid="stAppViewContainer"] { padding-top: 0; }
-        
-        /* 1. Força o fundo para branco */
-        body, [data-testid="stAppViewContainer"] {
-            background: #ffffff !important;
-        }
-
-        /* 2. O "Canhão": Força TODO o texto (títulos, etc.) 
-           a ser PRETO. */
-        * {
-            color: #000000 !important;
-        }
-    }
-    </style>
-    """
-    st.markdown(print_css, unsafe_allow_html=True)
-
-    # 2. O Botão (CSS inalterado)
-    button_style = """
-        background-color: transparent;
-        border: none;
-        color: #0068C9; /* Cor azul (padrão de link) */
-        cursor: pointer;
-        font-family: 'Source Sans Pro', sans-serif;
-        font-size: 0.95rem; /* Tamanho de fonte padrão */
-        padding: 0.25rem 0rem; /* Padding vertical leve */
-        margin: 0.5rem 0;
-        text-align: left; /* Alinha à esquerda */
-        opacity: 0.8; /* Ligeiramente transparente */
-        transition: opacity 0.2s;
-    """
-
-    # 3. O HTML do Botão (inalterado)
-    button_html = f"""
-    <button
-        onclick="window.parent.print()"
-        class="no-print"
-        style="{button_style}"
-        onmouseover="this.style.opacity=1"
-        onmouseout="this.style.opacity=0.8"
-        title="Imprimir esta página (Salvar como PDF)"
-    >
-        🖨️ Imprimir página
-    </button>
-    """
-
-    # 4. A Chamada (inalterada)
-    html(button_html, height=50)
-
-
-# --- INÍCIO DA ALTERAÇÃO ---
-# REMOVIDO: @st.cache_resource
-# Não podemos cachear a conexão, pois ela fica "stale" (vencida)
-# e não vê as escritas feitas pelo app.py (outro processo).
 def connect_to_db():
     """
     Conecta ao banco de dados SQLite do histórico.
