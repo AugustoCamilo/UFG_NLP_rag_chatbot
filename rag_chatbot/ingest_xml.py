@@ -30,30 +30,31 @@ from langchain_huggingface import HuggingFaceEmbeddings
 # Importar o arquivo de configuração existente
 import config
 
+
 def parse_xml_to_documents(xml_path):
     """
     Lê um arquivo XML e converte seus itens em objetos Document do LangChain.
     Ignora o 'chunk_id' original.
     """
     documents = []
-    
+
     try:
         tree = ET.parse(xml_path)
         root = tree.getroot()
-        
+
         # Itera sobre cada <item> no XML
-        for item in root.findall('item'):
+        for item in root.findall("item"):
             # 1. Extrair Conteúdo
-            conteudo_node = item.find('conteudo')
+            conteudo_node = item.find("conteudo")
             if conteudo_node is None or not conteudo_node.text:
-                continue # Pula itens vazios
-            
+                continue  # Pula itens vazios
+
             page_content = conteudo_node.text.strip()
-            
+
             # 2. Extrair Metadados
             metadata = {}
-            metadados_node = item.find('metadados')
-            
+            metadados_node = item.find("metadados")
+
             if metadados_node is not None:
                 for meta_item in metadados_node:
                     # Adiciona chave/valor ao dicionário de metadados
@@ -67,7 +68,9 @@ def parse_xml_to_documents(xml_path):
                 try:
                     # Se o caminho for absoluto, torna relativo à raiz do projeto
                     if os.path.isabs(metadata["source"]):
-                        metadata["source"] = os.path.relpath(metadata["source"], config.BASE_DIR)
+                        metadata["source"] = os.path.relpath(
+                            metadata["source"], config.BASE_DIR
+                        )
                 except ValueError:
                     # Caso o caminho esteja em uma unidade diferente (Windows), mantém como está
                     pass
@@ -76,13 +79,14 @@ def parse_xml_to_documents(xml_path):
             # Nota: Não passamos 'id' aqui, o Chroma vai gerar um UUID.
             doc = Document(page_content=page_content, metadata=metadata)
             documents.append(doc)
-            
+
     except ET.ParseError as e:
         print(f"Erro ao processar XML {xml_path}: {e}")
     except Exception as e:
         print(f"Erro genérico ao ler {xml_path}: {e}")
 
     return documents
+
 
 def process_documents_from_xml():
     """Lê XMLs, cria documentos e vetoriza no ChromaDB."""
@@ -99,7 +103,7 @@ def process_documents_from_xml():
 
     # 2. Carregar e Converter XMLs para Documents
     all_docs = []
-    
+
     for filename in tqdm(xml_files, desc="Lendo XMLs", unit="arquivo"):
         filepath = os.path.join(config.DOCS_DIR, filename)
         docs_from_file = parse_xml_to_documents(filepath)
@@ -120,13 +124,29 @@ def process_documents_from_xml():
     if os.path.isdir(config.VECTOR_DB_DIR):
         try:
             shutil.rmtree(config.VECTOR_DB_DIR)
+            # Pequena pausa para o OS liberar o file handle
+            time.sleep(1)
+        except PermissionError:
+            print("ERRO CRÍTICO: Não foi possível apagar a pasta do banco de dados.")
+            print(
+                "Motivo: O banco de dados está em uso por outro processo (provavelmente o Streamlit)."
+            )
+            print("SOLUÇÃO: Feche o terminal do 'streamlit run' e tente novamente.")
+            return  # PARE a execução aqui para não corromper mais
         except OSError as e:
             print(f"Erro ao remover diretório do banco: {e}")
             return
-    
+
+    # Verificação extra
+    if os.path.exists(config.VECTOR_DB_DIR):
+        print(
+            "Erro: O diretório ainda existe. A ingestão foi abortada para evitar corrupção."
+        )
+        return
+
     # 5. Criar e persistir o banco de dados vetorial
     print("Gerando Embeddings e populando o ChromaDB...")
-    
+
     # Batch size pode ser ajustado se houver erro de memória, mas Chroma gerencia bem
     vectordb = Chroma.from_documents(
         documents=all_docs,
@@ -134,7 +154,10 @@ def process_documents_from_xml():
         persist_directory=config.VECTOR_DB_DIR,
     )
 
-    print(f"Sucesso! Banco de vetores recriado em '{config.VECTOR_DB_DIR}' a partir dos XMLs.")
+    print(
+        f"Sucesso! Banco de vetores recriado em '{config.VECTOR_DB_DIR}' a partir dos XMLs."
+    )
+
 
 if __name__ == "__main__":
     process_documents_from_xml()
