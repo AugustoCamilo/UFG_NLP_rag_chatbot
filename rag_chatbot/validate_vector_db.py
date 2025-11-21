@@ -5,90 +5,27 @@ Módulo de Frontend para Avaliação Manual do Retriever (Entrada de Dados).
 Esta aplicação Streamlit é a principal ferramenta do avaliador humano para
 testar a qualidade do sistema de recuperação (Retrieval) e *criar* os
 dados de "verdade de campo" (ground truth).
-
-Enquanto o `validate_evaluation.py` é o *dashboard de
-análise* (que lê os dados), este script é a *ferramenta de
-entrada* (que escreve os dados).
-
-Ele se conecta ao VectorDB (Chroma) e ao banco de
-avaliação (SQLite).
-
----
-### Funcionalidades Principais (Modos)
----
-
-A aplicação é dividida em cinco modos principais:
-
-1.  **Testar Busca (SÓ Vetorial):**
-    * Executa `run_search_test_no_rerank`.
-    * Testa a performance do "Recall" puro, chamando
-        `retriever.retrieve_context_vector_search_only`
-        para buscar os K_FINAL chunks.
-
-2.  **Testar Busca (COM Re-Ranking):**
-    * Executa `run_search_test`.
-    * Testa a performance do "Recall + Precisão", chamando
-        `retriever.retrieve_context_with_scores` para
-        buscar K_RAW chunks, re-ranquear, e exibir
-        os K_FINAL melhores.
-
-3.  **Listar Todos os Chunks:**
-    * Executa `run_list_all`.
-    * Uma ferramenta de utilidade para inspecionar o conteúdo
-        bruto do banco de vetores ChromaDB (via `retriever.get_all_chunks`).
-
-4.  **Exportar Chunks para XML:**
-    * Executa `run_export_xml`.
-    * Exporta o conteúdo bruto do ChromaDB.
-
-5.  **Encerrar Servidor:**
-    * Executa `run_shutdown` para parar o servidor.
-
----
-### Fluxo de Avaliação (Modos 1 e 2)
----
-
-O fluxo principal de avaliação é o coração deste script:
-
-1.  **Busca:** O usuário insere uma query e executa uma busca (vetorial ou
-    re-ranking).
-2.  **Exibição (`display_search_results`):** A interface
-    exibe os chunks encontrados e apresenta um formulário de avaliação.
-3.  **Coleta de Métricas (Formulário):**
-    * **Checkboxes (Relevância):** O avaliador marca *todos* os chunks
-        corretos. (Usado para calcular Hit Rate e Precisão@K).
-    * **Radio Buttons (MRR):** O avaliador marca o *melhor* chunk
-        (o primeiro mais relevante).
-4.  **Salvamento (`save_evaluation_to_db`):**
-    * Quando o formulário é enviado, esta função calcula as três
-        métricas (Hit Rate, MRR, Precisão@K).
-    * Ela então salva a query e as métricas na tabela `validation_runs`.
-    * Salva cada chunk individual, seu score, e se foi marcado
-        como correto (`is_correct_eval`) na tabela
-        `validation_retrieved_chunks`.
-    * *Nota:* Esta função converte os scores (`numpy.float`) para
-        `float` nativo do Python antes de salvar, para evitar
-        corrupção de dados (BLOBs) no SQLite.
 """
-
 
 import streamlit as st
 import os
-import sys
 import xml.etree.ElementTree as ET
-from ui_utils import add_print_to_pdf_button
 from xml.dom import minidom
 from datetime import datetime
-from streamlit.components.v1 import html
-import config
-import sqlite3
+from sqlmodel import Session, create_engine
 
-
-# Importa a classe centralizada que faz o trabalho pesado
+# --- Imports do Projeto ---
+from settings import settings  # <--- Importação da nova configuração
+from ui_utils import add_print_to_pdf_button
 from vector_retriever import VectorRetriever
 
-# Importa o caminho do DB para salvar as avaliações
-import database as history_db
+# --- Importação da Camada de Dados (SQLModel) ---
+# Removido DB_PATH daqui, pois agora vem do settings
+from database import ValidationRun, ValidationRetrievedChunk
+
+# Configuração do Engine Síncrono para o Streamlit
+# Usamos a URL síncrona definida no settings.py
+engine = create_engine(settings.SYNC_DATABASE_URL)
 
 
 @st.cache_resource
@@ -110,100 +47,80 @@ def initialize_retriever():
         st.stop()
 
 
-# --- FUNÇÃO DE SALVAMENTO ---
+# --- FUNÇÃO DE SALVAMENTO (REFATORADA COM SQLMODEL) ---
 def save_evaluation_to_db(query, search_type, results_map, hit_rate_evals, mrr_score):
     """
-    Salva a consulta, os chunks e as avaliações (Hit Rate, MRR e Precisão@K)
-    no banco.
-    'hit_rate_evals' (dict): {1: True, 2: False, ...} - dos checkboxes
-    'mrr_score' (float): A pontuação MRR já calculada
+    Salva a consulta, os chunks e as avaliações no banco usando SQLModel.
     """
-    conn = None
     try:
-        conn = sqlite3.connect(history_db.DB_PATH)  #
-        cursor = conn.cursor()
+        with Session(engine) as session:
+            # 1. Calcular Métricas
 
-        # 1. Calcular Métrica 1: Hit Rate (Binário, 1/0)
-        hit_rate = 1 if any(hit_rate_evals.values()) else 0  #
+            # Métrica 1: Hit Rate (Binário, 1/0)
+            hit_rate = 1 if any(hit_rate_evals.values()) else 0
 
-        # 2. Calcular Métrica 2: MRR
-        mrr = float(mrr_score)
+            # Métrica 2: MRR
+            mrr = float(mrr_score)
 
-        # --- INÍCIO DA ALTERAÇÃO ---
-        # 3. Calcular Métrica 3: Precisão@K
+            # Métrica 3: Precisão@K
+            k = len(results_map)
+            hit_count = sum(bool(v) for v in hit_rate_evals.values())
+            precision = (hit_count / k) if k > 0 else 0.0
+            precision = float(precision)
 
-        # K é o número total de resultados mostrados (ex: 3)
-        k = len(results_map)
-
-        # hit_count é a contagem de checkboxes marcados
-        hit_count = sum(bool(v) for v in hit_rate_evals.values())
-
-        # Precisão = (Chunks Corretos) / (Total de Chunks Mostrados)
-        precision = (hit_count / k) if k > 0 else 0.0
-        # Força para float nativo
-        precision = float(precision)
-
-        # 4. Inserir na tabela 'validation_runs'
-        cursor.execute(
-            """
-            INSERT INTO validation_runs (
-                query, search_type, 
-                hit_rate_eval, mrr_eval, precision_at_k_eval
+            # 2. Criar e Salvar a Rodada (ValidationRun)
+            run_entry = ValidationRun(
+                query=query,
+                search_type=search_type,
+                hit_rate_eval=hit_rate,
+                mrr_eval=mrr,
+                precision_at_k_eval=precision,
+                timestamp=datetime.now(),
             )
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (
-                query,
-                search_type,
-                hit_rate,
-                mrr,
-                precision,
-            ),  # <-- 'precision' adicionado
-        )  #
 
-        run_id = cursor.lastrowid  #
+            session.add(run_entry)
+            session.commit()
+            session.refresh(run_entry)  # Atualiza para obter o ID gerado
 
-        # 5. Inserir cada chunk... (lógica inalterada)
-        for rank, (doc, score) in results_map.items():
-            is_correct = 1 if hit_rate_evals.get(rank, False) else 0
-            # Garante que o score (que é numpy.float)
-            # seja salvo como um float nativo do Python.
-            score_float = float(score)
+            # 3. Criar e Salvar os Chunks (ValidationRetrievedChunk)
+            for rank, (doc, score) in results_map.items():
+                is_correct = 1 if hit_rate_evals.get(rank, False) else 0
 
-            cursor.execute(
-                """
-                INSERT INTO validation_retrieved_chunks 
-                (run_id, rank, chunk_content, source, page, score, is_correct_eval)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    run_id,
-                    rank,
-                    doc.page_content,
-                    doc.metadata.get("source", "N/A"),
-                    doc.metadata.get("page", None),
-                    score_float,
-                    is_correct,
-                ),
-            )  #
+                # Garante conversão de numpy.float para float python
+                score_float = float(score)
 
-        conn.commit()  #
-        st.success(f"Avaliação salva com sucesso! (ID da Rodada: {run_id})")  #
+                # Trata campo page que pode ser None
+                page_val = doc.metadata.get("page", None)
+                if page_val is not None:
+                    try:
+                        page_val = int(page_val)
+                    except:
+                        page_val = None
+
+                chunk_entry = ValidationRetrievedChunk(
+                    run_id=run_entry.id,
+                    rank=rank,
+                    chunk_content=doc.page_content,
+                    source=doc.metadata.get("source", "N/A"),
+                    page=page_val,
+                    score=score_float,
+                    is_correct_eval=is_correct,
+                )
+                session.add(chunk_entry)
+
+            # Commit final dos chunks
+            session.commit()
+
+            st.success(f"Avaliação salva com sucesso! (ID da Rodada: {run_entry.id})")
 
     except Exception as e:
-        if conn:
-            conn.rollback()  #
-        st.error(f"Erro ao salvar avaliação no banco de dados: {e}")  #
-    finally:
-        if conn:
-            conn.close()
+        st.error(f"Erro ao salvar avaliação no banco de dados: {e}")
 
 
-# --- FUNÇÃO DE DISPLAY  ---
+# --- FUNÇÃO DE DISPLAY ---
 def display_search_results(query, search_type, results_with_scores):
     """
-    Exibe os resultados da busca E o formulário de avaliação
-    com Checkboxes (Hit Rate) e Radio Buttons (MRR).
+    Exibe os resultados da busca E o formulário de avaliação.
     """
 
     results_map = {
@@ -221,7 +138,9 @@ def display_search_results(query, search_type, results_with_scores):
         source = doc.metadata.get("source", "N/A")
         page = doc.metadata.get("page", "N/A")
         score_label = (
-            "Score de Relevância" if search_type == "reranked" else "Score de Distância"
+            "Score de Relevância"
+            if search_type == "reranked_NC"
+            else "Score de Distância"
         )
 
         with st.container(border=True):
@@ -231,7 +150,7 @@ def display_search_results(query, search_type, results_with_scores):
 
     st.divider()
 
-    # --- Formulário de Avaliação  ---
+    # --- Formulário de Avaliação ---
     st.subheader("Avaliar Resultados")
 
     with st.form(key=f"eval_form_{search_type}"):
@@ -255,12 +174,9 @@ def display_search_results(query, search_type, results_with_scores):
             "(a que melhor responde à pergunta)."
         )
 
-        # Cria as opções para o Radio
-        # Ex: ["Resultado 1 (MRR = 1)", "Resultado (MRR = 0.5)", "Resultado (MRR = 0.33)", "Nenhuma (MRR = 0)"]
         radio_options = []
         for rank in results_map.keys():
             mrr_score = 1.0 / rank
-            # Adiciona a opção formatada
             radio_options.append(f"Resultado {rank} (MRR = {mrr_score:.2f})")
 
         radio_options.append("Nenhuma (MRR = 0)")
@@ -275,28 +191,26 @@ def display_search_results(query, search_type, results_with_scores):
         submit_eval_button = st.form_submit_button(label="Salvar Avaliação")
 
     if submit_eval_button:
-
-        # 1. Processar a seleção do Radio para obter o rank (1, 2, 3... ou 0)
+        # 1. Processar a seleção do Radio
         mrr_eval_rank = 0
         if selected_radio != "Nenhuma (MRR = 0)":
-            # Extrai o número do texto "Resultado X"
-            mrr_eval_rank = int(selected_radio.split(" ")[1])  #
+            mrr_eval_rank = int(selected_radio.split(" ")[1])
 
-        # 2. Calcular a pontuação MRR conforme a fórmula
+        # 2. Calcular a pontuação MRR
         mrr_score = 0.0
         if mrr_eval_rank > 0:
             mrr_score = 1.0 / mrr_eval_rank
 
-        # 3. Passar o 'mrr_score' (calculado) em vez do 'mrr_eval_rank' (bruto)
+        # 3. Salvar via SQLModel
         save_evaluation_to_db(
             query,
             search_type,
             results_map,
             evaluations_hit_rate,
-            mrr_score,  # Passando o score (0.0, 0.33, 0.5, 1)
+            mrr_score,
         )
 
-        # 1. Limpa o estado da sessão para "resetar" a UI
+        # Limpeza de estado UI
         if "results" in st.session_state:
             del st.session_state.results
         if "query" in st.session_state:
@@ -304,10 +218,7 @@ def display_search_results(query, search_type, results_with_scores):
         if "search_type" in st.session_state:
             del st.session_state.search_type
 
-        # Limpa os campos de texto (widgets)
         st.session_state.clear_inputs = True
-
-        # 2. Força o Streamlit a rodar o script do início
         st.rerun()
 
 
@@ -315,7 +226,7 @@ def run_search_test_no_rerank(retriever: VectorRetriever):
     """Modo 1: Testar Busca Vetorial Apenas"""
     st.subheader("Modo 1: Testar Busca (SÓ Vetorial, sem Re-Ranking)")
     st.info(
-        f"Testa o RECALL. Busca {config.SEARCH_K_FINAL} e exibe {config.SEARCH_K_FINAL}."
+        f"Testa o RECALL. Busca {settings.SEARCH_K_FINAL} e exibe {settings.SEARCH_K_FINAL}."
     )
 
     with st.form(key="search_form_no_rerank"):
@@ -347,7 +258,7 @@ def run_search_test(retriever: VectorRetriever):
     """Modo 2: Testar Busca com Re-Ranking"""
     st.subheader("Modo 2: Testar Busca (COM Re-Ranking)")
     st.info(
-        f"Testa a PRECISÃO. Busca {config.SEARCH_K_RAW}, re-rankeia e exibe {config.SEARCH_K_FINAL}."
+        f"Testa a PRECISÃO. Busca {settings.SEARCH_K_RAW}, re-rankeia e exibe {settings.SEARCH_K_FINAL}."
     )
 
     with st.form(key="search_form_rerank"):
@@ -431,8 +342,10 @@ def run_export_xml(retriever: VectorRetriever):
                 conteudo_el.text = doc_text
                 metadatos_el = ET.SubElement(item, "metadados")
                 for key, value in meta.items():
-                    meta_key_el = ET.SubElement(metadatos_el, key.replace(" ", "_"))  # type: ignore
-                    meta_key_el.text = str(value)
+                    if key:  # evitar chaves vazias
+                        clean_key = key.replace(" ", "_")
+                        meta_key_el = ET.SubElement(metadatos_el, clean_key)
+                        meta_key_el.text = str(value)
             try:
                 xml_string = ET.tostring(root, "utf-8")
                 parsed_string = minidom.parseString(xml_string)
@@ -446,8 +359,8 @@ def run_export_xml(retriever: VectorRetriever):
 
 
 def run_shutdown():
-    """Modo 5: Encerrar"""
-    st.subheader("Modo 5: Encerrar Servidor")
+    """Modo 5: Sair"""
+    st.subheader("Modo 5: Sair")
     st.warning("Clicar neste botão encerrará este servidor Streamlit.")
     if st.button("Encerrar Aplicação"):
         st.success("Encerrando servidor...")
@@ -482,7 +395,7 @@ def main():
         "2. Testar Busca (COM Re-Ranking)",
         "3. Listar Todos os Chunks",
         "4. Exportar Chunks para XML",
-        "5. Encerrar Servidor",
+        "5. Sair",
     ]
     modo = st.sidebar.radio(
         "Selecione uma operação:", opcoes, label_visibility="collapsed"

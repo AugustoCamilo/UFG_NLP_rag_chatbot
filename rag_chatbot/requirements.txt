@@ -1,6 +1,10 @@
 # Framework da Interface Web
 streamlit==1.50.0
 
+# Banco de Dados e ORM 
+sqlmodel>=0.0.22
+aiosqlite>=0.20.0
+
 # Frameworks principais do LangChain
 langchain==1.0.2
 langchain-core==1.0.1
@@ -16,11 +20,10 @@ langchain-text-splitters==1.0.0
 # Modelos de Embedding e Re-Ranking
 sentence-transformers==5.1.2
 
-# Carregamento de PDF (requerido pelo PyMuPDFLoader)
+# Carregamento de PDF
 PyMuPDF==1.26.5
 
 # Utilitários
 python-dotenv==1.1.1
 tqdm==4.67.1
-
-
+pydantic-settings>=2.0.0

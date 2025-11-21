@@ -6,7 +6,7 @@ from xml.dom import minidom
 from datetime import datetime
 
 # Importar o arquivo de configuração
-import config
+from settings import settings
 
 # --- IMPORT PRINCIPAL ATUALIZADO ---
 # Removemos Chroma, HuggingFaceEmbeddings e CrossEncoder

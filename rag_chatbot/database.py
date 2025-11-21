@@ -1,161 +1,97 @@
 # database.py
-"""
-Módulo de Inicialização do Banco de Dados SQLite.
+import asyncio
+from datetime import datetime
+from typing import Optional
+from sqlmodel import Field, SQLModel
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
 
-Este script é responsável por definir e inicializar a estrutura completa
-do banco de dados (`chat_solution.db`) usado pela aplicação.
+# IMPORTAÇÃO NOVA
+from settings import settings
 
-Ele é executado tanto pelo `app.py` (para garantir que o banco de produção
-exista) quanto pelos scripts de validação (`validate_vector_db.py`,
-`validate_evaluation.py`).
+# Garante que o diretório existe usando pathlib
+settings.DB_DIR.mkdir(exist_ok=True)
 
-O comando `CREATE TABLE IF NOT EXISTS` é usado para garantir que
-o script possa ser executado com segurança sem apagar dados existentes,
-apenas criando as tabelas que estiverem faltando.
+# --- Engine Async (Usando a URL do settings) ---
+engine = create_async_engine(settings.DATABASE_URL, echo=False, future=True)
 
----
-### Estrutura do Schema (Tabelas)
----
-
-O banco é dividido em duas seções principais:
-
-#### 1. Tabelas de Produção (Usadas pelo `app.py` e `rag_chain.py`):
-
-* **`chat_history`:**
-    * Armazena cada interação (pergunta/resposta) de todas as sessões
-        de usuário.
-    * Inclui métricas de performance (duração, tokens, caracteres)
-        para cada chamada ao LLM.
-* **`feedback`:**
-    * Armazena o feedback do usuário (like/dislike).
-    * É vinculada à `chat_history` através da `message_id`
-        (chave estrangeira).
-
-#### 2. Tabelas de Avaliação (Usadas pelos scripts de validação):
-
-* **`validation_runs`:**
-    * Armazena o "resumo" de cada rodada de teste manual executada
-        no `validate_vector_db.py`.
-    * Contém a query, o tipo de busca (vetorial vs. re-ranking) e
-        as métricas de alto nível calculadas (Hit Rate, MRR, Precisão@K).
-* **`validation_retrieved_chunks`:**
-    * Armazena *cada chunk individual* que foi retornado durante uma
-        rodada de validação.
-    * É vinculada à `validation_runs` pela `run_id`.
-    * Registra o `score` e se o avaliador marcou aquele
-        chunk como correto (`is_correct_eval`).
-"""
+# Factory de Sessão Async
+AsyncSessionFactory = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
-import sqlite3
-import os
+# --- Modelos de Dados (Inalterados, mas mantidos aqui para contexto) ---
+class ChatHistory(SQLModel, table=True):
+    __tablename__ = "chat_history"
+    __table_args__ = {"extend_existing": True}
 
-# Define o diretório base (onde este script está)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  #
-# Define o nome da pasta para o banco de dados
-DB_DIR = os.path.join(BASE_DIR, "database")  #
-# Define o caminho completo para o arquivo do banco de dados
-DB_PATH = os.path.join(DB_DIR, "chat_solution.db")  #
+    id: Optional[int] = Field(default=None, primary_key=True)
+    session_id: str = Field(index=True)
+    user_message: str
+    bot_response: str
+    user_chars: int = 0
+    bot_chars: int = 0
+    user_tokens: int = 0
+    bot_tokens: int = 0
+    request_start_time: datetime = Field(default_factory=datetime.now)
+    retrieval_end_time: Optional[datetime] = None
+    response_end_time: Optional[datetime] = None
+    retrieval_duration_sec: float = 0.0
+    generation_duration_sec: float = 0.0
+    total_duration_sec: float = 0.0
 
 
-def init_db():
-    """Inicializa o banco de dados e cria as tabelas se não existirem."""
+class Feedback(SQLModel, table=True):
+    __tablename__ = "feedback"
+    __table_args__ = {"extend_existing": True}
 
-    # Garante que o diretório 'database' exista
-    try:
-        os.makedirs(DB_DIR, exist_ok=True)  #
-    except OSError as e:
-        print(f"Erro ao criar o diretório do banco de dados em {DB_DIR}: {e}")  #
-        return
+    id: Optional[int] = Field(default=None, primary_key=True)
+    message_id: int = Field(foreign_key="chat_history.id", unique=True)
+    rating: str
+    comment: Optional[str] = None
+    timestamp: datetime = Field(default_factory=datetime.now)
 
-    conn = sqlite3.connect(DB_PATH)  #
-    cursor = conn.cursor()  #
 
-    # --- Tabela de Histórico de Chat (Produção) ---
-    # (Inalterada)
-    cursor.execute(
-        """
-    CREATE TABLE IF NOT EXISTS chat_history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        session_id TEXT NOT NULL,
-        user_message TEXT NOT NULL,
-        bot_response TEXT NOT NULL,
-        user_chars INTEGER,
-        bot_chars INTEGER,
-        user_tokens INTEGER,
-        bot_tokens INTEGER,
-        request_start_time DATETIME,
-        retrieval_end_time DATETIME,
-        response_end_time DATETIME,
-        retrieval_duration_sec REAL,
-        generation_duration_sec REAL,
-        total_duration_sec REAL
-    )
-    """
-    )  #
+class ValidationRun(SQLModel, table=True):
+    __tablename__ = "validation_runs"
+    __table_args__ = {"extend_existing": True}
 
-    # --- Tabela de Feedback (Produção) ---
-    cursor.execute(
-        """
-    CREATE TABLE IF NOT EXISTS feedback (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        message_id INTEGER NOT NULL,
-        rating TEXT NOT NULL, -- 'like' ou 'dislike'
-        comment TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        
-        FOREIGN KEY (message_id) REFERENCES chat_history (id),
-        
-        -- Garante que só possa existir UMA avaliação por message_id
-        UNIQUE(message_id)
-        
-    )
-    """
-    )
+    id: Optional[int] = Field(default=None, primary_key=True)
+    timestamp: datetime = Field(default_factory=datetime.now)
+    query: str
+    search_type: str
+    hit_rate_eval: int = 0
+    mrr_eval: float = 0.0
+    precision_at_k_eval: float = 0.0
 
-    # --- INÍCIO DAS TABELAS DE AVALIAÇÃO ---
 
-    # Tabela 1: Armazena cada "Rodada de Validação"
-    cursor.execute(
-        """
-    CREATE TABLE IF NOT EXISTS validation_runs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        query TEXT NOT NULL,
-        search_type TEXT NOT NULL, -- 'vector_only' ou 'reranked'
-        
-        -- Métricas calculadas
-        hit_rate_eval INTEGER,      -- 0 (Erro) ou 1 (Acerto)
-        mrr_eval REAL,              -- 0, 1, 0.5, 0.33, etc.
-        precision_at_k_eval REAL  -- (Ex: 0.66 para 2/3 acertos)
-    )
-    """
-    )  #
+class ValidationRetrievedChunk(SQLModel, table=True):
+    __tablename__ = "validation_retrieved_chunks"
+    __table_args__ = {"extend_existing": True}
 
-    # Tabela 2: validation_retrieved_chunks (inalterada)
-    cursor.execute(
-        """
-    CREATE TABLE IF NOT EXISTS validation_retrieved_chunks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        run_id INTEGER NOT NULL,
-        rank INTEGER NOT NULL, -- Posição (1, 2, 3...)
-        chunk_content TEXT,
-        source TEXT,
-        page INTEGER,
-        score REAL,
-        is_correct_eval INTEGER, -- 0 (Errado) ou 1 (Marcado como Correto)
-        
-        FOREIGN KEY (run_id) REFERENCES validation_runs (id)
-    )
-    """
-    )
-    # --- FIM DAS TABELAS DE AVALIAÇÃO ---
+    id: Optional[int] = Field(default=None, primary_key=True)
+    run_id: int = Field(foreign_key="validation_runs.id")
+    rank: int
+    chunk_content: str
+    source: Optional[str] = None
+    page: Optional[int] = None
+    score: float
+    is_correct_eval: int = 0
 
-    conn.commit()
-    conn.close()
 
-    print(f"Banco de dados inicializado com sucesso em: {DB_PATH}")
+# --- Funções Utilitárias ---
+
+
+async def init_db():
+    """Cria as tabelas no banco de dados de forma assíncrona."""
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+    print(f"Banco de dados (Async) inicializado em: {settings.DB_PATH}")
+
+
+async def get_session() -> AsyncSession:
+    async with AsyncSessionFactory() as session:
+        yield session
 
 
 if __name__ == "__main__":
-    init_db()
+    asyncio.run(init_db())

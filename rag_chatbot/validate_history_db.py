@@ -2,462 +2,234 @@
 """
 Módulo de Dashboard de Auditoria do Histórico de Produção.
 
-Esta aplicação Streamlit é uma ferramenta de "Business Intelligence" (BI)
-focada em analisar o uso real do chatbot (o frontend `app.py`).
-
-Ele se conecta ao `chat_solution.db` e foca na leitura das
-tabelas `chat_history` e `feedback` para responder perguntas como:
-- "Quantas pessoas usaram o bot?"
-- "Qual foi a conversa completa de um usuário específico?"
-- "Quais respostas receberam feedback negativo?"
-
----
-### Funcionalidades Principais (Modos)
----
-
-A aplicação é dividida em seis modos principais, selecionáveis
-na barra lateral:
-
-1.  **Listar Todas as Sessões:**
-    * Executa `run_list_sessions`.
-    * Agrupa a tabela `chat_history` por `session_id`.
-    * Fornece um resumo de alto nível de quantas conversas únicas
-        aconteceram, quantas mensagens elas tiveram e qual foi a
-        duração média.
-
-2.  **Buscar por Sessão:**
-    * Executa `run_search_by_session`.
-    * Permite que o administrador insira um `session_id` (obtido no Modo 1)
-        para ver a transcrição completa daquela conversa específica.
-    * Exibe métricas de performance (tokens, duração) para cada
-        mensagem na sessão.
-
-3.  **Ver Histórico Completo:**
-    * Executa `run_list_all`.
-    * Carrega e exibe *todas as mensagens de todas as sessões* em
-        ordem cronológica. Útil para uma visão geral ou
-        para depuração de baixo nível.
-
-4.  **Ver Avaliações (Feedback):**
-    * Executa `run_list_feedback`.
-    * Faz um `JOIN` entre as tabelas `feedback` e `chat_history`.
-    * Exibe todas as avaliações (👍/👎) junto com a pergunta
-        e a resposta que receberam a avaliação, permitindo uma
-        análise qualitativa imediata de respostas problemáticas.
-
-5.  **Exportar Histórico para CSV:**
-    * Executa `run_export_csv`.
-    * Exporta a tabela `chat_history` inteira para um arquivo CSV
-        (`historico_chat_exportado.csv`) para análise
-        externa em ferramentas como Excel ou Power BI.
-
-6.  **Encerrar Servidor:**
-    * Uma função de conveniência (`run_shutdown`) que chama
-        `os._exit(0)` para parar o processo do Streamlit.
+Atualizado para:
+1. Usar Callbacks no botão de navegação (Correção do bug de reset).
+2. Usar settings.py.
+3. Exportar CSV com timestamp.
+4. Usar SQLModel.
 """
 
-
 import streamlit as st
-import sqlite3
+import pandas as pd
 import os
-import sys
-import csv
-from ui_utils import add_print_to_pdf_button
 from datetime import datetime
-from streamlit.components.v1 import html
+from sqlmodel import Session, create_engine, select, func, desc
 
-# Importar o arquivo de configuração do banco de dados
-# para obter o caminho (DB_PATH)
-import database as history_db
+# --- Imports do Projeto ---
+from settings import settings
+from ui_utils import add_print_to_pdf_button
+from database import ChatHistory, Feedback
+
+# --- Configuração do Engine Síncrono ---
+engine = create_engine(settings.SYNC_DATABASE_URL)
 
 
-def connect_to_db():
+def get_session_sync():
+    """Retorna uma sessão síncrona."""
+    return Session(engine)
+
+
+# --- CALLBACK DE NAVEGAÇÃO (A CORREÇÃO MÁGICA) ---
+def ir_para_busca(session_id):
     """
-    Conecta ao banco de dados SQLite do histórico.
-    Esta função agora é chamada por cada modo, garantindo uma conexão nova.
+    Função executada ANTES do rerun, garantindo que o estado
+    esteja atualizado quando a interface for redesenhada.
     """
-    db_path = history_db.DB_PATH
-
-    if not os.path.exists(db_path):
-        st.error(f"Erro: Arquivo do banco de dados não encontrado em '{db_path}'")
-        st.error("Por favor, execute 'python database.py' primeiro para criá-lo.")
-        st.stop()
-    try:
-        conn = sqlite3.connect(db_path, check_same_thread=False)
-        return conn
-    except Exception as e:
-        st.error(f"Ocorreu um erro ao conectar ao banco de dados: {e}")
-        st.stop()
+    st.session_state["target_session_id"] = session_id
+    # O valor aqui DEVE ser idêntico ao texto da opção no menu
+    st.session_state["sb_menu"] = "2. Buscar Sessão"
 
 
 def run_list_sessions():
     """Modo 1: Listar Todas as Sessões"""
     st.subheader("Modo 1: Listar Todas as Sessões")
-    st.info("Exibe um resumo de todas as conversas únicas, agrupadas por ID de Sessão.")
 
     if st.button("Carregar Resumo das Sessões"):
-        with st.spinner("Consultando sessões..."):
-
-            # --- Bloco de conexão/fechamento ---
-            conn = None
-            try:
-                conn = connect_to_db()  # Abre uma nova conexão
-                cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    SELECT 
-                        session_id, 
-                        COUNT(*) as msg_count, 
-                        MAX(response_end_time) as last_activity,
-                        AVG(total_duration_sec) as avg_duration
-                    FROM chat_history 
-                    GROUP BY session_id
-                    ORDER BY last_activity DESC
-                """
+        with st.spinner("Consultando sessões via SQLModel..."):
+            with get_session_sync() as session:
+                statement = (
+                    select(
+                        ChatHistory.session_id,
+                        func.count(ChatHistory.id).label("msg_count"),
+                        func.max(ChatHistory.response_end_time).label("last_activity"),
+                        func.avg(ChatHistory.total_duration_sec).label("avg_duration"),
+                    )
+                    .group_by(ChatHistory.session_id)
+                    .order_by(desc("last_activity"))
                 )
-                rows = cursor.fetchall()
-                # ... (resto da lógica de exibição do dataframe) ...
-                if not rows:
-                    st.warning("Nenhuma sessão encontrada no histórico.")
+                results = session.exec(statement).all()
+
+                if not results:
+                    st.warning("Nenhuma sessão encontrada.")
                     return
 
-                st.success(f"Total de sessões únicas encontradas: {len(rows)}")
-                data = [
-                    {
-                        "ID DA SESSÃO": row[0],
-                        "MSGS": row[1],
-                        "ÚLTIMA ATIVIDADE": row[2],
-                        "DURAÇÃO MÉDIA (s)": f"{row[3]:.2f}",
-                    }
-                    for row in rows
-                ]
-                st.dataframe(data, use_container_width=True)
+                st.success(f"Total de sessões encontradas: {len(results)}")
+                st.markdown("---")
 
-            except Exception as e:
-                st.error(f"Erro ao listar sessões: {e}")
-            finally:
-                if conn:
-                    conn.close()  # Fecha a conexão
-            # --- Fim do bloco ---
+                # --- Cabeçalho ---
+                c1, c2, c3, c4, c5 = st.columns([4, 1, 2, 1, 1.5])
+                c1.markdown("**ID da Sessão**")
+                c2.markdown("**Msgs**")
+                c3.markdown("**Última Atividade**")
+                c4.markdown("**Tempo**")
+                c5.markdown("**Ação**")
+                st.divider()
+
+                # --- Loop ---
+                for row in results:
+                    c1, c2, c3, c4, c5 = st.columns([4, 1, 2, 1, 1.5])
+
+                    # Coluna 1: ID com botão de cópia nativo
+                    c1.code(row.session_id, language="text")
+
+                    c2.write(f"{row.msg_count}")
+                    c3.write(
+                        f"{row.last_activity.strftime('%d/%m %H:%M') if row.last_activity else 'N/A'}"
+                    )
+                    c4.write(f"{row.avg_duration:.2f}s")
+
+                    # Coluna 5: Botão com CALLBACK
+                    # Note o uso de on_click e args. Não usamos 'if button:'
+                    c5.button(
+                        "📂 Abrir",
+                        key=f"btn_open_{row.session_id}",
+                        on_click=ir_para_busca,
+                        args=(row.session_id,),
+                    )
+
+                    st.markdown("---")
 
 
 def run_search_by_session():
     """Modo 2: Buscar por Sessão"""
     st.subheader("Modo 2: Buscar Histórico por Sessão")
-    st.info("Digite um ID de Sessão (obtido no Modo 1) para ver uma conversa completa.")
+
+    # Verifica se veio um ID do callback
+    default_id = st.session_state.get("target_session_id", "")
 
     with st.form(key="session_search_form"):
-        session_id = st.text_input(
-            "ID da Sessão:", placeholder="ex: 172f1ed9-e649-4359-aa24-f01dadf0ce4e"
-        )
+        # O value=default_id preenche automaticamente
+        session_id = st.text_input("ID da Sessão:", value=default_id)
         submit_button = st.form_submit_button(label="Buscar")
 
-    if submit_button and session_id:
-        st.write(f"Buscando pela Sessão: {session_id}")
-        with st.spinner("Consultando histórico da sessão..."):
+    # Executa a busca se clicou no botão OU se veio redirecionado (tem default_id)
+    # A verificação (submit_button or default_id) garante que rode na primeira carga
+    if (submit_button or default_id) and session_id:
 
-            # --- Bloco de conexão/fechamento ---
-            conn = None
-            try:
-                conn = connect_to_db()  # Abre uma nova conexão
-                cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    SELECT id, user_message, bot_response, 
-                           user_chars, bot_chars, user_tokens, bot_tokens,
-                           request_start_time, retrieval_duration_sec, 
-                           generation_duration_sec, total_duration_sec
-                    FROM chat_history 
-                    WHERE session_id = ? 
-                    ORDER BY request_start_time ASC
-                """,
-                    (session_id.strip(),),
+        # Opcional: Limpar o target para evitar comportamento "pegajoso" futuro
+        # mas mantendo por enquanto para permitir refresh da página
+
+        with st.spinner("Buscando mensagens..."):
+            with get_session_sync() as session:
+                statement = (
+                    select(ChatHistory)
+                    .where(ChatHistory.session_id == session_id.strip())
+                    .order_by(ChatHistory.request_start_time)
                 )
-                rows = cursor.fetchall()
-                # ... (resto da lógica de exibição) ...
-                if not rows:
-                    st.warning(
-                        f"Nenhum histórico encontrado para a sessão: '{session_id}'"
-                    )
+                messages = session.exec(statement).all()
+
+                if not messages:
+                    st.warning("Sessão não encontrada.")
                     return
-                st.success(
-                    f"Total de mensagens encontradas para esta sessão: {len(rows)}"
-                )
-                for row in rows:
-                    (
-                        id,
-                        user_msg,
-                        bot_msg,
-                        u_chars,
-                        b_chars,
-                        u_tokens,
-                        b_tokens,
-                        start,
-                        retr_dur,
-                        gen_dur,
-                        total_dur,
-                    ) = row
+
+                st.success(f"Encontradas {len(messages)} mensagens.")
+                for msg in messages:
                     with st.container(border=True):
-                        st.markdown(f"**ID da Mensagem: {id}** | Início: {start}")
-                        st.caption(
-                            f"Duração (s): Total={total_dur:<.2f} (Recup: {retr_dur:<.2f}s, Geração: {gen_dur:<.2f}s)"
-                        )
-                        st.text(
-                            f"USUÁRIO (Chars: {u_chars}, Tokens: {u_tokens}): {user_msg}"
-                        )
-                        st.text(
-                            f"ASSIST. (Chars: {b_chars}, Tokens: {b_tokens}): {bot_msg}"
-                        )
-
-            except Exception as e:
-                st.error(f"Erro ao buscar pela sessão: {e}")
-            finally:
-                if conn:
-                    conn.close()  # Fecha a conexão
-            # --- Fim do bloco ---
-
-
-def run_list_all():  # <-- 1. REMOVIDO 'conn' DAQUI
-    """Modo 3: Ver Histórico Completo"""
-    st.subheader("Modo 3: Ver Histórico Completo")  #
-    st.warning(
-        "Atenção: Isso pode carregar um grande volume de dados se o banco for grande."
-    )  #
-
-    if st.button("Carregar TODO o histórico"):  #
-        with st.spinner("Consultando todo o histórico..."):  #
-
-            # --- 2. ADICIONADO O BLOCO DE CONEXÃO ---
-            conn = None
-            try:
-                conn = connect_to_db()  # Abre uma nova conexão
-                cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    SELECT id, session_id, user_message, bot_response, 
-                           user_chars, bot_chars, user_tokens, bot_tokens,
-                           request_start_time, retrieval_duration_sec, 
-                           generation_duration_sec, total_duration_sec
-                    FROM chat_history 
-                    ORDER BY request_start_time ASC
-                """
-                )  #
-                rows = cursor.fetchall()  #
-
-                if not rows:  #
-                    st.warning("O banco de dados de histórico está vazio.")  #
-                    return
-
-                st.success(f"Total de mensagens encontradas: {len(rows)}")  #
-                for row in rows:  #
-                    (
-                        id,
-                        session_id,
-                        user_msg,
-                        bot_msg,
-                        u_chars,
-                        b_chars,
-                        u_tokens,
-                        b_tokens,
-                        start,
-                        retr_dur,
-                        gen_dur,
-                        total_dur,
-                    ) = row  #
-                    with st.container(border=True):  #
-                        st.markdown(
-                            f"**ID: {id}** | Sessão: {session_id} | Início: {start}"
-                        )  #
-                        st.caption(
-                            f"Duração (s): Total={total_dur:<.2f} (Recup: {retr_dur:<.2f}s, Geração: {gen_dur:<.2f}s)"
-                        )  #
-                        st.text(
-                            f"USUÁRIO (Chars: {u_chars}, Tokens: {u_tokens}): {user_msg}"
-                        )  #
-                        st.text(
-                            f"ASSIST. (Chars: {b_chars}, Tokens: {b_tokens}): {bot_msg}"
-                        )  #
-
-            except Exception as e:
-                st.error(f"Erro ao ler o histórico: {e}")  #
-            finally:
-                if conn:
-                    conn.close()  # Fecha a conexão
+                        st.markdown(f"**ID: {msg.id}** | {msg.request_start_time}")
+                        st.text(f"USER: {msg.user_message}")
+                        st.text(f"BOT:  {msg.bot_response}")
+                        st.caption(f"Tokens: U={msg.user_tokens} / B={msg.bot_tokens}")
 
 
 def run_list_feedback():
-    """Modo 4: Ver Avaliações (Feedback)"""
-    st.subheader("Modo 4: Ver Avaliações (Feedback)")
-    st.info("Exibe todas as avaliações (like/dislike) dadas pelos usuários.")
+    """Modo 3: Ver Avaliações"""
+    st.subheader("Modo 3: Ver Avaliações (Feedback)")
 
-    if st.button("Carregar Todas as Avaliações"):
-        with st.spinner("Consultando avaliações..."):
+    if st.button("Carregar Feedbacks"):
+        with get_session_sync() as session:
+            statement = (
+                select(Feedback, ChatHistory)
+                .join(ChatHistory, Feedback.message_id == ChatHistory.id)
+                .order_by(desc(Feedback.timestamp))
+            )
+            results = session.exec(statement).all()
 
-            # --- Bloco de conexão/fechamento ---
-            conn = None
-            try:
-                conn = connect_to_db()  # Abre uma nova conexão
-                cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    SELECT 
-                        f.id as feedback_id,
-                        f.rating,
-                        f.timestamp as feedback_time,
-                        f.comment,
-                        h.id as message_id,
-                        h.session_id,
-                        h.user_message,
-                        h.bot_response
-                    FROM feedback f
-                    JOIN chat_history h ON f.message_id = h.id
-                    ORDER BY f.timestamp DESC
-                """
-                )
-                rows = cursor.fetchall()
+            if not results:
+                st.warning("Nenhum feedback encontrado.")
+                return
 
-                if not rows:
-                    st.warning(
-                        "Nenhuma avaliação (feedback) encontrada no banco de dados."
+            for feedback, history in results:
+                icon = "👍" if feedback.rating == "like" else "👎"
+                with st.container(border=True):
+                    st.markdown(
+                        f"**{icon} {feedback.rating.upper()}** | {feedback.timestamp}"
                     )
-                    return
-
-                st.success(f"Total de avaliações encontradas: {len(rows)}")
-
-                # Exibe os feedbacks
-                for row in rows:
-                    (
-                        fb_id,
-                        rating,
-                        fb_time,
-                        comment,
-                        msg_id,
-                        session_id,
-                        user_msg,
-                        bot_msg,
-                    ) = row
-                    icon = "👍" if rating == "like" else "👎"
-                    with st.container(border=True):
-                        st.markdown(
-                            f"**Avaliação: {icon} (ID: {fb_id})** | Data: {fb_time}"
-                        )
-                        st.caption(f"Sessão: {session_id} | ID da Mensagem: {msg_id}")
-                        if comment:
-                            st.write(f"Comentário: {comment}")
-                        st.text(f"USUÁRIO: {user_msg}")
-                        st.text(f"ASSISTENTE: {bot_msg}")
-
-            except Exception as e:
-                st.error(f"Erro ao ler o histórico de feedback: {e}")
-            finally:
-                if conn:
-                    conn.close()  # Fecha a conexão
-            # --- Fim do bloco ---
+                    if feedback.comment:
+                        st.info(f"Comentário: {feedback.comment}")
+                    st.text(f"Q: {history.user_message}")
+                    st.text(f"A: {history.bot_response}")
 
 
 def run_export_csv():
-    """Modo 5: Exportar Histórico para CSV"""
-    st.subheader("Modo 5: Exportar Histórico para CSV")
-    st.info("O arquivo será salvo na pasta raiz do projeto.")
+    """Modo 4: Exportar para CSV"""
+    st.subheader("Modo 4: Exportar Histórico Completo")
 
-    if st.button("Gerar Arquivo 'historico_chat_exportado.csv'"):
-        SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-        output_filename = "historico_chat_exportado.csv"
-        output_path = os.path.join(SCRIPT_DIR, output_filename)
+    if st.button("Gerar Arquivo CSV"):
+        file_timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+        output_filename = f"historico_chat_{file_timestamp}.csv"
 
-        with st.spinner("Exportando histórico para CSV..."):
-
-            # --- Bloco de conexão/fechamento ---
-            conn = None
+        with st.spinner("Exportando..."):
             try:
-                conn = connect_to_db()  # Abre uma nova conexão
-                cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT * FROM chat_history ORDER BY request_start_time ASC"
-                )
-                rows = cursor.fetchall()
+                statement = select(ChatHistory).order_by(ChatHistory.request_start_time)
+                df = pd.read_sql(statement, engine)
 
-                if not rows:
-                    st.error("Nada para exportar, o histórico está vazio.")
+                if df.empty:
+                    st.warning("Histórico vazio.")
                     return
 
-                headers = [description[0] for description in cursor.description]
-
-                with open(output_path, "w", newline="", encoding="utf-8") as f:
-                    writer = csv.writer(f)
-                    writer.writerow(headers)
-                    writer.writerows(rows)
-
-                st.success(f"\nSucesso! {len(rows)} mensagens exportadas para:")
-                st.code(output_path, language="bash")
+                df.to_csv(output_filename, index=False)
+                st.success(f"Sucesso! Exportado para: {output_filename}")
+                st.code(output_filename, language="text")
 
             except Exception as e:
-                st.error(f"\nErro ao salvar o arquivo CSV: {e}")
-            finally:
-                if conn:
-                    conn.close()  # Fecha a conexão
-            # --- Fim do bloco ---
+                st.error(f"Erro ao exportar CSV: {e}")
 
 
 def run_shutdown():
-    """Modo 6: Encerrar"""
-    st.subheader("Modo 6: Encerrar Servidor")
+    """Modo 5: Sair"""
+    st.subheader("Modo 5: Sair")
     st.warning("Clicar neste botão encerrará este servidor Streamlit.")
-
     if st.button("Encerrar Aplicação"):
         st.success("Encerrando servidor...")
         print("Comando de encerramento recebido da UI.")
-        os._exit(0)  # Força a parada do processo Python
+        os._exit(0)
 
 
-# --- Ponto de Entrada Principal da Aplicação ---
 def main():
-    st.set_page_config(page_title="Auditoria do Histórico", layout="wide")
-    st.title("Ferramenta de Auditoria do Histórico de Chat (SQLite)")
-    st.caption("Esta interface consulta o banco de dados 'chat_solution.db'.")
+    st.set_page_config(page_title="Auditoria Histórico", layout="wide")
+    st.title("Auditoria do Histórico (SQLModel)")
 
-    # --- INÍCIO DA ALTERAÇÃO ---
-    # Removida a chamada 'conn = connect_to_db()' daqui.
-    # Cada função 'run_...' agora gerencia sua própria conexão.
-    # --- FIM DA ALTERAÇÃO ---
-
-    # --- Barra Lateral de Navegação ---
-    st.sidebar.title("Opções de Auditoria")
-
-    st.sidebar.markdown("---")
+    st.sidebar.title("Menu")
     add_print_to_pdf_button()
     st.sidebar.markdown("---")
 
-    opcoes = [
-        "1. Listar Todas as Sessões",
-        "2. Buscar por Sessão",
-        "3. Ver Histórico Completo",
-        "4. Ver Avaliações (Feedback)",
-        "5. Exportar Histórico para CSV",
-        "6. Encerrar Servidor",
-    ]
-    modo = st.sidebar.radio(
-        "Selecione uma operação:", opcoes, label_visibility="collapsed"
-    )
+    # As chaves do dicionário DEVEM ser idênticas à string usada em ir_para_busca
+    options = {
+        "1. Listar Sessões": run_list_sessions,
+        "2. Buscar Sessão": run_search_by_session,
+        "3. Ver Feedbacks": run_list_feedback,
+        "4. Exportar CSV": run_export_csv,
+        "5. Sair": run_shutdown,
+    }
 
-    # --- Exibe a página correta baseada na seleção ---
-    if modo == opcoes[0]:
-        run_list_sessions()  # Chamada sem 'conn'
+    # Se não houver menu no estado, define o padrão
+    if "sb_menu" not in st.session_state:
+        st.session_state["sb_menu"] = list(options.keys())[0]
 
-    elif modo == opcoes[1]:
-        run_search_by_session()  # Chamada sem 'conn'
+    # O widget radio agora "escuta" o estado (key="sb_menu") e atualiza ele também
+    choice = st.sidebar.radio("Opções", list(options.keys()), key="sb_menu")
 
-    elif modo == opcoes[2]:
-        run_list_all()  # Chamada sem 'conn' (Ops, esqueci de remover o arg)
-
-    elif modo == opcoes[3]:
-        run_list_feedback()  # Chamada sem 'conn'
-
-    elif modo == opcoes[4]:
-        run_export_csv()  # Chamada sem 'conn'
-
-    elif modo == opcoes[5]:
-        run_shutdown()
+    options[choice]()
 
 
 if __name__ == "__main__":

@@ -1,26 +1,8 @@
 # ingest_xml.py
-"""
-Módulo de Ingestão de Chunks Pré-Processados (XML).
-
-Este script substitui o processo de leitura de PDFs e divisão de texto (splitting).
-Ele lê arquivos XML que já contêm os chunks processados semanticamente (Pergunta/Resposta),
-conforme gerado externamente, e popula o banco vetorial ChromaDB.
-
----
-### Regras de Negócio
----
-1. **Leitura de XML:** Itera sobre todos os arquivos .xml na pasta `config.DOCS_DIR`.
-2. **Ignora Chunk ID:** O campo <chunk_id> do XML é ignorado para evitar conflitos.
-   O ChromaDB gerará IDs automáticos.
-3. **Metadados Dinâmicos:** Todos os campos dentro da tag <metadados> são capturados.
-4. **Sanitização:** O campo 'source' nos metadados é convertido para caminho relativo,
-   mantendo a segurança e consistência com o script original.
-5. **Recriação do Banco:** Assim como o ingest original, este script APAGA o banco atual
-   e cria um novo com base nos XMLs encontrados.
-"""
 
 import os
 import shutil
+import time
 import xml.etree.ElementTree as ET
 from tqdm import tqdm
 from langchain_core.documents import Document
@@ -28,7 +10,7 @@ from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 
 # Importar o arquivo de configuração existente
-import config
+from settings import settings
 
 
 def parse_xml_to_documents(xml_path):
@@ -69,7 +51,7 @@ def parse_xml_to_documents(xml_path):
                     # Se o caminho for absoluto, torna relativo à raiz do projeto
                     if os.path.isabs(metadata["source"]):
                         metadata["source"] = os.path.relpath(
-                            metadata["source"], config.BASE_DIR
+                            metadata["source"], settings.BASE_DIR
                         )
                 except ValueError:
                     # Caso o caminho esteja em uma unidade diferente (Windows), mantém como está
@@ -93,10 +75,10 @@ def process_documents_from_xml():
     print("Iniciando a ingestão via XML (Chunking Semântico)...")
 
     # 1. Listar arquivos XML
-    xml_files = [f for f in os.listdir(config.DOCS_DIR) if f.endswith(".xml")]
+    xml_files = [f for f in os.listdir(settings.DOCS_DIR) if f.endswith(".xml")]
 
     if not xml_files:
-        print(f"Nenhum arquivo XML encontrado no diretório: {config.DOCS_DIR}")
+        print(f"Nenhum arquivo XML encontrado no diretório: {settings.DOCS_DIR}")
         return
 
     print(f"Encontrados {len(xml_files)} arquivos XML.")
@@ -105,7 +87,7 @@ def process_documents_from_xml():
     all_docs = []
 
     for filename in tqdm(xml_files, desc="Lendo XMLs", unit="arquivo"):
-        filepath = os.path.join(config.DOCS_DIR, filename)
+        filepath = os.path.join(settings.DOCS_DIR, filename)
         docs_from_file = parse_xml_to_documents(filepath)
         all_docs.extend(docs_from_file)
 
@@ -116,14 +98,14 @@ def process_documents_from_xml():
     print(f"Total de chunks carregados: {len(all_docs)}")
 
     # 3. Inicializar modelo de embedding
-    print(f"Carregando modelo de embedding: {config.EMBEDDING_MODEL_NAME}")
-    embeddings = HuggingFaceEmbeddings(model_name=config.EMBEDDING_MODEL_NAME)
+    print(f"Carregando modelo de embedding: {settings.EMBEDDING_MODEL_NAME}")
+    embeddings = HuggingFaceEmbeddings(model_name=settings.EMBEDDING_MODEL_NAME)
 
     # 4. Limpar o banco de dados vetorial antigo
-    print(f"Limpando banco de dados antigo em: {config.VECTOR_DB_DIR}")
-    if os.path.isdir(config.VECTOR_DB_DIR):
+    print(f"Limpando banco de dados antigo em: {settings.VECTOR_DB_DIR}")
+    if os.path.isdir(settings.VECTOR_DB_DIR):
         try:
-            shutil.rmtree(config.VECTOR_DB_DIR)
+            shutil.rmtree(settings.VECTOR_DB_DIR)
             # Pequena pausa para o OS liberar o file handle
             time.sleep(1)
         except PermissionError:
@@ -138,7 +120,7 @@ def process_documents_from_xml():
             return
 
     # Verificação extra
-    if os.path.exists(config.VECTOR_DB_DIR):
+    if os.path.exists(settings.VECTOR_DB_DIR):
         print(
             "Erro: O diretório ainda existe. A ingestão foi abortada para evitar corrupção."
         )
@@ -151,11 +133,11 @@ def process_documents_from_xml():
     vectordb = Chroma.from_documents(
         documents=all_docs,
         embedding=embeddings,
-        persist_directory=config.VECTOR_DB_DIR,
+        persist_directory=settings.VECTOR_DB_DIR,
     )
 
     print(
-        f"Sucesso! Banco de vetores recriado em '{config.VECTOR_DB_DIR}' a partir dos XMLs."
+        f"Sucesso! Banco de vetores recriado em '{settings.VECTOR_DB_DIR}' a partir dos XMLs."
     )
 
 

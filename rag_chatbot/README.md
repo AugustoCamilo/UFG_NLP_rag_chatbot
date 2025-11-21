@@ -380,6 +380,29 @@ Assuma que o sistema está configurado para retornar **K=3** resultados.
 |-- README.md                # Este arquivo
 ```
 
+📂 rag_chatbot/
+│
+├── 📜 .env                     Armazena a GEMINI_API_KEY
+├── 📜 config.py                Configurações globais (caminhos, nomes de modelos, etc.)
+├── 📜 database.py              Schema do SQLite
+├── 📜 ui_utils.py              Botão PDF, Estilos CSS comuns
+│
+├── 📂 core/                    (Sugestão: Agrupar lógica pesada)
+│   ├── rag_chain.py            (Lógica LangGraph)
+│   └── vector_retriever.py     (Lógica Chroma/Rerank)
+│
+├── 📂 tools/                   (Sugestão: Scripts de ingestão)
+│   ├── ingest.py               (PDF -> VectorDB)
+│   └── ingest_xml.py           (XML -> VectorDB)
+│
+├── 📂 apps/                    (As interfaces Streamlit)
+│   ├── app.py                  (Chatbot Usuário Final)
+│   ├── validate_vector_db.py   (Validação IA - Input)
+│   ├── validate_evaluation.py  (Validação Métricas - Dashboard)
+│   └── validate_history_db.py  (Auditoria Produção)
+```
+
+
 -----
 
 ## 6\. Nota sobre o Desenvolvimento e Colaboração com IA
