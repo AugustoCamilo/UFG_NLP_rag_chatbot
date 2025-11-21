@@ -11,7 +11,7 @@ OUTPUT_FILENAME = "projeto_unificado.txt"
 # Preenchi com os arquivos do seu projeto para facilitar
 FILES_TO_PROCESS: List[str] = [
     "requirements.txt",
-    "config.py",
+    "settings.py",
     "database.py",
     "ui_utils.py",
     "vector_retriever.py",
@@ -48,14 +48,14 @@ def unify_files(file_list: List[str], output_file: str) -> None:
     Lê múltiplos arquivos e os consolida em um único arquivo de texto
     com formatação amigável para LLMs e humanos.
     """
-    output_path = Path(output_file)
+    output_path = Path(__file__).resolve().parent / output_file
 
     print(f"🚀 Iniciando unificação de {len(file_list)} arquivos...")
 
     try:
         with open(output_path, "w", encoding="utf-8") as out:
             for filename in file_list:
-                file_path = Path(filename)
+                file_path = Path(__file__).resolve().parent.parent / filename
 
                 if not file_path.exists():
                     print(f"⚠️  Aviso: Arquivo não encontrado e ignorado: {filename}")
