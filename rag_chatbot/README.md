@@ -124,21 +124,40 @@ graph TD
 
 ### 2\. Configuração do Ambiente
 
+**Opção A: Usando `venv` (Padrão do Python)**
+
 ```bash
-# 1. Clone o repositório e crie o ambiente virtual
-python -m venv venv
+# 1. Crie o ambiente (usando o nome 'rag_solution')
+python -m venv rag_solution
 
 # 2. Ative o ambiente
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
+# Windows
+.\rag_solution\Scripts\activate
+# macOS/Linux
+source rag_solution/bin/activate
+```
 
-# 3. Instale as dependências
+-----
+
+**Opção B: Usando `conda` (Anaconda)**
+
+```bash
+# 1. Crie o ambiente (usando o nome 'rag_solution' e especificando Python 3.10+)
+conda create -n rag_solution python=3.10
+
+# 2. Ative o ambiente
+conda activate rag_solution
+```
+
+### 3. Instalação das Dependências
+
+Com o ambiente virtual (`rag_solution`) ativo, instale todas as bibliotecas listadas no `requirements.txt`:
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 3\. Variáveis de Ambiente
+### 4\. Variáveis de Ambiente
 
 Crie um arquivo `.env` na raiz do projeto:
 
@@ -147,15 +166,27 @@ GEMINI_API_KEY="sua_chave_aqui"
 DATABASE_URL="sqlite+aiosqlite:///./database/chat_database.db"
 ```
 
-### 4\. Ingestão de Dados
+### 5\. Ingestão de Dados
 
-Coloque seus arquivos PDF na pasta `docs/` e execute o pipeline de ingestão para criar o banco vetorial:
+Coloque seus arquivos na pasta `docs/` e execute o pipeline correspondente ao formato dos seus dados:
+
+**Opção A: Arquivos PDF (Ingestão Padrão)**
+
+Para processar documentos PDF brutos. O sistema fará a limpeza, sanitização e divisão (splitting) automática baseada em caracteres.
 
 ```bash
 python ingest.py
 ```
 
-*(Nota: O script criará automaticamente as pastas `database/` e `vector_db/`)*
+**Opção B: Arquivos XML (Semantic Chunking)**
+
+Para ingerir dados que já passaram por um processo de "Semantic Chunking" externo e estão estruturados em XML (Pergunta/Resposta/Metadados).
+
+```bash
+python ingest_xml.py
+```
+
+*(Nota: Ambos os scripts recriam automaticamente as pastas `database/` e `vector_db/`. **Execute apenas um dos scripts**, dependendo de qual fonte de dados você deseja utilizar no momento.)*
 
 -----
 
