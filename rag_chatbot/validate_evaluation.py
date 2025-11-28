@@ -7,8 +7,10 @@ ler e visualizar os dados de avaliação.
 
 Atualizado para:
 1. Usar SQLModel.
-2. Usar settings.py para configuração (Correção do ImportError).
+2. Usar settings.py para configuração.
 3. Exportar XML com timestamp.
+4. Filtro por tipo de busca na listagem.
+5. Exibição COMPLETA do conteúdo dos chunks (sem truncar).
 """
 
 import streamlit as st
@@ -20,11 +22,10 @@ from sqlmodel import Session, create_engine, select, func, desc
 
 # --- Imports do Projeto ---
 from ui_utils import add_print_to_pdf_button
-from settings import settings  # <--- Importação CORRETA da configuração
-from database import ValidationRun, ValidationRetrievedChunk  # Removido DB_PATH daqui
+from settings import settings
+from database import ValidationRun, ValidationRetrievedChunk
 
 # Configuração do Engine Síncrono para o Streamlit
-# Usamos a URL síncrona já preparada no settings.py
 engine = create_engine(settings.SYNC_DATABASE_URL)
 
 
@@ -48,7 +49,6 @@ def run_metrics_summary():
 
     if st.button("Calcular Resumo"):
         with get_session() as session:
-            # Query agregada
             statement = select(
                 ValidationRun.search_type,
                 func.count(ValidationRun.id),
@@ -76,29 +76,41 @@ def run_metrics_summary():
             st.dataframe(data, use_container_width=True)
 
 
-# --- MODO 2: LISTAGEM DETALHADA ---
+# --- MODO 2: LISTAGEM DETALHADA (COM FILTRO E TEXTO COMPLETO) ---
 def run_list_evaluations():
     st.subheader("Modo 2: Listar Avaliações Detalhadas")
 
+    # 1. Preparar o Filtro
+    with get_session() as session:
+        types_statement = select(ValidationRun.search_type).distinct()
+        available_types = session.exec(types_statement).all()
+
+    filter_options = ["Todos"] + list(available_types)
+    selected_type = st.selectbox("Filtrar por Tipo de Busca:", filter_options)
+
     if st.button("Carregar Avaliações"):
         with get_session() as session:
-            # Busca as rodadas ordenadas por data
-            runs = session.exec(
-                select(ValidationRun).order_by(desc(ValidationRun.timestamp))
-            ).all()
+
+            # 2. Construir a Query Dinâmica
+            statement = select(ValidationRun).order_by(desc(ValidationRun.timestamp))
+
+            if selected_type != "Todos":
+                statement = statement.where(ValidationRun.search_type == selected_type)
+
+            runs = session.exec(statement).all()
 
             if not runs:
-                st.warning("Nenhuma avaliação encontrada.")
+                st.warning(f"Nenhuma avaliação encontrada para o tipo: {selected_type}")
                 return
 
-            st.success(f"Total de rodadas: {len(runs)}")
+            st.success(f"Total de rodadas encontradas: {len(runs)}")
 
             for run in runs:
                 hr_icon = "✅" if run.hit_rate_eval else "❌"
 
                 with st.container(border=True):
                     st.markdown(
-                        f"**ID: {run.id}** | {run.timestamp} | Tipo: **{run.search_type}**"
+                        f"**ID: {run.id}** | {run.timestamp.strftime('%d/%m/%Y %H:%M:%S')} | Tipo: **{run.search_type}**"
                     )
                     st.markdown(f"> Query: *{run.query}*")
 
@@ -115,33 +127,38 @@ def run_list_evaluations():
                     ).all()
 
                     st.markdown("---")
+                    st.markdown("**Chunks Retornados:**")
+
                     for chunk in chunks:
                         color = "green" if chunk.is_correct_eval else "red"
                         correct_lbl = "SIM" if chunk.is_correct_eval else "NÃO"
 
+                        # Cabeçalho do Chunk
                         st.markdown(
-                            f"{chunk.rank}. :{color}[Correct: {correct_lbl}] | Score: {chunk.score:.4f} | {chunk.source} (p.{chunk.page})"
+                            f"**{chunk.rank}.** :{color}[Correct: {correct_lbl}] | Score: {chunk.score:.4f} | {chunk.source} (p.{chunk.page})"
                         )
-                        st.caption(chunk.chunk_content[:200] + "...")
+
+                        # --- ALTERAÇÃO AQUI: Exibir texto completo ---
+                        # Antes: st.caption(chunk.chunk_content[:200] + "...")
+                        # Agora: st.text() para mostrar tudo, com quebra de linha automática
+                        st.text(chunk.chunk_content)
+                        st.markdown("---")
 
 
-# --- MODO 3: EXPORTAR XML (COM TIMESTAMP) ---
+# --- MODO 3: EXPORTAR XML ---
 def run_export_xml():
     st.subheader("Modo 3: Exportar Avaliações (XML)")
     st.info("Exporta os dados para backup ou análise.")
 
     if st.button("Gerar Arquivo XML"):
         with get_session() as session:
-            # 1. Buscar dados
             runs = session.exec(select(ValidationRun)).all()
 
             if not runs:
                 st.error("Banco de dados vazio.")
                 return
 
-            # 2. Construir XML
             root = ET.Element("dados_avaliacoes")
-            # Comentário com data
             timestamp_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             root.insert(
                 0, ET.Comment(f" Exportado em: {timestamp_now} | Total: {len(runs)} ")
@@ -149,12 +166,10 @@ def run_export_xml():
 
             for run in runs:
                 run_el = ET.SubElement(root, "validation_run")
-                # Serializa campos do ValidationRun
                 for k, v in run.model_dump().items():
                     if v is not None:
                         ET.SubElement(run_el, k).text = str(v)
 
-                # Busca chunks dessa run
                 chunks = session.exec(
                     select(ValidationRetrievedChunk)
                     .where(ValidationRetrievedChunk.run_id == run.id)
@@ -168,15 +183,10 @@ def run_export_xml():
                         if v is not None:
                             ET.SubElement(chunk_el, k).text = str(v)
 
-            # 3. Formatar XML (Pretty Print)
             xml_str = minidom.parseString(ET.tostring(root)).toprettyxml(indent="  ")
-
-            # 4. Gerar Nome do Arquivo com Timestamp
-            # Formato solicitado: avaliacoes_YYYY-MM-dd-HHMMSS.xml
             file_timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
             filename = f"avaliacoes_{file_timestamp}.xml"
 
-            # 5. Salvar
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(xml_str)
 
@@ -203,20 +213,16 @@ def run_import_xml():
                 all_runs_xml = root.findall("validation_run")
 
                 for run_node in all_runs_xml:
-                    # 1. Verifica duplicidade pelo timestamp
                     ts_str = _safe_get_text(run_node, "timestamp")
                     if not ts_str:
                         skipped_count += 1
                         continue
 
-                    # Converte string ISO para datetime
                     try:
                         ts_dt = datetime.fromisoformat(ts_str)
                     except ValueError:
-                        # Fallback para formatos comuns se isoformat falhar
                         ts_dt = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S.%f")
 
-                    # Verifica se já existe no banco
                     existing = session.exec(
                         select(ValidationRun).where(ValidationRun.timestamp == ts_dt)
                     ).first()
@@ -225,7 +231,6 @@ def run_import_xml():
                         skipped_count += 1
                         continue
 
-                    # 2. Cria objeto ValidationRun
                     run_obj = ValidationRun(
                         timestamp=ts_dt,
                         query=_safe_get_text(run_node, "query", ""),
@@ -238,16 +243,13 @@ def run_import_xml():
                     )
                     session.add(run_obj)
                     session.commit()
-                    session.refresh(run_obj)  # Pega o novo ID
+                    session.refresh(run_obj)
 
                     imported_count += 1
 
-                    # 3. Importa os Chunks
                     chunks_node = run_node.find("retrieved_chunks")
                     if chunks_node is not None:
                         for chunk_node in chunks_node.findall("chunk"):
-
-                            # Tratamento seguro de inteiros e nulos
                             page_txt = _safe_get_text(chunk_node, "page")
                             page_val = (
                                 int(page_txt)
@@ -306,7 +308,6 @@ def main():
 
     choice = st.sidebar.radio("Menu", list(options.keys()))
 
-    # Executa a função escolhida
     options[choice]()
 
 
