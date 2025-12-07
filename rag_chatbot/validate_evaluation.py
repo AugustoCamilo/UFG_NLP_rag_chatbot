@@ -5,12 +5,12 @@ Módulo de Dashboard de Avaliação de Métricas (Frontend de Teste).
 Este script é uma aplicação Streamlit independente, projetada para
 ler e visualizar os dados de avaliação.
 
-Atualizado para:
+
 1. Usar SQLModel.
 2. Usar settings.py para configuração.
 3. Exportar XML com timestamp.
 4. Filtro por tipo de busca na listagem.
-5. Exibição COMPLETA do conteúdo dos chunks (sem truncar).
+5. Exibição COMPLETA do conteúdo dos chunks.
 """
 
 import streamlit as st
@@ -75,6 +75,17 @@ def run_metrics_summary():
                 )
             st.dataframe(data, use_container_width=True)
 
+            # --- LEGENDA ---
+            st.markdown("---")
+            st.header("Interpretação das Métricas")
+            st.markdown(
+                """
+                - **Hit Rate (Taxa de Acerto):** A porcentagem de vezes que *pelo menos um* chunk correto foi retornado. (Maior é melhor)
+                - **MRR (Mean Reciprocal Rank):** A média da "pontuação de ranking" do *primeiro* chunk correto. (Maior é melhor, 1.0 é perfeito)
+                - **Precisão@K Média:** A proporção média de chunks corretos por rodada (ex: 0.66 = 2 de 3 chunks estavam certos). Mede a "pureza" do resultado. (Maior é melhor)
+                """
+            )
+
 
 # --- MODO 2: LISTAGEM DETALHADA (COM FILTRO E TEXTO COMPLETO) ---
 def run_list_evaluations():
@@ -138,9 +149,7 @@ def run_list_evaluations():
                             f"**{chunk.rank}.** :{color}[Correct: {correct_lbl}] | Score: {chunk.score:.4f} | {chunk.source} (p.{chunk.page})"
                         )
 
-                        # --- ALTERAÇÃO AQUI: Exibir texto completo ---
-                        # Antes: st.caption(chunk.chunk_content[:200] + "...")
-                        # Agora: st.text() para mostrar tudo, com quebra de linha automática
+                        # Texto completo
                         st.text(chunk.chunk_content)
                         st.markdown("---")
 
