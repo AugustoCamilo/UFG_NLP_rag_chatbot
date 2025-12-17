@@ -8207,67 +8207,6 @@ desta Lei Complementar.</chunk_content>
     </retrieved_chunks>
   </validation_run>
   <validation_run>
-    <search_type>reranked_NC</search_type>
-    <id>103</id>
-    <mrr_eval>1.0</mrr_eval>
-    <timestamp>2025-11-20 19:24:15</timestamp>
-    <query>Qual é o objeto específico do Edital de Transação Tributária nº 01/2025 e qual o valor remanescente mínimo para inclusão de créditos?</query>
-    <hit_rate_eval>1</hit_rate_eval>
-    <precision_at_k_eval>0.6666666666666666</precision_at_k_eval>
-    <retrieved_chunks>
-      <chunk>
-        <chunk_content>Pergunta: Quais dívidas eu posso incluir no acordo? Resposta: A transação abrange créditos tributários que estão inscritos em Dívida Ativa do Estado de Goiás. No caso específico do Edital nº 01/2025, o foco são dívidas inscritas de valor remanescente superior a R$ 500.000,00 (quinhentos mil reais).</chunk_content>
-        <id>307</id>
-        <run_id>103</run_id>
-        <page>7</page>
-        <is_correct_eval>1</is_correct_eval>
-        <rank>1</rank>
-        <source>docs\faq.pdf</source>
-        <score>5.635484218597412</score>
-      </chunk>
-      <chunk>
-        <chunk_content>ESTADO DE GOIÁS
-PROCURADORIA-GERAL DO ESTADO
-Edital
-EDITAL DE TRANSAÇÃO TRIBUTÁRIA 01/2025
-O PROCURADOR-GERAL DO ESTADO, no uso de suas atribuições
-legais, considerando o disposto nos arts. 156, III, e 171, do Código Tributário
-Nacional (CTN), no art. 10 da Lei Complementar federal nº 24, de 7 de janeiro de
-1975, no Convênio ICMS nº 210, de 8 de dezembro de 2023, no Ato Declaratório nº
-53, de 29 de dezembro de 2023, publicado em 2 de janeiro de 2024, no art. 119 da
-Constituição Estadual, no art. 5º, inciso I, da Lei Complementar estadual nº 58, de 4
-de julho de 2006, na Lei Complementar federal nº 24, de 7 de janeiro de 1975, e na
-Portaria nº 55-GAB, de 10 de fevereiro de 2025, torna público o presente Edital de
-transação de créditos tributários inscritos em dívida ativa por adesão à proposta da
-Procuradoria-Geral do Estado.
-DO OBJETO
-Art. 1º A transação de créditos tributários inscritos em dívida ativa do
-Estado de Goiás, irrecuperáveis e de difícil recuperação, de valor remanescente
-superior a R$ 500.000,00 (quinhentos mil reais), será realizada conforme o art. 17
-da Portaria nº 55-GAB, de 10 de fevereiro de 2025, desta Procuradoria-Geral do
-Estado.</chunk_content>
-        <id>308</id>
-        <run_id>103</run_id>
-        <page>0</page>
-        <is_correct_eval>1</is_correct_eval>
-        <rank>2</rank>
-        <source>docs\EDITAL-DE-TRANSACAO-TRIBUTARIA-No-012025.pdf</source>
-        <score>5.456511497497559</score>
-      </chunk>
-      <chunk>
-        <chunk_content>Pergunta: Qual é o procedimento para solicitar a adesão (Edital 001/2025)?
-Resposta: O contribuinte deve solicitar seu cadastro, através de requerimento endereçado ao e-mail da Procuradoria-Geral do Estado ntt@pge.go.gov.br, para obter a simulação de seus créditos. Após a simulação, o seu pedido é submetido à análise da Procuradoria-Geral do Estado.</chunk_content>
-        <id>309</id>
-        <run_id>103</run_id>
-        <page>2</page>
-        <is_correct_eval>0</is_correct_eval>
-        <rank>3</rank>
-        <source>docs\faq.pdf</source>
-        <score>2.8032493591308594</score>
-      </chunk>
-    </retrieved_chunks>
-  </validation_run>
-  <validation_run>
     <search_type>vector_only_NC</search_type>
     <id>104</id>
     <mrr_eval>0.0</mrr_eval>
