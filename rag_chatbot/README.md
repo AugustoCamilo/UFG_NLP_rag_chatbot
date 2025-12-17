@@ -10,6 +10,15 @@ O grande diferencial é a sua **Suíte de Auditoria e Avaliação (QA Suite)**, 
 
 -----
 
+## 💡 Dica de Visualização (Diagramas)
+
+Este documento contém diagramas de arquitetura complexos usando a sintaxe **Mermaid**. Para visualizá-los corretamente (renderizados como gráficos e não como código), recomenda-se o seguinte ambiente:
+
+* **Editor de Código:** [Visual Studio Code (VS Code)](https://code.visualstudio.com/download)
+* **Extensão Recomendada:** [Markdown Preview Mermaid Support](https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid) (por Matt Bierner).
+
+---
+
 ## 🧩 Arquitetura da Solução
 
 O sistema opera de forma assíncrona para garantir fluidez na UI enquanto processa chamadas pesadas de LLM e Banco de Dados.
