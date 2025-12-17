@@ -1,0 +1,34 @@
+**Situação**
+
+Você está desenvolvendo um projeto de pesquisa que implementa uma solução RAG (Retrieval-Augmented Generation) completa. O código foi desenvolvido e agora precisa ser documentado academicamente em um documento de planejamento de pesquisa. A documentação deve refletir com precisão o que foi implementado, facilitando a compreensão do método científico utilizado.
+
+**Tarefa**
+
+O assistente deve analisar detalhadamente o código-fonte fornecido (todos os arquivos da solução RAG), estudar o fluxo de funcionamento através do README.md, e então gerar o texto para duas seções específicas do documento "Stage 2 - Planejamento - Projeto de Pesquisa.pdf":
+- Seção 6.1: Descrição geral do método
+- Seção 6.2: Objetivos metodológicos
+
+**Objetivo**
+
+Produzir uma documentação acadêmica de alta qualidade que capture com precisão a arquitetura, componentes, fluxos de dados e objetivos da solução RAG implementada, servindo como base sólida para o projeto de pesquisa.
+
+**Conhecimento**
+
+O assistente deve:
+1. Mapear todos os componentes do sistema (módulos, classes, funções principais)
+2. Identificar o fluxo completo de dados: entrada → processamento → saída
+3. Reconhecer as tecnologias e bibliotecas utilizadas
+4. Compreender como o sistema implementa os princípios de RAG
+5. Identificar as etapas de pré-processamento, indexação, recuperação e geração
+6. Notar qualquer configuração, parametrização ou decisões de design importantes
+
+Quando identificar lacunas ou aspectos que possam ser complementados com experiência prática de desenvolvimento (como justificativas de escolhas técnicas, limitações conhecidas, ou contexto de implementação), o assistente deve inserir **[DICA: descrição do que preencher]** no texto para orientar o autor do documento.
+
+O texto deve ser:
+- Claro e preciso, usando linguagem acadêmica apropriada
+- Estruturado de forma lógica e hierárquica
+- Específico quanto aos métodos, algoritmos e processos implementados
+- Pronto para inserção direta no documento (sem necessidade de reformatação significativa)
+- Em português brasileiro
+
+Dedique o tempo necessário para análise profunda antes de gerar o texto final, priorizando a qualidade e a precisão das informações sobre a velocidade.

@@ -1,12 +1,11 @@
 # 🏛️ Chatbot RAG - Programa Quita Goiás
 
-> **Arquitetura:** Modular Monolith Async | **Orquestração:** LangGraph | **LLM:** Google Gemini 2.5 Flash
+> **Arquitetura:** Modular Monolith Async | **Orquestração:** LangGraph | **LLM:** Google Gemini
 
+Este projeto implementa um assistente virtual de alta performance baseado em **RAG (Retrieval-Augmented Generation)**. 
+Projetado para responder dúvidas sobre legislação tributária com precisão, ele utiliza uma arquitetura assíncrona moderna, persistência estruturada e um pipeline de recuperação híbrida (Vetorial + Re-ranking).
 
-Este projeto implementa um assistente virtual de alta performance baseado em **RAG (Retrieval-Augmented Generation)**.
-Projetado para responder dúvidas sobre legislação tributária com precisão, ele utiliza uma arquitetura assíncrona moderna, persistência estruturada via **SQLModel** e um pipeline de recuperação híbrida (Vetorial + Re-ranking).
-
-O grande diferencial é a sua **Suíte de Auditoria e Avaliação (QA Suite)**, que permite a criação de "Gabaritos" (Ground Truth) persistentes no banco de dados, garantindo transparência e métricas auditáveis (Hit Rate, MRR, Precision@K).
+O grande diferencial é a sua **Suíte de Auditoria e Avaliação** integrada, permitindo melhoria contínua baseada em métricas reais (Hit Rate, MRR, Precision@K).
 
 -----
 
@@ -79,9 +78,8 @@ graph TD
 ### Destaques Técnicos
 
   * **Hybrid Retrieval:** Combina a velocidade da busca vetorial (`all-MiniLM-L6-v2`) com a precisão semântica de um Cross-Encoder (`ms-marco-MiniLM-L6-v2`) para reordenar os resultados.
-  * **LangGraph:** Orquestração de estado (*Stateful*) para gerenciar o fluxo de conversação e memória de curto prazo.
-  * **Async SQLModel:** Uso de `aiosqlite` e `SQLAlchemy 2.0` para persistência não-bloqueante de históricos, feedbacks e métricas de validação.
-  * **Auditabilidade Total:** Todas as validações manuais (Gabaritos) são salvas no banco de dados, permitindo a reprodução de testes e auditoria de viés.
+  * **LangGraph:** Orquestração de estado (Stateful) para gerenciar o fluxo de conversação e memória.
+  * **Async SQLModel:** Uso de `aiosqlite` e `SQLAlchemy 2.0` para operações de banco de dados não-bloqueantes.
 
 -----
 
@@ -106,8 +104,8 @@ graph TD
 ├── 📜 ui_utils.py                  # [Utils] Helpers de UI (Impressão, Foco)
 │
 ├── 🔧 ETL & Ingestão
-│   ├── 📜 ingest.py                # Pipeline PDF -> Chunks Fixos -> VectorDB
-│   └── 📜 ingest_xml.py            # Pipeline XML -> Chunks Semânticos -> VectorDB
+│   ├── 📜 ingest.py                # Pipeline PDF -> VectorDB
+│   └── 📜 ingest_xml.py            # Pipeline XML -> VectorDB
 │
 └── 🛠️ Ferramentas de Auditoria (QA)
     ├── 📜 validate_vector_db.py    # [Coleta] Teste de Retrieval e Criação de Gabarito
