@@ -373,6 +373,13 @@ code {
 Projetado para responder dúvidas sobre legislação tributária com precisão, ele utiliza uma arquitetura assíncrona moderna, persistência estruturada via <strong>SQLModel</strong> e um pipeline de recuperação híbrida (Vetorial + Re-ranking).</p>
 <p>O grande diferencial é a sua <strong>Suíte de Auditoria e Avaliação (QA Suite)</strong>, que permite a criação de &quot;Gabaritos&quot; (Ground Truth) persistentes no banco de dados, garantindo transparência e métricas auditáveis (Hit Rate, MRR, Precision@K).</p>
 <hr>
+<h2 id="%F0%9F%92%A1-dica-de-visualiza%C3%A7%C3%A3o-diagramas">💡 Dica de Visualização (Diagramas)</h2>
+<p>Este documento contém diagramas de arquitetura complexos usando a sintaxe <strong>Mermaid</strong>. Para visualizá-los corretamente (renderizados como gráficos e não como código), recomenda-se o seguinte ambiente:</p>
+<ul>
+<li><strong>Editor de Código:</strong> <a href="https://code.visualstudio.com/download">Visual Studio Code (VS Code)</a></li>
+<li><strong>Extensão Recomendada:</strong> <a href="https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid">Markdown Preview Mermaid Support</a> (por Matt Bierner).</li>
+</ul>
+<hr>
 <h2 id="%F0%9F%A7%A9-arquitetura-da-solu%C3%A7%C3%A3o">🧩 Arquitetura da Solução</h2>
 <p>O sistema opera de forma assíncrona para garantir fluidez na UI enquanto processa chamadas pesadas de LLM e Banco de Dados.</p>
 <pre><code class="language-mermaid"><div class="mermaid">graph TD
