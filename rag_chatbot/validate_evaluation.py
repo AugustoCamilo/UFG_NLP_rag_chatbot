@@ -9,9 +9,9 @@ Atualizado para:
 1. Usar SQLModel.
 2. Usar settings.py para configuração.
 3. Exportar/Importar XML.
-4. Filtro por tipo de busca na listagem (Combo Box).
-5. Nova Métrica: Precisão@1 (Precision at 1).
-6. Legendas atualizadas.
+4. Filtro por tipo de busca na listagem.
+5. Nova Métrica: Precisão@1.
+6. Legendas das Métricas (Texto Evoluído e Didático).
 """
 
 import streamlit as st
@@ -47,10 +47,7 @@ def _safe_get_text(element, tag, default=None):
 def run_metrics_summary():
     st.subheader("Modo 1: Resumo das Métricas de Avaliação")
 
-    # Descrição atualizada sobre o K=3
-    st.info(
-        "Calcula médias de Hit Rate, MRR e Precisão. (Observação: As métricas globais consideram o retorno de 3 chunks por consulta)."
-    )
+    st.info("Abaixo estão os indicadores de performance (KPIs) do sistema de busca.")
 
     if st.button("Calcular Resumo"):
         with get_session() as session:
@@ -91,7 +88,6 @@ def run_metrics_summary():
             data = []
             for row in main_results:
                 search_type = row[0]
-                # Recupera o valor de P@1 do mapa, ou 0.0 se não houver
                 p1_score = p1_map.get(search_type, 0.0)
 
                 data.append(
@@ -101,45 +97,77 @@ def run_metrics_summary():
                         "HIT RATE (%)": f"{row[2]*100:.2f}%",
                         "MRR MÉDIO": f"{row[3]:.4f}",
                         "PRECISÃO@K (K=3)": f"{row[4]:.4f}",
-                        "PRECISÃO@1": f"{p1_score:.4f}",  # Nova Coluna
+                        "PRECISÃO@1": f"{p1_score:.4f}",
                     }
                 )
 
             st.dataframe(data, use_container_width=True)
 
-            # --- LEGENDA DAS MÉTRICAS ATUALIZADA ---
+            # --- LEGENDA DAS MÉTRICAS (TEXTO EVOLUÍDO) ---
             st.markdown("---")
-            st.header("Interpretação das Métricas")
+            st.header("📚 Guia de Interpretação das Métricas")
             st.markdown(
                 """
-                *As métricas abaixo (exceto P@1) consideram a análise dos **3 primeiros chunks** retornados.*
+                As métricas abaixo avaliam a qualidade da recuperação de informação (Retrieval). 
+                O sistema considera o retorno de **3 documentos (chunks)** por pergunta.
 
-                - **Hit Rate (Taxa de Acerto):** A porcentagem de vezes que *pelo menos um* chunk correto foi encontrado entre os 3 retornados. (Maior é melhor).
-                - **MRR (Mean Reciprocal Rank):** A média da pontuação baseada na posição do *primeiro* chunk correto. Recompensa respostas que aparecem no topo.
-                - **Precisão@K (Média):** A proporção média de chunks corretos dentro dos 3 retornados (ex: 0.66 significa que 2 dos 3 estavam certos).
-                - **Precisão@1:** A proporção média de acerto considerando **apenas o 1º chunk** (Rank 1). Indica a capacidade do sistema de entregar a resposta perfeita logo de cara.
+                ---
+
+                ### 1. Hit Rate (Taxa de Sucesso)
+                > *Pergunta chave: "O sistema encontrou **alguma** informação útil?"*
+                
+                * **Definição:** Representa a porcentagem de perguntas para as quais o sistema encontrou *pelo menos um* documento relevante na lista de 3 resultados.
+                * **Interpretação:** * **Alto:** O sistema raramente deixa o usuário "na mão".
+                    * **Baixo:** O sistema está falhando em encontrar o contexto (Recall ruim).
+                
+                ---
+
+                ### 2. MRR (Mean Reciprocal Rank)
+                > *Pergunta chave: "A melhor resposta aparece **no topo**?"*
+                
+                * **Definição:** Avalia a capacidade de ordenação (ranking). Dá nota máxima (1.0) se o documento correto for o 1º da lista, nota média (0.5) se for o 2º, e assim por diante.
+                * **Interpretação:**
+                    * **Próximo de 1.0:** O sistema é excelente em priorizar a informação correta.
+                    * **Baixo:** O sistema até acha a resposta, mas ela fica "escondida" no final da lista.
+
+                ---
+
+                ### 3. Precisão@K (Densidade de Relevância)
+                > *Pergunta chave: "Quanto **'ruído'** o sistema traz junto com a resposta?"*
+                
+                * **Definição:** É a média de quantos documentos são úteis dentro do total retornado (3 chunks). Se 2 dos 3 chunks forem úteis, a precisão é 0.66.
+                * **Interpretação:**
+                    * **Alta:** O contexto enviado para o chatbot é "limpo" e focado.
+                    * **Baixa:** O sistema traz muito texto inútil junto com a resposta certa, o que pode confundir o chatbot (alucinação) e aumentar o custo.
+
+                ---
+
+                ### 4. Precisão@1 (Tiro Certeiro)
+                > *Pergunta chave: "O **primeiro** resultado resolve o problema?"*
+                
+                * **Definição:** A porcentagem de vezes que o resultado número 1 (Rank 1) é relevante, ignorando os demais.
+                * **Interpretação:** É a métrica mais rigorosa de todas. Indica a capacidade do sistema de acertar de primeira, sem depender de resultados secundários. Essencial para sistemas de alta performance.
                 """
             )
 
 
-# --- MODO 2: LISTAGEM DETALHADA (COM FILTRO E CONTEÚDO COMPLETO) ---
+# --- MODO 2: LISTAGEM DETALHADA ---
 def run_list_evaluations():
     st.subheader("Modo 2: Listar Avaliações Detalhadas")
 
-    # 1. Carregar Tipos de Busca Disponíveis para o Filtro
+    # 1. Carregar Tipos de Busca
     with get_session() as session:
         types_statement = select(ValidationRun.search_type).distinct()
         available_types = session.exec(types_statement).all()
 
-    # Cria as opções do Combo Box: "Todos" é o padrão
+    # Opções do Filtro
     filter_options = ["Todos"] + list(available_types)
-
     selected_type = st.selectbox("Filtrar por Tipo de Busca:", filter_options)
 
     if st.button("Carregar Avaliações"):
         with get_session() as session:
 
-            # 2. Construir a Query Base
+            # 2. Query Base
             statement = select(ValidationRun).order_by(desc(ValidationRun.timestamp))
 
             # 3. Aplicar Filtro
@@ -160,19 +188,19 @@ def run_list_evaluations():
                 hr_icon = "✅" if run.hit_rate_eval else "❌"
 
                 with st.container(border=True):
-                    # Cabeçalho da Avaliação
+                    # Cabeçalho
                     st.markdown(
                         f"**ID: {run.id}** | {run.timestamp.strftime('%d/%m/%Y %H:%M:%S')} | Tipo: **{run.search_type}**"
                     )
                     st.markdown(f"> Query: *{run.query}*")
 
-                    # Métricas da Rodada
+                    # Métricas
                     c1, c2, c3 = st.columns(3)
                     c1.metric("Hit Rate", hr_icon)
                     c2.metric("MRR", f"{run.mrr_eval:.4f}")
                     c3.metric("P@K", f"{run.precision_at_k_eval:.4f}")
 
-                    # Busca chunks associados
+                    # Chunks
                     chunks = session.exec(
                         select(ValidationRetrievedChunk)
                         .where(ValidationRetrievedChunk.run_id == run.id)
@@ -186,12 +214,9 @@ def run_list_evaluations():
                         color = "green" if chunk.is_correct_eval else "red"
                         correct_lbl = "SIM" if chunk.is_correct_eval else "NÃO"
 
-                        # Detalhes do Chunk
                         st.markdown(
                             f"**{chunk.rank}.** :{color}[Correct: {correct_lbl}] | Score: {chunk.score:.4f} | {chunk.source} (p.{chunk.page})"
                         )
-
-                        # Conteúdo completo
                         st.text(chunk.chunk_content)
                         st.markdown("---")
 
