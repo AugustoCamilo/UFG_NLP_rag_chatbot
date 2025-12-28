@@ -5,12 +5,13 @@ Módulo de Dashboard de Avaliação de Métricas (Frontend de Teste).
 Este script é uma aplicação Streamlit independente, projetada para
 ler e visualizar os dados de avaliação.
 
-
+Atualizado para:
 1. Usar SQLModel.
 2. Usar settings.py para configuração.
-3. Exportar XML com timestamp.
-4. Filtro por tipo de busca na listagem.
-5. Exibição COMPLETA do conteúdo dos chunks.
+3. Exportar/Importar XML.
+4. Filtro por tipo de busca na listagem (Combo Box).
+5. Nova Métrica: Precisão@1 (Precision at 1).
+6. Legendas atualizadas.
 """
 
 import streamlit as st
@@ -45,73 +46,112 @@ def _safe_get_text(element, tag, default=None):
 # --- MODO 1: RESUMO ---
 def run_metrics_summary():
     st.subheader("Modo 1: Resumo das Métricas de Avaliação")
-    st.info("Calcula médias de Hit Rate, MRR e Precisão@K.")
+
+    # Descrição atualizada sobre o K=3
+    st.info(
+        "Calcula médias de Hit Rate, MRR e Precisão. (Observação: As métricas globais consideram o retorno de 3 chunks por consulta)."
+    )
 
     if st.button("Calcular Resumo"):
         with get_session() as session:
-            statement = select(
+            # 1. Consulta Principal (Métricas Agregadas na Tabela Run)
+            main_statement = select(
                 ValidationRun.search_type,
                 func.count(ValidationRun.id),
                 func.avg(ValidationRun.hit_rate_eval),
                 func.avg(ValidationRun.mrr_eval),
                 func.avg(ValidationRun.precision_at_k_eval),
             ).group_by(ValidationRun.search_type)
-            results = session.exec(statement).all()
+            main_results = session.exec(main_statement).all()
 
-            if not results:
+            if not main_results:
                 st.warning("Nenhuma avaliação encontrada.")
                 return
 
+            # 2. Consulta Específica para Precisão@1
+            # Calcula a média de acerto (is_correct_eval) apenas onde rank == 1
+            p1_statement = (
+                select(
+                    ValidationRun.search_type,
+                    func.avg(ValidationRetrievedChunk.is_correct_eval),
+                )
+                .join(
+                    ValidationRetrievedChunk,
+                    ValidationRun.id == ValidationRetrievedChunk.run_id,
+                )
+                .where(ValidationRetrievedChunk.rank == 1)
+                .group_by(ValidationRun.search_type)
+            )
+            p1_results = session.exec(p1_statement).all()
+
+            # Cria um dicionário para busca rápida: {tipo_busca: score_p1}
+            p1_map = {row[0]: row[1] for row in p1_results}
+
+            # 3. Montagem dos Dados
             data = []
-            for row in results:
+            for row in main_results:
+                search_type = row[0]
+                # Recupera o valor de P@1 do mapa, ou 0.0 se não houver
+                p1_score = p1_map.get(search_type, 0.0)
+
                 data.append(
                     {
-                        "TIPO DE BUSCA": row[0],
+                        "TIPO DE BUSCA": search_type,
                         "TOTAL": row[1],
                         "HIT RATE (%)": f"{row[2]*100:.2f}%",
                         "MRR MÉDIO": f"{row[3]:.4f}",
-                        "PRECISÃO@K": f"{row[4]:.4f}",
+                        "PRECISÃO@K (K=3)": f"{row[4]:.4f}",
+                        "PRECISÃO@1": f"{p1_score:.4f}",  # Nova Coluna
                     }
                 )
+
             st.dataframe(data, use_container_width=True)
 
-            # --- LEGENDA ---
+            # --- LEGENDA DAS MÉTRICAS ATUALIZADA ---
             st.markdown("---")
             st.header("Interpretação das Métricas")
             st.markdown(
                 """
-                - **Hit Rate (Taxa de Acerto):** A porcentagem de vezes que *pelo menos um* chunk correto foi retornado. (Maior é melhor)
-                - **MRR (Mean Reciprocal Rank):** A média da "pontuação de ranking" do *primeiro* chunk correto. (Maior é melhor, 1.0 é perfeito)
-                - **Precisão@K Média:** A proporção média de chunks corretos por rodada (ex: 0.66 = 2 de 3 chunks estavam certos). Mede a "pureza" do resultado. (Maior é melhor)
+                *As métricas abaixo (exceto P@1) consideram a análise dos **3 primeiros chunks** retornados.*
+
+                - **Hit Rate (Taxa de Acerto):** A porcentagem de vezes que *pelo menos um* chunk correto foi encontrado entre os 3 retornados. (Maior é melhor).
+                - **MRR (Mean Reciprocal Rank):** A média da pontuação baseada na posição do *primeiro* chunk correto. Recompensa respostas que aparecem no topo.
+                - **Precisão@K (Média):** A proporção média de chunks corretos dentro dos 3 retornados (ex: 0.66 significa que 2 dos 3 estavam certos).
+                - **Precisão@1:** A proporção média de acerto considerando **apenas o 1º chunk** (Rank 1). Indica a capacidade do sistema de entregar a resposta perfeita logo de cara.
                 """
             )
 
 
-# --- MODO 2: LISTAGEM DETALHADA (COM FILTRO E TEXTO COMPLETO) ---
+# --- MODO 2: LISTAGEM DETALHADA (COM FILTRO E CONTEÚDO COMPLETO) ---
 def run_list_evaluations():
     st.subheader("Modo 2: Listar Avaliações Detalhadas")
 
-    # 1. Preparar o Filtro
+    # 1. Carregar Tipos de Busca Disponíveis para o Filtro
     with get_session() as session:
         types_statement = select(ValidationRun.search_type).distinct()
         available_types = session.exec(types_statement).all()
 
+    # Cria as opções do Combo Box: "Todos" é o padrão
     filter_options = ["Todos"] + list(available_types)
+
     selected_type = st.selectbox("Filtrar por Tipo de Busca:", filter_options)
 
     if st.button("Carregar Avaliações"):
         with get_session() as session:
 
-            # 2. Construir a Query Dinâmica
+            # 2. Construir a Query Base
             statement = select(ValidationRun).order_by(desc(ValidationRun.timestamp))
 
+            # 3. Aplicar Filtro
             if selected_type != "Todos":
                 statement = statement.where(ValidationRun.search_type == selected_type)
 
             runs = session.exec(statement).all()
 
             if not runs:
-                st.warning(f"Nenhuma avaliação encontrada para o tipo: {selected_type}")
+                st.warning(
+                    f"Nenhuma avaliação encontrada para o filtro: {selected_type}"
+                )
                 return
 
             st.success(f"Total de rodadas encontradas: {len(runs)}")
@@ -120,11 +160,13 @@ def run_list_evaluations():
                 hr_icon = "✅" if run.hit_rate_eval else "❌"
 
                 with st.container(border=True):
+                    # Cabeçalho da Avaliação
                     st.markdown(
                         f"**ID: {run.id}** | {run.timestamp.strftime('%d/%m/%Y %H:%M:%S')} | Tipo: **{run.search_type}**"
                     )
                     st.markdown(f"> Query: *{run.query}*")
 
+                    # Métricas da Rodada
                     c1, c2, c3 = st.columns(3)
                     c1.metric("Hit Rate", hr_icon)
                     c2.metric("MRR", f"{run.mrr_eval:.4f}")
@@ -144,12 +186,12 @@ def run_list_evaluations():
                         color = "green" if chunk.is_correct_eval else "red"
                         correct_lbl = "SIM" if chunk.is_correct_eval else "NÃO"
 
-                        # Cabeçalho do Chunk
+                        # Detalhes do Chunk
                         st.markdown(
                             f"**{chunk.rank}.** :{color}[Correct: {correct_lbl}] | Score: {chunk.score:.4f} | {chunk.source} (p.{chunk.page})"
                         )
 
-                        # Texto completo
+                        # Conteúdo completo
                         st.text(chunk.chunk_content)
                         st.markdown("---")
 
