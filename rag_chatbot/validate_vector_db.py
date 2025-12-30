@@ -139,7 +139,7 @@ def display_search_results(query, search_type, results_with_scores):
         page = doc.metadata.get("page", "N/A")
         score_label = (
             "Score de Relevância"
-            if search_type == "reranked_SC"
+            if search_type == "reranked_USER"
             else "Score de Distância"
         )
 
@@ -269,13 +269,16 @@ def run_search_test(retriever: VectorRetriever):
 
     if submit_button and query:
         st.session_state.query = query
-        st.session_state.search_type = "reranked_SC"
+        st.session_state.search_type = "reranked_USER"
 
         with st.spinner("Etapa 1 (Recall) e Etapa 2 (Re-Ranking) em progresso..."):
             top_k_results = retriever.retrieve_context_with_scores(query)
             st.session_state.results = top_k_results
 
-    if "results" in st.session_state and st.session_state.search_type == "reranked_SC":
+    if (
+        "results" in st.session_state
+        and st.session_state.search_type == "reranked_USER"
+    ):
         display_search_results(
             st.session_state.query,
             st.session_state.search_type,
