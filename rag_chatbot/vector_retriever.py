@@ -52,9 +52,15 @@ class VectorRetriever:
                 embedding_function=self.embeddings,
             )
 
-            # 3. Carregar o modelo de Re-Ranker (CrossEncoder)
+            # 3. Carregar o modelo de Re-Ranker (Cross-Encoder)
             print("Carregando modelo de Re-Ranking (Cross-Encoder)...")
-            self.reranker = CrossEncoder(settings.RERANKER_MODEL_NAME)
+            # self.reranker = CrossEncoder(settings.RERANKER_MODEL_NAME)
+            self.cross_encoder = CrossEncoder(
+                settings.RERANK_MODEL,
+                max_length=512,
+                device=self.device,
+                automodel_args={"low_cpu_mem_usage": False},
+            )
             print("VectorRetriever inicializado com sucesso.")
 
         except Exception as e:
