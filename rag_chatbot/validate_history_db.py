@@ -10,6 +10,7 @@ Atualizado para:
 5. Resumo Estatístico agrupado por Origem (Real vs Sintético).
 6. Importação e Exportação de XML (Backup completo).
 7. Gráficos de Pizza (Pie Charts) com Altair para visualização de feedbacks.
+8. Filtro dinâmico de Origem no Resumo dos Feedbacks.
 """
 
 import streamlit as st
@@ -190,16 +191,30 @@ def run_list_feedback():
 
 def run_feedback_summary():
     """Modo 4: Resumo dos Feedbacks"""
-    st.subheader("Modo 4: Resumo dos Feedbacks (Estatísticas por Origem)")
+    st.subheader("Modo 4: Resumo dos Feedbacks (Estatísticas)")
     st.info("Estatísticas consolidadas de satisfação, separadas por tipo de interação.")
+
+    # --- NOVO FILTRO DE ORIGEM ---
+    origin_filter = st.selectbox(
+        "Filtrar Dados por Origem:", ["Todos", "Usuário Real", "Teste Sintético"]
+    )
 
     if st.button("Calcular Estatísticas"):
         with get_session_sync() as session:
 
-            origins_to_check = [
+            # Definição base das origens
+            all_origins = [
                 {"label": "👤 Usuário Real", "is_synthetic": False},
                 {"label": "🧪 Teste Sintético", "is_synthetic": True},
             ]
+
+            # Aplica o filtro
+            if origin_filter == "Todos":
+                origins_to_check = all_origins
+            elif origin_filter == "Usuário Real":
+                origins_to_check = [all_origins[0]]
+            else:  # Teste Sintético
+                origins_to_check = [all_origins[1]]
 
             consolidated_data = []
             charts_payload = []  # Para armazenar dados para os gráficos
@@ -298,7 +313,7 @@ def run_feedback_summary():
                 )
 
             if not consolidated_data:
-                st.warning("Nenhum dado encontrado para gerar estatísticas.")
+                st.warning(f"Nenhum dado encontrado para o filtro: {origin_filter}.")
                 return
 
             # Exibir Tabela
@@ -308,6 +323,42 @@ def run_feedback_summary():
             st.table(df)
 
             st.divider()
+
+            # --- CORREÇÃO DE IMPRESSÃO (CSS INJETADO) ---
+            # 1. Page Break: Força nova página para os gráficos
+            # 2. Fix Selectbox: Força fundo branco e borda no filtro para ser legível
+            st.markdown(
+                """
+            <style>
+            @media print {
+                /* Quebra de página antes dos gráficos */
+                .page-break { 
+                    page-break-before: always; 
+                    margin-top: 2rem;
+                    display: block;
+                }
+                
+                /* Força fundo branco nos componentes de Input e Select */
+                div[data-baseweb="select"] > div,
+                div[data-baseweb="base-input"] {
+                    background-color: #ffffff !important;
+                    border: 1px solid #999999 !important;
+                    color: #000000 !important;
+                    -webkit-print-color-adjust: exact;
+                }
+                
+                /* Garante que o texto dentro do select (SVG/Labels) seja preto */
+                div[data-baseweb="select"] span, 
+                div[data-baseweb="select"] div {
+                    color: #000000 !important;
+                }
+            }
+            </style>
+            <div class="page-break"></div>
+            """,
+                unsafe_allow_html=True,
+            )
+            # ---------------------------------------------
 
             # Exibir Gráficos
             st.markdown("### 📊 Visualização Gráfica")
@@ -335,6 +386,10 @@ def run_feedback_summary():
                                         "#dc3545",
                                         "#eaeaea",
                                     ],  # Verde, Vermelho, Cinza
+                                ),
+                                # Mantendo a legenda ajustada para impressão (abaixo)
+                                legend=alt.Legend(
+                                    orient="bottom", direction="horizontal"
                                 ),
                             ),
                             tooltip=[
