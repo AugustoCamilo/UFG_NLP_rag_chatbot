@@ -20,6 +20,11 @@ class Settings(BaseSettings):
         return str(self.DB_DIR / "chat_solution.db")
 
     @property
+    def VECTOR_DB_PATH(self) -> Path:
+        # Garante compatibilidade caso o código chame .VECTOR_DB_PATH
+        return self.VECTOR_DB_DIR
+
+    @property
     def DATABASE_URL(self) -> str:
         # Retorna a string de conexão para o SQLModel/SQLAlchemy
         return f"sqlite+aiosqlite:///{self.DB_PATH}"
@@ -34,9 +39,8 @@ class Settings(BaseSettings):
     GEMINI_MODEL_NAME: str = "gemini-2.5-flash"
 
     # --- Embeddings & Retrieval ---
-    # Nomes corrigidos para EMBEDDING_MODEL e RERANK_MODEL (sem o sufixo _NAME)
-    EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
-    RERANK_MODEL: str = "cross-encoder/ms-marco-MiniLM-L6-v2"
+    EMBEDDING_MODEL_NAME: str = "sentence-transformers/all-MiniLM-L6-v2"
+    RERANK_MODEL_NAME: str = "cross-encoder/ms-marco-MiniLM-L6-v2"
 
     SEARCH_K_RAW: int = 20
     SEARCH_K_FINAL: int = 3
