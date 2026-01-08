@@ -373,13 +373,6 @@ code {
 Projetado para responder dúvidas sobre legislação tributária com precisão, ele utiliza uma arquitetura assíncrona moderna, persistência estruturada via <strong>SQLModel</strong> e um pipeline de recuperação híbrida (Vetorial + Re-ranking).</p>
 <p>O grande diferencial é a sua <strong>Suíte de Auditoria e Avaliação (QA Suite)</strong>, que permite a criação de &quot;Gabaritos&quot; (Ground Truth) persistentes no banco de dados, garantindo transparência e métricas auditáveis (Hit Rate, MRR, Precision@K).</p>
 <hr>
-<h2 id="%F0%9F%92%A1-dica-de-visualiza%C3%A7%C3%A3o-diagramas">💡 Dica de Visualização (Diagramas)</h2>
-<p>Este documento contém diagramas de arquitetura complexos usando a sintaxe <strong>Mermaid</strong>. Para visualizá-los corretamente (renderizados como gráficos e não como código), recomenda-se o seguinte ambiente:</p>
-<ul>
-<li><strong>Editor de Código:</strong> <a href="https://code.visualstudio.com/download">Visual Studio Code (VS Code)</a></li>
-<li><strong>Extensão Recomendada:</strong> <a href="https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid">Markdown Preview Mermaid Support</a> (por Matt Bierner).</li>
-</ul>
-<hr>
 <h2 id="%F0%9F%A7%A9-arquitetura-da-solu%C3%A7%C3%A3o">🧩 Arquitetura da Solução</h2>
 <p>O sistema opera de forma assíncrona para garantir fluidez na UI enquanto processa chamadas pesadas de LLM e Banco de Dados.</p>
 <pre><code class="language-mermaid"><div class="mermaid">graph TD
@@ -403,43 +396,40 @@ Projetado para responder dúvidas sobre legislação tributária com precisão, 
     Chain -->|Persist Logs| SQL
     Chain -->|Response| UI
 </div></code></pre>
-<h3 id="fluxo-de-trabalho-de-dados-e-qa">Fluxo de Trabalho de Dados e QA</h3>
-<p>Este diagrama ilustra como as ferramentas de suporte (<code>validate_*.py</code> e <code>edit_*.py</code>) interagem para garantir a qualidade contínua do chatbot.</p>
 <pre><code class="language-mermaid"><div class="mermaid">graph TD
     %% Atores (Humanos)
     QA(QA / Especialista) -->|1. Cria Gabarito| ValDB[validate_vector_db.py]
-    Analyst(Analista de Dados) -->|2. Corrige & Cura| ValEdit[edit_evaluation.py]
-    Analyst -->|3. Analisa Métricas| ValEval[validate_evaluation.py]
-    Admin(Admin do Sistema) -->|4. Audita Produção| ValHist[validate_history_db.py]
+    Analyst(Analista de Dados) -->|2. Analisa Métricas| ValEval[validate_evaluation.py]
+    Admin(Admin do Sistema) -->|3. Audita Produção| ValHist[validate_history_db.py]
 
     %% Componentes Reutilizados do Core
-    subgraph "Core Modules"
+    subgraph "Core Modules (Módulos Compartilhados)"
         Retriever[VectorRetriever]
     end
 
-    %% Armazenamento
-    subgraph "Data Layer"
+    %% Armazenamento Vetorial
+    subgraph "Knowledge Base"
         VectorDB[(ChromaDB)]
-        SQL_Val[(Tabela: ValidationRuns)]
-        SQL_Prod[(Tabela: ChatHistory)]
     end
 
-    %% Fluxo de Coleta (Criação)
+    %% Armazenamento Relacional (Separado logicamente por tabelas)
+    subgraph "Data Persistence (SQLite/SQLModel)"
+        SQL_Val[(Tabelas de Validação<br/>ValidationRuns)]
+        SQL_Prod[(Tabelas de Produção<br/>ChatHistory/Feedback)]
+    end
+
+    %% Fluxo da Ferramenta de Coleta (Vector DB Validation)
     ValDB -->|Uses| Retriever
-    Retriever -->|Search| VectorDB
-    ValDB -->|Insert: Queries & Scores| SQL_Val
+    Retriever -->|Search & Rerank| VectorDB
+    ValDB -->|Write: Queries & Scores| SQL_Val
 
-    %% Fluxo de Curadoria (Edição)
-    ValEdit <-->|Read/Update: Recalcula Métricas| SQL_Val
+    %% Fluxo da Ferramenta de Métricas (Evaluation Dashboard)
+    ValEval -->|Read: Hit Rate / MRR / P@K| SQL_Val
+    ValEval <-->|Import/Export Team Data| XML[📄 Arquivos XML]
 
-    %% Fluxo de Análise (Leitura)
-    ValEval -->|Read: Hit Rate / MRR| SQL_Val
-    ValEval <-->|Import/Export Dataset| XML[📄 Arquivos XML]
-
-    %% Fluxo de Auditoria (Produção)
+    %% Fluxo da Ferramenta de Histórico (Production Audit)
     ValHist -->|Read: Sessions & Feedback| SQL_Prod
-    ValHist -->|Export Data| CSV[📊 CSV / XML / Charts]
-
+    ValHist -->|Export Data| CSV[📊 Relatórios CSV]
 </div></code></pre>
 <h3 id="destaques-t%C3%A9cnicos">Destaques Técnicos</h3>
 <ul>
@@ -454,14 +444,14 @@ Projetado para responder dúvidas sobre legislação tributária com precisão, 
 │
 ├── 📂 docs/                        # [Input] Coloque aqui seus PDFs e XMLs
 │
-├── 📂 database/                    # [Storage] Persistência Relacional
-│   └── 💾 chat_solution.db         # Histórico, Feedbacks e Validações
+├── 📂 database/                    # [Storage] Persistência Relacional (Gerado Automático)
+│   └── 💾 chat_database.db         # Histórico de Chat, Feedbacks e Métricas
 │
-├── 📂 vector_db/                   # [Storage] Banco Vetorial ChromaDB
+├── 📂 vector_db/                   # [Storage] Banco Vetorial (Gerado Automático)
 │   └── 💾 ...                      # Arquivos do ChromaDB
 │
-├── 📜 app.py                       # [App] Interface de Chat (Produção)
-├── 📜 rag_chain.py                 # [Core] Lógica RAG e LangGraph
+├── 📜 app.py                       # [App] Interface de Chat (Usuário Final)
+├── 📜 rag_chain.py                 # [Core] Lógica RAG, LangGraph e Memória
 ├── 📜 vector_retriever.py          # [Core] Motor de Busca (Recall + Rerank)
 ├── 📜 database.py                  # [Model] Schemas do Banco (SQLModel)
 ├── 📜 settings.py                  # [Config] Variáveis de Ambiente e Caminhos
@@ -471,13 +461,12 @@ Projetado para responder dúvidas sobre legislação tributária com precisão, 
 │   ├── 📜 ingest.py                # Pipeline PDF -&gt; Chunks Fixos -&gt; VectorDB
 │   └── 📜 ingest_xml.py            # Pipeline XML -&gt; Chunks Semânticos -&gt; VectorDB
 │
-└── 🛠️ Ferramentas de Auditoria &amp; QA
+└── 🛠️ Ferramentas de Auditoria (QA)
     ├── 📜 validate_vector_db.py    # [Coleta] Teste de Retrieval e Criação de Gabarito
-    ├── 📜 edit_evaluation.py       # [Curadoria] Editor para corrigir avaliações e recalcular métricas
-    ├── 📜 validate_evaluation.py   # [Análise] Dashboard de Métricas (HR, MRR, P@K)
-    └── 📜 validate_history_db.py   # [Auditoria] Logs de Produção, Gráficos e Feedbacks
-
+    ├── 📜 validate_evaluation.py   # [Análise] Dashboard de Métricas (HR, MRR)
+    └── 📜 validate_history_db.py   # [Auditoria] Logs de Produção e Feedbacks
 </div></code></pre>
+<hr>
 <h2 id="%F0%9F%9A%80-instala%C3%A7%C3%A3o-e-configura%C3%A7%C3%A3o">🚀 Instalação e Configuração</h2>
 <h3 id="1-pr%C3%A9-requisitos">1. Pré-requisitos</h3>
 <ul>
@@ -525,7 +514,7 @@ conda activate rag_solution
 <p><em>(Nota: Ambos os scripts recriam automaticamente as pastas <code>database/</code> e <code>vector_db/</code>. <strong>Execute apenas um dos scripts</strong>, dependendo de qual fonte de dados você deseja utilizar no momento.)</em></p>
 <hr>
 <h2 id="%F0%9F%96%A5%EF%B8%8F-guia-de-utiliza%C3%A7%C3%A3o">🖥️ Guia de Utilização</h2>
-<p>O projeto é composto por <strong>5 aplicações Streamlit</strong> distintas. Execute-as em terminais separados conforme a necessidade.</p>
+<p>O projeto é composto por <strong>4 aplicações Streamlit</strong> distintas. Execute-as em terminais separados conforme a necessidade.</p>
 <h3 id="1-chatbot-produ%C3%A7%C3%A3o">1. Chatbot (Produção)</h3>
 <p>A interface principal para o usuário final.</p>
 <pre class="hljs"><code><div>streamlit run app.py
@@ -551,96 +540,90 @@ conda activate rag_solution
 <pre class="hljs"><code><div>streamlit run validate_evaluation.py
 </div></code></pre>
 <ul>
-<li><strong>Métricas:</strong> Hit Rate, MRR, Precision@K e Precision@1.</li>
-<li><strong>Import/Export:</strong> Permite importar dados validados de XML para análises históricas.</li>
+<li><strong>Hit Rate:</strong> Frequência com que a resposta correta aparece nos resultados.</li>
+<li><strong>MRR (Mean Reciprocal Rank):</strong> Quão bem posicionado (1º, 2º, 3º...) está o melhor resultado.</li>
+<li><strong>Exportação:</strong> Gera XMLs para compartilhar avaliações entre a equipe.</li>
 </ul>
 <h4 id="c-auditoria-de-hist%C3%B3rico">C. Auditoria de Histórico</h4>
 <p>Monitora o uso real em produção.</p>
 <pre class="hljs"><code><div>streamlit run validate_history_db.py
 </div></code></pre>
 <ul>
-<li><strong>Resumo Visual:</strong> Gráficos de Pizza interativos comparando satisfação (Likes/Dislikes) entre Usuários Reais e Testes Sintéticos.</li>
-<li><strong>Backup:</strong> Exportação completa do histórico de conversas e feedbacks para XML e CSV.</li>
+<li>Visualize conversas completas por ID de sessão.</li>
+<li>Filtre por Feedbacks negativos (👎) para ajustar o conteúdo.</li>
 </ul>
 <hr>
 <h2 id="%F0%9F%93%8A-entendendo-as-m%C3%A9tricas">📊 Entendendo as Métricas</h2>
+<p>O sistema calcula automaticamente três métricas vitais para RAG:</p>
 <table>
 <thead>
 <tr>
-<th>Métrica</th>
-<th>O que mede?</th>
-<th>Interpretação</th>
+<th style="text-align:left">Métrica</th>
+<th style="text-align:left">O que mede?</th>
+<th style="text-align:left">Exemplo</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Hit Rate</strong></td>
-<td>Capacidade de encontrar <em>alguma</em> resposta útil.</td>
-<td>Se a resposta certa apareceu (mesmo em 3º lugar), é 1. Se não, 0.</td>
+<td style="text-align:left"><strong>Hit Rate</strong></td>
+<td style="text-align:left">Capacidade de encontrar <em>alguma</em> resposta útil.</td>
+<td style="text-align:left">Se a resposta certa apareceu (mesmo em 3º lugar), é 1. Se não, 0.</td>
 </tr>
 <tr>
-<td><strong>MRR</strong></td>
-<td>Qualidade da ordenação (Ranking).</td>
-<td>Se a melhor resposta é a 1ª, MRR=1.0. Se for a 2ª, MRR=0.5. Se for a 3ª, MRR=0.33.</td>
+<td style="text-align:left"><strong>MRR</strong></td>
+<td style="text-align:left">Qualidade da ordenação (Ranking).</td>
+<td style="text-align:left">Se a melhor resposta é a 1ª, MRR=1.0. Se for a 2ª, MRR=0.5. Se for a 3ª, MRR=0.33.</td>
 </tr>
 <tr>
-<td><strong>Precision@K</strong></td>
-<td>Densidade</td>
-<td>Quanto &quot;ruído&quot; veio junto? (Ex: 2 chunks úteis de 3 = 0.66)</td>
-</tr>
-<tr>
-<td><strong>Precision@1</strong></td>
-<td>&quot;Tiro Certeiro&quot;</td>
-<td>O 1º resultado sozinho responde à pergunta?</td>
+<td style="text-align:left"><strong>Precision@K</strong></td>
+<td style="text-align:left">Densidade de informação útil.</td>
+<td style="text-align:left">Se dos 3 chunks retornados, 2 são úteis, P@K = 0.66.</td>
 </tr>
 </tbody>
 </table>
 <hr>
 <h2 id="%F0%9F%9B%A0%EF%B8%8F-stack-tecnol%C3%B3gico">🛠️ Stack Tecnológico</h2>
 <ul>
-<li><strong>Frontend:</strong> Streamlit 1.50 (com Altair Charts)</li>
-<li><strong>Core AI:</strong> LangChain 1.0, LangGraph, Google Gemini 2.5</li>
+<li><strong>Frontend:</strong> Streamlit 1.50</li>
+<li><strong>Core AI:</strong> LangChain 1.0, LangGraph, Google Gemini 1.5</li>
 <li><strong>Data:</strong> SQLModel (SQLAlchemy + Pydantic), ChromaDB (Vector Store)</li>
 <li><strong>NLP:</strong> Sentence-Transformers (Embeddings + Cross-Encoders)</li>
 <li><strong>Utils:</strong> PyMuPDF, Python-Dotenv</li>
 </ul>
 <hr>
-<h2 id="6-%F0%9F%94%84-nota-sobre-o-desenvolvimento-a-abordagem-%22vibe-coding%22">6. 🔄 Nota sobre o Desenvolvimento: A Abordagem &quot;Vibe Coding&quot;</h2>
-<p>Este projeto foi construído utilizando o paradigma de Vibe Coding (Intent-Based Programming).
-Diferente da codificação tradicional, aqui o foco deslocou-se da sintaxe manual para a arquitetura, fluxo de dados e regras de negócio, enquanto a IA assumiu a implementação pesada com padrões de engenharia modernos.</p>
-<p>A colaboração seguiu uma dinâmica fluida de &quot;Human-in-the-Loop&quot;:</p>
+<h2 id="6-%F0%9F%94%84-nota-sobre-o-desenvolvimento-e-colabora%C3%A7%C3%A3o-com-ia">6. 🔄 Nota sobre o Desenvolvimento e Colaboração com IA</h2>
+<p>Este projeto representa um fluxo de trabalho moderno de <strong>Desenvolvimento Assistido por IA</strong> (<em>AI-Assisted Development</em>).</p>
+<p>A divisão de responsabilidades neste projeto seguiu a filosofia de &quot;Human in the Loop&quot;:</p>
 <ul>
 <li>
-<p><strong>👨‍💻 Engenheiro Humano (Arquiteto &amp; Vibe Keeper):</strong></p>
+<p><strong>👨‍💻 Engenheiro Humano (Arquiteto &amp; Product Owner):</strong></p>
 <ul>
-<li>Responsável pela <strong>Intenção e Visão</strong>: Definição do &quot;quê&quot; e do &quot;porquê&quot;.</li>
-<li>Arquitetura de Solução: Escolha da stack (LangGraph, SQLModel, Streamlit).</li>
-<li>Curadoria de Código: Revisão crítica de segurança, lógica de negócios e auditoria de métricas.</li>
+<li>Concepção da <strong>Arquitetura de Sistema</strong> e padrões de projeto.</li>
+<li>Definição de todas as <strong>Regras de Negócio</strong> e requisitos funcionais.</li>
+<li>Desenho do <strong>Fluxo de Dados</strong> e estratégias de validação (QA).</li>
 </ul>
 </li>
 <li>
 <p><strong>🤖 Google Gemini (AI Pair Programmer):</strong></p>
 <ul>
-<li>Implementação &quot;Zero-Friction&quot;: Transformação de prompts em linguagem natural diretamente em código Python tipado, assíncrono e documentado.</li>
-<li>Refatoração Proativa: Aplicação imediata de Design Patterns e migração de scripts síncronos para asyncio.</li>
-<li>Manutenção de Contexto: Geração de testes e documentação técnica alinhada ao estilo do projeto.</li>
+<li>Geração de sintaxe de código (<em>boilerplate</em> e implementações complexas) em Python e SQLModel.</li>
 <li>Refatoração para padrões modernos (migração para <code>async/await</code>).</li>
+<li>Criação de documentação técnica.</li>
 </ul>
 </li>
 <li>
 <p><strong>🔄 Fluxo de Trabalho:</strong></p>
 <ul>
-<li><strong>Intenção</strong>: O desenvolvedor define o objetivo (ex: &quot;Criar um dashboard de auditoria com gráficos&quot;).</li>
-<li><strong>Vibe Coding</strong>: A IA gera a solução completa seguindo as diretrizes de qualidade do projeto.</li>
-<li><strong>Refinamento</strong>: Ajustes finos de UI/UX e validação de lógica pelo humano.</li>
+<li>O desenvolvimento seguiu um ciclo iterativo onde o desenvolvedor solicitava funcionalidades via linguagem natural (prompting técnico).</li>
+<li>O modelo gerava a implementação, e o desenvolvedor realizava a revisão de código (<em>Code Review</em>), ajustes finos e integração final.</li>
 </ul>
 </li>
 </ul>
 <pre><code class="language-mermaid"><div class="mermaid">graph TD
-    A[👨‍💻 Intenção & Arquitetura] -->|Natural Language| B[🤖 Vibe Coding Engine]
-    B -->|⚡ High-Quality Code| C[👨‍💻 Code Review & Teste]
-    C -->|❌ Feedback| B
-    C -->|✅ Aprovado| D[🚀 Deploy/Commit]
+    A[Prompting Técnico] --> B[Geração]
+    B --> C[Code Review Humano]
+    C --> D[Refinamento]
+    D -.->|Novo Ciclo| A
 </div></code></pre>
 
 </body>
