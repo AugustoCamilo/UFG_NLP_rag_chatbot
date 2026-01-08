@@ -1,0 +1,1023 @@
+<?xml version="1.0" ?>
+<chat_database_export>
+  <!-- Exportado em: 2026-01-08 12:07:37 | Total msgs: 33 -->
+  <chat_message>
+    <bot_response>Olá! Sou o assistente virtual do Quita Goiás e posso te ajudar com essa informação.
+
+O **objeto específico** do Edital nº 01/2025 é a **transação de créditos tributários inscritos em Dívida Ativa do Estado de Goiás que são considerados irrecuperáveis ou de difícil recuperação**.
+
+Para que uma dívida possa ser incluída nesse acordo, ela precisa ter um **valor remanescente superior a R$ 500.000,00 (quinhentos mil reais)**.
+
+Em resumo:
+*   **Objeto:** Transação de dívidas tributárias inscritas em Dívida Ativa de Goiás, classificadas como irrecuperáveis ou de difícil recuperação.
+*   **Valor Mínimo:** A dívida deve ter um valor remanescente acima de **R$ 500.000,00**.
+
+Espero que esta explicação clara ajude! Se tiver mais alguma dúvida, é só perguntar.</bot_response>
+    <id>1</id>
+    <user_message>Qual é o objeto específico do Edital de Transação Tributária nº 01/2025 e qual o valor remanescente mínimo para inclusão de créditos?</user_message>
+    <session_id>47827581-4ceb-459c-b358-64f958614cd2</session_id>
+    <user_chars>133</user_chars>
+    <user_tokens>1474</user_tokens>
+    <request_start_time>2026-01-07 22:04:44.050633</request_start_time>
+    <response_end_time>2026-01-07 22:04:51.446919</response_end_time>
+    <generation_duration_sec>5.97487</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>758</bot_chars>
+    <bot_tokens>213</bot_tokens>
+    <retrieval_end_time>2026-01-07 22:04:45.472049</retrieval_end_time>
+    <retrieval_duration_sec>1.421416</retrieval_duration_sec>
+    <total_duration_sec>7.396286</total_duration_sec>
+    <feedback>
+      <id>1</id>
+      <rating>like</rating>
+      <timestamp>2026-01-07 22:05:00.042373</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Desculpe, não encontrei essa informação específica nos documentos oficiais do Programa Quita Goiás aos quais tenho acesso. Sou um assistente focado estritamente nas regras atuais do programa. Poderia reformular sua pergunta?</bot_response>
+    <id>2</id>
+    <user_message>Quais são as modalidades de transação previstas na Lei Complementar nº 197/2024?</user_message>
+    <session_id>47827581-4ceb-459c-b358-64f958614cd2</session_id>
+    <user_chars>80</user_chars>
+    <user_tokens>1754</user_tokens>
+    <request_start_time>2026-01-07 22:05:16.351819</request_start_time>
+    <response_end_time>2026-01-07 22:05:23.085103</response_end_time>
+    <generation_duration_sec>5.740581</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>224</bot_chars>
+    <bot_tokens>45</bot_tokens>
+    <retrieval_end_time>2026-01-07 22:05:17.344522</retrieval_end_time>
+    <retrieval_duration_sec>0.992703</retrieval_duration_sec>
+    <total_duration_sec>6.733284</total_duration_sec>
+    <feedback>
+      <id>2</id>
+      <rating>dislike</rating>
+      <timestamp>2026-01-07 22:06:09.921723</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Sou o assistente virtual do Quita Goiás e posso te ajudar com essa informação importante.
+
+O canal oficial de comunicação para **TODAS** as etapas e procedimentos de transação entre o contribuinte e a Procuradoria-Geral do Estado (PGE) é o e-mail:
+
+*   **ntt@pge.go.gov.br**
+
+Este e-mail deve ser usado para:
+*   Cadastro
+*   Dúvidas
+*   Envio de documentos
+*   Impugnações
+*   Todas as demais comunicações
+
+É fundamental utilizar este canal para garantir que suas mensagens sejam recebidas e processadas corretamente pela PGE.</bot_response>
+    <id>3</id>
+    <user_message>Qual é o canal de comunicação oficial (e-mail) entre o contribuinte e a Procuradoria-Geral do Estado (PGE) para os procedimentos de transação?</user_message>
+    <session_id>47827581-4ceb-459c-b358-64f958614cd2</session_id>
+    <user_chars>142</user_chars>
+    <user_tokens>1284</user_tokens>
+    <request_start_time>2026-01-07 22:06:27.467033</request_start_time>
+    <response_end_time>2026-01-07 22:06:35.513006</response_end_time>
+    <generation_duration_sec>6.844977</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>532</bot_chars>
+    <bot_tokens>140</bot_tokens>
+    <retrieval_end_time>2026-01-07 22:06:28.668029</retrieval_end_time>
+    <retrieval_duration_sec>1.200996</retrieval_duration_sec>
+    <total_duration_sec>8.045973</total_duration_sec>
+    <feedback>
+      <id>3</id>
+      <rating>like</rating>
+      <timestamp>2026-01-07 22:06:47.796276</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Sou o assistente virtual do Quita Goiás e posso esclarecer essa dúvida.
+
+Não, a transação **não constitui um direito subjetivo do contribuinte**.
+
+Isso significa que:
+*   A transação não é um direito garantido que você pode exigir.
+*   O deferimento (aprovação) do seu pedido de transação dependerá da verificação de que você cumpriu todas as exigências e regras estabelecidas.
+*   O Estado de Goiás, representado pela Procuradoria-Geral do Estado (PGE), fará uma análise de conveniência e oportunidade para decidir se aceita ou não o pedido.
+
+Em resumo, a aprovação da transação depende do cumprimento das regras e da análise da PGE.</bot_response>
+    <id>4</id>
+    <user_message>A transação constitui um direito subjetivo do contribuinte?</user_message>
+    <session_id>47827581-4ceb-459c-b358-64f958614cd2</session_id>
+    <user_chars>59</user_chars>
+    <user_tokens>1530</user_tokens>
+    <request_start_time>2026-01-07 22:07:11.986932</request_start_time>
+    <response_end_time>2026-01-07 22:07:20.151087</response_end_time>
+    <generation_duration_sec>7.215107</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>639</bot_chars>
+    <bot_tokens>156</bot_tokens>
+    <retrieval_end_time>2026-01-07 22:07:12.935980</retrieval_end_time>
+    <retrieval_duration_sec>0.949048</retrieval_duration_sec>
+    <total_duration_sec>8.164155</total_duration_sec>
+    <feedback>
+      <id>4</id>
+      <rating>like</rating>
+      <timestamp>2026-01-07 22:07:30.555151</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Sou o assistente virtual do Quita Goiás e posso te informar sobre os limites gerais de desconto e prazo de quitação.
+
+Como **regra geral**, os limites máximos estabelecidos para a transação são:
+
+*   **Desconto Máximo:** Você pode conseguir um desconto de até **65%** (sessenta e cinco por cento) do valor total dos créditos que serão negociados.
+    *   **Importante:** Esse desconto é aplicado somente sobre as multas, juros e outros acréscimos legais, e **não sobre o valor original do imposto (montante principal)**.
+*   **Prazo Máximo de Quitação:** O parcelamento pode ser feito em até **120 meses** (cento e vinte meses), o que equivale a 10 anos.
+
+Esses são os limites padrão do programa. Se tiver mais alguma dúvida, é só perguntar!</bot_response>
+    <id>5</id>
+    <user_message>Quais são os limites máximos de desconto e prazo de quitação estabelecidos como regra geral?</user_message>
+    <session_id>47827581-4ceb-459c-b358-64f958614cd2</session_id>
+    <user_chars>92</user_chars>
+    <user_tokens>1839</user_tokens>
+    <request_start_time>2026-01-07 22:07:50.656218</request_start_time>
+    <response_end_time>2026-01-07 22:07:59.572934</response_end_time>
+    <generation_duration_sec>7.797845</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>746</bot_chars>
+    <bot_tokens>192</bot_tokens>
+    <retrieval_end_time>2026-01-07 22:07:51.775089</retrieval_end_time>
+    <retrieval_duration_sec>1.118871</retrieval_duration_sec>
+    <total_duration_sec>8.916716</total_duration_sec>
+    <feedback>
+      <id>5</id>
+      <rating>like</rating>
+      <timestamp>2026-01-07 22:08:24.373488</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Sou o assistente virtual do Quita Goiás e posso te informar quais grupos de contribuintes têm direito a condições mais vantajosas.
+
+Sim, alguns grupos de contribuintes têm direito a um **desconto máximo ampliado de 70%** e a um **prazo de quitação de até 145 meses**.
+
+Esses grupos são:
+
+*   **Pessoa Natural** (ou seja, pessoa física)
+*   **Microempresa (ME)**
+*   **Empresa de Pequeno Porte (EPP)**
+*   **Empresas em recuperação judicial**
+*   **Empresas em liquidação judicial**
+*   **Empresas em liquidação extrajudicial**
+*   **Empresas em falência**
+*   **Microempreendedor Individual (MEI)** (que se enquadra como pessoa física ou microempresa)
+
+Para esses contribuintes, as condições são:
+*   **Desconto Máximo:** **70%**
+*   **Prazo Máximo de Quitação:** **145 meses**
+
+É importante notar que essas condições se aplicam a **todos os créditos aptos** para transação para esses grupos específicos.
+
+Se tiver mais alguma dúvida, estou à disposição!</bot_response>
+    <id>6</id>
+    <user_message>Quais grupos de contribuintes têm direito ao desconto máximo ampliado de 70% e ao prazo de 145 meses?</user_message>
+    <session_id>47827581-4ceb-459c-b358-64f958614cd2</session_id>
+    <user_chars>101</user_chars>
+    <user_tokens>2060</user_tokens>
+    <request_start_time>2026-01-07 22:08:46.483033</request_start_time>
+    <response_end_time>2026-01-07 22:08:56.957161</response_end_time>
+    <generation_duration_sec>9.507689</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>959</bot_chars>
+    <bot_tokens>267</bot_tokens>
+    <retrieval_end_time>2026-01-07 22:08:47.449472</retrieval_end_time>
+    <retrieval_duration_sec>0.966439</retrieval_duration_sec>
+    <total_duration_sec>10.474128</total_duration_sec>
+    <feedback>
+      <id>6</id>
+      <rating>like</rating>
+      <timestamp>2026-01-07 22:10:38.530982</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Sou o assistente virtual do Quita Goiás e posso esclarecer essa dúvida importante.
+
+Não, o desconto da transação **não incide sobre o montante principal (o valor original do tributo)**.
+
+É fundamental entender que:
+*   A transação **não pode reduzir o valor original do imposto** que você deve.
+*   Os descontos são aplicados **somente sobre as multas, os juros e outros acréscimos legais** que foram gerados pela dívida.
+
+Em resumo, o valor do imposto em si permanece o mesmo, mas os encargos adicionais podem ser significativamente reduzidos.</bot_response>
+    <id>7</id>
+    <user_message>O desconto da transação incide sobre o montante principal do tributo?</user_message>
+    <session_id>47827581-4ceb-459c-b358-64f958614cd2</session_id>
+    <user_chars>69</user_chars>
+    <user_tokens>2383</user_tokens>
+    <request_start_time>2026-01-07 22:11:13.659911</request_start_time>
+    <response_end_time>2026-01-07 22:11:23.951021</response_end_time>
+    <generation_duration_sec>9.358655</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>549</bot_chars>
+    <bot_tokens>136</bot_tokens>
+    <retrieval_end_time>2026-01-07 22:11:14.592366</retrieval_end_time>
+    <retrieval_duration_sec>0.932455</retrieval_duration_sec>
+    <total_duration_sec>10.29111</total_duration_sec>
+    <feedback>
+      <id>7</id>
+      <rating>like</rating>
+      <timestamp>2026-01-07 22:11:46.047344</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Sou o assistente virtual do Quita Goiás e posso te explicar quando um acordo de transação é considerado formalmente fechado.
+
+Para que o ajuste de transação seja considerado **formalizado** (ou seja, para que ele comece a valer), é necessário que **dois requisitos sejam cumpridos juntos (cumulativamente)**. Não basta cumprir apenas um, é preciso cumprir os dois:
+
+1.  **Assinatura do termo eletrônico de transação:** Você precisa assinar o documento eletrônico que formaliza o acordo.
+2.  **Pagamento da parcela única ou da primeira parcela no prazo de vencimento:** É preciso efetuar o pagamento da sua primeira obrigação financeira (seja a parcela única ou a primeira de muitas parcelas) dentro do prazo estabelecido.
+
+Somente após a assinatura do termo eletrônico E o pagamento inicial, o seu acordo será considerado oficialmente fechado e válido.
+
+Se tiver mais alguma dúvida, estou à disposição!</bot_response>
+    <id>8</id>
+    <user_message>Quais são os dois requisitos cumulativos necessários para que o ajuste de transação seja considerado formalizado?</user_message>
+    <session_id>47827581-4ceb-459c-b358-64f958614cd2</session_id>
+    <user_chars>113</user_chars>
+    <user_tokens>2346</user_tokens>
+    <request_start_time>2026-01-07 22:12:19.954718</request_start_time>
+    <response_end_time>2026-01-07 22:12:33.584748</response_end_time>
+    <generation_duration_sec>12.597529</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>907</bot_chars>
+    <bot_tokens>204</bot_tokens>
+    <retrieval_end_time>2026-01-07 22:12:20.987219</retrieval_end_time>
+    <retrieval_duration_sec>1.032501</retrieval_duration_sec>
+    <total_duration_sec>13.63003</total_duration_sec>
+    <feedback>
+      <id>8</id>
+      <rating>like</rating>
+      <timestamp>2026-01-07 22:13:12.373242</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Sou o assistente virtual do Quita Goiás e posso esclarecer essa dúvida importante sobre a assinatura do termo de transação.
+
+A **implicação jurídica imediata** da assinatura eletrônica do termo de transação, **mesmo que você não pague a primeira parcela**, é a **confissão irrevogável e irretratável dos débitos abrangidos**.
+
+Em termos mais simples, isso significa que:
+*   Ao assinar o termo, você está **reconhecendo oficialmente** que deve os valores que fazem parte do acordo.
+*   Essa confissão é **irreversível** (irretratável) e **não pode ser desfeita** (irrevogável).
+
+Portanto, a assinatura é um passo muito sério, pois formaliza o reconhecimento da dívida, independentemente do pagamento inicial.
+
+Se tiver mais alguma dúvida, estou à disposição!</bot_response>
+    <id>9</id>
+    <user_message>Qual é a implicação jurídica imediata da assinatura do termo eletrônico de transação, mesmo que o pagamento inicial não seja realizado?</user_message>
+    <session_id>47827581-4ceb-459c-b358-64f958614cd2</session_id>
+    <user_chars>135</user_chars>
+    <user_tokens>2791</user_tokens>
+    <request_start_time>2026-01-07 22:13:45.407139</request_start_time>
+    <response_end_time>2026-01-07 22:14:30.276186</response_end_time>
+    <generation_duration_sec>43.885514</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>763</bot_chars>
+    <bot_tokens>185</bot_tokens>
+    <retrieval_end_time>2026-01-07 22:13:46.390672</retrieval_end_time>
+    <retrieval_duration_sec>0.983533</retrieval_duration_sec>
+    <total_duration_sec>44.869047</total_duration_sec>
+    <feedback>
+      <id>9</id>
+      <rating>like</rating>
+      <timestamp>2026-01-07 22:14:40.949543</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Sou o assistente virtual do Quita Goiás e posso te explicar as condições de atraso no pagamento que podem levar à rescisão (cancelamento) da sua transação.
+
+A transação pode ser rescindida (cancelada) se você atrasar o pagamento das parcelas nas seguintes situações:
+
+1.  **Atraso no número de parcelas:** Se houver **atraso no pagamento de mais de 3 (três) parcelas**, sejam elas sucessivas (seguidas) ou não.
+2.  **Atraso prolongado de qualquer parcela:** Ou, se **qualquer uma das parcelas** for paga com um atraso que ultrapasse **30 (trinta) dias corridos da data final do prazo total do seu parcelamento**.
+
+Portanto, o &quot;prazo limite de atraso&quot; para uma única parcela, que pode causar a rescisão, é de **30 (trinta) dias corridos após a data final do prazo total do seu parcelamento**. Além disso, o acúmulo de mais de 3 parcelas em atraso também é uma causa de rescisão.
+
+É muito importante ficar atento a esses prazos para não ter seu acordo cancelado! Se tiver mais alguma dúvida, estou à disposição.</bot_response>
+    <id>10</id>
+    <user_message>Qual o prazo limite de atraso no pagamento de parcelas que configura um vício insanável e causa de rescisão, na hipótese de parcelamento?</user_message>
+    <session_id>47827581-4ceb-459c-b358-64f958614cd2</session_id>
+    <user_chars>137</user_chars>
+    <user_tokens>3317</user_tokens>
+    <request_start_time>2026-01-07 22:15:18.393076</request_start_time>
+    <response_end_time>2026-01-07 22:15:41.638442</response_end_time>
+    <generation_duration_sec>22.291423</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>1014</bot_chars>
+    <bot_tokens>266</bot_tokens>
+    <retrieval_end_time>2026-01-07 22:15:19.347019</retrieval_end_time>
+    <retrieval_duration_sec>0.953943</retrieval_duration_sec>
+    <total_duration_sec>23.245366</total_duration_sec>
+    <feedback>
+      <id>10</id>
+      <rating>like</rating>
+      <timestamp>2026-01-07 22:15:57.027331</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá!
+
+Com base nos documentos oficiais do Programa Quita Goiás (Edital nº 01/2025), as dívidas que podem ser negociadas são os **créditos tributários** (impostos devidos) que já foram inscritos na **Dívida Ativa do Estado** (ou seja, são dívidas que o Estado já está cobrando judicialmente ou administrativamente).
+
+Para este primeiro edital, o foco são **dívidas inscritas de valor remanescente superior a R$ 500.000,00 (quinhentos mil reais)**.
+
+Os documentos não mencionam a possibilidade de somar vários créditos de valores menores para atingir esse limite de R$ 500.000,00. A regra se refere ao valor remanescente da própria dívida.
+
+Você tem a liberdade de escolher quais débitos listados na sua simulação deseja incluir no acordo, desde que cada um deles se enquadre nas regras previstas no Edital.</bot_response>
+    <id>11</id>
+    <user_message>posso somar os meus créditos para atingir o valor de R$ 500.000,00 para negociar?</user_message>
+    <session_id>51403a6e-52d2-4901-b4aa-d040177a4919</session_id>
+    <user_chars>81</user_chars>
+    <user_tokens>1251</user_tokens>
+    <request_start_time>2026-01-07 23:38:43.973128</request_start_time>
+    <response_end_time>2026-01-07 23:38:58.516814</response_end_time>
+    <generation_duration_sec>13.280565</generation_duration_sec>
+    <is_synthetic>False</is_synthetic>
+    <bot_chars>805</bot_chars>
+    <bot_tokens>215</bot_tokens>
+    <retrieval_end_time>2026-01-07 23:38:45.236249</retrieval_end_time>
+    <retrieval_duration_sec>1.263121</retrieval_duration_sec>
+    <total_duration_sec>14.543686</total_duration_sec>
+    <feedback>
+      <id>11</id>
+      <rating>like</rating>
+      <timestamp>2026-01-07 23:39:25.935986</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Entendo perfeitamente a sua dúvida, é uma questão muito comum.
+
+De acordo com os documentos oficiais do Programa Quita Goiás, a transação (negociação) abrange **exclusivamente** os **créditos tributários de natureza tributária inscritos em Dívida Ativa**.
+
+Vamos simplificar isso:
+
+*   **Créditos Tributários de Natureza Tributária:** Isso significa que são dívidas relacionadas a impostos, taxas e contribuições que são de responsabilidade do **Estado de Goiás**.
+*   **Inscritos em Dívida Ativa:** Quer dizer que são débitos que o Estado já tentou cobrar administrativamente e, como não houve pagamento, foram oficialmente registrados como dívida, podendo ser cobrados judicialmente.
+
+**O que isso significa na prática para a sua pergunta:**
+
+*   **IPTU (Imposto Predial e Territorial Urbano):** O IPTU é um imposto municipal, ou seja, cobrado pelas prefeituras. Como o Programa Quita Goiás é para débitos da **Fazenda Pública Estadual**, o IPTU **não pode ser negociado** por meio deste programa.
+*   **Débitos Não Tributários:** Dívidas que não são de natureza tributária (por exemplo, multas administrativas que não são impostos, ou outras cobranças que não se enquadram como tributo) **também não podem ser negociadas** no Quita Goiás.
+
+Em resumo, o programa é focado em débitos de impostos e taxas estaduais que já estão em Dívida Ativa.
+
+Os requisitos, condições e vedações para essa transação estão detalhados na Lei Complementar nº 197/2024 e na Portaria nº 55-GAB/2025.
+
+Espero que esta explicação tenha sido clara! Se tiver mais alguma dúvida, é só perguntar.</bot_response>
+    <id>12</id>
+    <user_message>qual a natureza das dívidas de negociação (tem gente querendo saber se pode negociar iptu ou débitos não tributáiros)</user_message>
+    <session_id>74d657d7-7cad-4266-8dd1-559daded5662</session_id>
+    <user_chars>117</user_chars>
+    <user_tokens>1291</user_tokens>
+    <request_start_time>2026-01-08 10:59:14.873922</request_start_time>
+    <response_end_time>2026-01-08 10:59:22.994079</response_end_time>
+    <generation_duration_sec>6.384682</generation_duration_sec>
+    <is_synthetic>False</is_synthetic>
+    <bot_chars>1576</bot_chars>
+    <bot_tokens>402</bot_tokens>
+    <retrieval_end_time>2026-01-08 10:59:16.609397</retrieval_end_time>
+    <retrieval_duration_sec>1.735475</retrieval_duration_sec>
+    <total_duration_sec>8.120157</total_duration_sec>
+    <feedback>
+      <id>12</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 10:59:36.912577</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>De acordo com os documentos oficiais do Programa Quita Goiás, a previsão é que um edital específico para débitos de menor valor, como o IPVA, **seria lançado em dezembro**.
+
+Considerando que a data atual do sistema é 08/01/2026, essa previsão se referia a **dezembro de 2025**.
+
+Os documentos mencionam que já existe autorização legal para o lançamento desse edital.</bot_response>
+    <id>13</id>
+    <user_message>data que sairá o edital de pequeno valor</user_message>
+    <session_id>74d657d7-7cad-4266-8dd1-559daded5662</session_id>
+    <user_chars>40</user_chars>
+    <user_tokens>1747</user_tokens>
+    <request_start_time>2026-01-08 10:59:56.582865</request_start_time>
+    <response_end_time>2026-01-08 11:00:03.126567</response_end_time>
+    <generation_duration_sec>5.657899</generation_duration_sec>
+    <is_synthetic>False</is_synthetic>
+    <bot_chars>366</bot_chars>
+    <bot_tokens>95</bot_tokens>
+    <retrieval_end_time>2026-01-08 10:59:57.468668</retrieval_end_time>
+    <retrieval_duration_sec>0.885803</retrieval_duration_sec>
+    <total_duration_sec>6.543702</total_duration_sec>
+    <feedback>
+      <id>13</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 11:03:07.580413</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Desculpe, não encontrei essa informação específica nos documentos oficiais do Programa Quita Goiás aos quais tenho acesso. Sou um assistente focado estritamente nas regras atuais do programa.
+
+Os documentos mencionam que a Procuradoria-Geral do Estado (PGE) analisa o pedido de transação para verificar se não há &quot;vedaçoes para transação&quot; (proibições para transação), mas não detalham se a rescisão de um parcelamento anterior se enquadra como uma dessas vedações.
+
+Poderia reformular sua pergunta ou verificar se há alguma outra dúvida?</bot_response>
+    <id>14</id>
+    <user_message>se eu rescindir o meu parcelamento, posso negociar os créditos na transação?</user_message>
+    <session_id>74d657d7-7cad-4266-8dd1-559daded5662</session_id>
+    <user_chars>76</user_chars>
+    <user_tokens>1644</user_tokens>
+    <request_start_time>2026-01-08 11:03:21.031451</request_start_time>
+    <response_end_time>2026-01-08 11:03:28.026804</response_end_time>
+    <generation_duration_sec>6.058201</generation_duration_sec>
+    <is_synthetic>False</is_synthetic>
+    <bot_chars>537</bot_chars>
+    <bot_tokens>123</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:03:21.968603</retrieval_end_time>
+    <retrieval_duration_sec>0.937152</retrieval_duration_sec>
+    <total_duration_sec>6.995353</total_duration_sec>
+    <feedback>
+      <id>14</id>
+      <rating>dislike</rating>
+      <timestamp>2026-01-08 11:03:52.040259</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Para iniciar o processo de negociação e, consequentemente, o parcelamento dos seus créditos no Programa Quita Goiás, o primeiro passo é o seguinte:
+
+1.  **Solicitar seu Cadastro:** Você precisa pedir o seu cadastro para que a Procuradoria-Geral do Estado (PGE) possa gerar uma simulação dos créditos (dívidas) que podem ser negociados.
+2.  **Preencher o Formulário:** Essa solicitação de cadastro é feita através do preenchimento de um formulário que é disponibilizado no site da PGE.
+3.  **Reunir Documentos:** Além de preencher o formulário, você precisará reunir os documentos exigidos para essa solicitação.
+
+Em resumo, o processo começa com a sua solicitação de cadastro para que a PGE possa identificar e simular as suas dívidas aptas à transação.
+
+Se precisar de ajuda para encontrar o site da PGE ou tiver dúvidas sobre os documentos, me diga!</bot_response>
+    <id>15</id>
+    <user_message>como faço para solicitar o parcelamento dos créditos?</user_message>
+    <session_id>74d657d7-7cad-4266-8dd1-559daded5662</session_id>
+    <user_chars>53</user_chars>
+    <user_tokens>1668</user_tokens>
+    <request_start_time>2026-01-08 11:06:24.435962</request_start_time>
+    <response_end_time>2026-01-08 11:06:32.916543</response_end_time>
+    <generation_duration_sec>7.480833</generation_duration_sec>
+    <is_synthetic>False</is_synthetic>
+    <bot_chars>856</bot_chars>
+    <bot_tokens>203</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:06:25.435710</retrieval_end_time>
+    <retrieval_duration_sec>0.999748</retrieval_duration_sec>
+    <total_duration_sec>8.480581</total_duration_sec>
+    <feedback>
+      <id>15</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 11:06:49.658802</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Para efetuar o seu cadastro no Programa Quita Goiás, o processo é o seguinte:
+
+1.  **Acesso ao Formulário:** Você precisará preencher um formulário específico que é disponibilizado no **site da Procuradoria-Geral do Estado (PGE)**.
+2.  **Documentação:** Além de preencher o formulário, será necessário reunir e apresentar os documentos exigidos para a solicitação.
+
+Após o envio do formulário e dos documentos, a PGE analisará o seu pedido. Uma vez que seu cadastro for **aprovado (formalizado)**, você ou seu representante legal receberá por e-mail a simulação com todas as dívidas que podem ser negociadas e as condições de pagamento.
+
+É importante acessar o site oficial da PGE para encontrar o formulário correto e a lista exata de documentos necessários.</bot_response>
+    <id>16</id>
+    <user_message>como efetuo o meu cadastro?</user_message>
+    <session_id>74d657d7-7cad-4266-8dd1-559daded5662</session_id>
+    <user_chars>27</user_chars>
+    <user_tokens>1861</user_tokens>
+    <request_start_time>2026-01-08 11:07:20.050435</request_start_time>
+    <response_end_time>2026-01-08 11:07:30.398364</response_end_time>
+    <generation_duration_sec>9.372377</generation_duration_sec>
+    <is_synthetic>False</is_synthetic>
+    <bot_chars>759</bot_chars>
+    <bot_tokens>176</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:07:21.025987</retrieval_end_time>
+    <retrieval_duration_sec>0.975552</retrieval_duration_sec>
+    <total_duration_sec>10.347929</total_duration_sec>
+    <feedback>
+      <id>16</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 11:07:49.080728</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Para o cadastro no Programa Quita Goiás, os documentos que você deve encaminhar dependem se você é uma **Pessoa Jurídica (empresa)**.
+
+Os documentos oficiais detalham os requisitos para **Pessoas Jurídicas**. Se for o seu caso, você deve enviar para o e-mail **ntt@pge.go.gov.br** os seguintes dados e documentos:
+
+**Dados a serem informados no formulário:**
+
+*   Nome da empresa
+*   CNPJ da empresa
+*   CPF do solicitante (a pessoa que está fazendo a solicitação pela empresa)
+*   E-mail para contato
+*   Telefone para contato
+
+**Documentos a serem anexados (cópias):**
+
+*   **Documento oficial de identificação** (do solicitante)
+*   **Comprovante de endereço** (da empresa)
+*   **Contrato Social** (da empresa)
+*   **Certidão atualizada da JUCEG** (Junta Comercial do Estado de Goiás)
+*   Se houver, **procuração** ou outros documentos que comprovem que você tem autoridade para representar a pessoa jurídica.
+
+**Importante:** Os documentos oficiais que tenho acesso especificam apenas os requisitos para Pessoa Jurídica. Se você for Pessoa Física, essa informação não está detalhada nos documentos disponíveis.</bot_response>
+    <id>17</id>
+    <user_message>quais os documentos devo encaminhar para o cadastro?</user_message>
+    <session_id>74d657d7-7cad-4266-8dd1-559daded5662</session_id>
+    <user_chars>52</user_chars>
+    <user_tokens>2194</user_tokens>
+    <request_start_time>2026-01-08 11:10:23.451678</request_start_time>
+    <response_end_time>2026-01-08 11:10:33.384188</response_end_time>
+    <generation_duration_sec>8.883532</generation_duration_sec>
+    <is_synthetic>False</is_synthetic>
+    <bot_chars>1114</bot_chars>
+    <bot_tokens>285</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:10:24.500656</retrieval_end_time>
+    <retrieval_duration_sec>1.048978</retrieval_duration_sec>
+    <total_duration_sec>9.93251</total_duration_sec>
+    <feedback>
+      <id>17</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 11:10:58.456167</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Com certeza! Entendo que essa é uma parte fundamental para compreender como as condições de negociação são definidas.
+
+A classificação dos créditos tributários, que você chamou de &quot;rating&quot;, é feita com base no **grau de recuperabilidade da dívida**. Em outras palavras, o programa avalia qual a probabilidade de o Estado conseguir receber aquele valor.
+
+Essa avaliação é realizada por meio de uma **segmentação**, definida pela **Secretaria de Estado da Economia**, e leva em consideração diversas dimensões (critérios).
+
+Vamos detalhar os principais critérios utilizados para essa classificação:
+
+1.  **Faixa de valor do PAT (Processo Administrativo Tributário):** Considera o valor envolvido no processo administrativo que originou a dívida.
+2.  **Tipo de exequibilidade:** Refere-se à facilidade ou dificuldade de o Estado conseguir cobrar judicialmente essa dívida.
+3.  **Idade do auto de infração:** Quanto mais antiga a dívida, isso pode influenciar na sua recuperabilidade.
+4.  **Situação cadastral:** A situação do contribuinte nos cadastros estaduais (se está ativo, inativo, etc.).
+5.  **Status do ajuizamento:** Se a dívida já foi levada à justiça para cobrança e em que fase esse processo se encontra.
+6.  **Faixa de valor da dívida:** O valor total da dívida em si.
+7.  **Solidariedade:** Se há outros responsáveis pela dívida (co-devedores), o que pode impactar a recuperabilidade.
+
+**Classificação Especial para Dívidas Irrecuperáveis:**
+
+É importante saber que, independentemente da pontuação gerada por esses critérios, algumas dívidas são automaticamente classificadas como **irrecuperáveis**. Isso acontece com débitos de **pessoas jurídicas (empresas)** que estão registradas no Cadastro da Secretaria de Estado da Economia como **inativas e sem patrimônio identificado**.
+
+Essa classificação é crucial porque ela determina as condições de desconto e parcelamento que serão oferecidas na sua simulação.
+
+Espero que essa explicação detalhada ajude a entender melhor o processo!</bot_response>
+    <id>18</id>
+    <user_message>como é feita a classificação dos créditos tributários - contribuinte pede para detalhar como é feita a construção do rating dos créditos</user_message>
+    <session_id>74d657d7-7cad-4266-8dd1-559daded5662</session_id>
+    <user_chars>136</user_chars>
+    <user_tokens>2804</user_tokens>
+    <request_start_time>2026-01-08 11:21:35.025182</request_start_time>
+    <response_end_time>2026-01-08 11:21:48.725720</response_end_time>
+    <generation_duration_sec>12.731322</generation_duration_sec>
+    <is_synthetic>False</is_synthetic>
+    <bot_chars>1996</bot_chars>
+    <bot_tokens>458</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:21:35.994398</retrieval_end_time>
+    <retrieval_duration_sec>0.969216</retrieval_duration_sec>
+    <total_duration_sec>13.700538</total_duration_sec>
+    <feedback>
+      <id>18</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 11:22:19.728966</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Desculpe, não encontrei essa informação específica sobre as vedações expressas para a transação tributária nos documentos oficiais do Programa Quita Goiás aos quais tenho acesso.
+
+Sou um assistente focado estritamente nas regras atuais do programa, e as informações sobre as vedações estão mencionadas como estando na LC nº 197/2024 e na Portaria nº 55-GAB/2025, mas o conteúdo detalhado dessas vedações não está disponível aqui.
+
+Poderia reformular sua pergunta ou perguntar sobre outro tópico do programa?</bot_response>
+    <id>19</id>
+    <user_message>Cite três vedações expressas para a transação tributária, conforme as normas.</user_message>
+    <session_id>f52966fd-1c88-4c7f-a269-e4c20c4416f4</session_id>
+    <user_chars>77</user_chars>
+    <user_tokens>1038</user_tokens>
+    <request_start_time>2026-01-08 11:24:49.292835</request_start_time>
+    <response_end_time>2026-01-08 11:24:55.820055</response_end_time>
+    <generation_duration_sec>5.076801</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>507</bot_chars>
+    <bot_tokens>125</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:24:50.743254</retrieval_end_time>
+    <retrieval_duration_sec>1.450419</retrieval_duration_sec>
+    <total_duration_sec>6.52722</total_duration_sec>
+    <feedback>
+      <id>19</id>
+      <rating>dislike</rating>
+      <timestamp>2026-01-08 11:25:48.479335</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Em relação aos depósitos judiciais, valores bloqueados ou penhorados que garantem os débitos incluídos na transação do Programa Quita Goiás, o devedor tem as seguintes obrigações:
+
+1.  **Utilização Obrigatória:** É **obrigatório** que você utilize esses valores (dinheiro depositado, bloqueado ou penhorado judicialmente) para abater o saldo devedor da dívida que está sendo transacionada.
+2.  **Oferta no Acordo:** Você deve **ofertar** esses valores no termo de acordo da transação.
+3.  **Autorização para Uso:** É preciso **autorizar** a Procuradoria-Geral do Estado (PGE) a &quot;levantar&quot; (retirar) esses valores ou a &quot;converter esses depósitos em renda&quot;. Isso significa dar permissão para que o dinheiro seja usado para quitar parte da sua dívida.
+4.  **Amortização do Saldo:** O objetivo é que esses valores sejam usados para **amortizar** (diminuir) o valor remanescente da dívida após a transação.
+5.  **Extinção do Processo:** Além disso, você deve **requerer a extinção** do processo judicial correspondente, com resolução de mérito, uma vez que os créditos foram incluídos na transação e os depósitos utilizados.
+
+Em resumo, se você tem dinheiro parado na justiça para garantir uma dívida que quer negociar no Quita Goiás, é mandatório que você o use para pagar essa dívida e autorize o governo a fazer isso.</bot_response>
+    <id>20</id>
+    <user_message>Quais são as obrigações do devedor em relação a depósitos judiciais, bloqueados ou penhorados para garantia dos débitos transacionados?</user_message>
+    <session_id>f52966fd-1c88-4c7f-a269-e4c20c4416f4</session_id>
+    <user_chars>135</user_chars>
+    <user_tokens>1327</user_tokens>
+    <request_start_time>2026-01-08 11:26:20.750698</request_start_time>
+    <response_end_time>2026-01-08 11:26:27.856310</response_end_time>
+    <generation_duration_sec>6.095203</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>1320</bot_chars>
+    <bot_tokens>336</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:26:21.761107</retrieval_end_time>
+    <retrieval_duration_sec>1.010409</retrieval_duration_sec>
+    <total_duration_sec>7.105612</total_duration_sec>
+    <feedback>
+      <id>20</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 11:26:58.898433</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Se você tiver processos judiciais em andamento relacionados aos débitos que serão incluídos na transação do Programa Quita Goiás, suas obrigações são as seguintes:
+
+1.  **Desistir de Questionamentos:** Você deve **desistir** de todas as impugnações (contestações) ou recursos que tenha apresentado na justiça. Isso significa que você não pode mais questionar a dívida judicialmente.
+2.  **Renunciar a Direitos:** É preciso **renunciar** a quaisquer alegações de direito sobre os créditos (as dívidas) que estão sendo incluídos na transação. Ou seja, você abre mão de qualquer argumento legal que pudesse ter para não pagar ou pagar menos.
+3.  **Pedir a Extinção do Processo:** Você deve **requerer a extinção** do processo judicial correspondente. Isso significa pedir ao juiz que o processo seja encerrado definitivamente, com &quot;resolução de mérito&quot; (o que indica que a questão foi resolvida e não pode ser discutida novamente).
+
+Em resumo, ao aderir ao programa com dívidas em discussão judicial, você se compromete a parar de questioná-las na justiça e a pedir o encerramento desses processos.</bot_response>
+    <id>21</id>
+    <user_message>Se o contribuinte tiver processos judiciais em curso sobre os débitos incluídos na transação, quais são suas obrigações processuais?</user_message>
+    <session_id>f52966fd-1c88-4c7f-a269-e4c20c4416f4</session_id>
+    <user_chars>132</user_chars>
+    <user_tokens>1537</user_tokens>
+    <request_start_time>2026-01-08 11:30:17.699896</request_start_time>
+    <response_end_time>2026-01-08 11:30:26.101096</response_end_time>
+    <generation_duration_sec>7.292296</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>1100</bot_chars>
+    <bot_tokens>260</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:30:18.808800</retrieval_end_time>
+    <retrieval_duration_sec>1.108904</retrieval_duration_sec>
+    <total_duration_sec>8.4012</total_duration_sec>
+    <feedback>
+      <id>21</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 11:31:04.581896</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Para que uma Pessoa Jurídica (empresa) solicite o cadastro inicial no Programa Quita Goiás, ela deve enviar os seguintes dados e documentos para o e-mail **ntt@pge.go.gov.br**:
+
+### Dados a serem informados (no formulário ou corpo do e-mail):
+
+*   **Nome da empresa:** O nome completo da sua Pessoa Jurídica.
+*   **CNPJ da empresa:** O Cadastro Nacional da Pessoa Jurídica.
+*   **CPF do solicitante:** O CPF da pessoa física que está realizando a solicitação em nome da empresa.
+*   **E-mail:** O endereço de e-mail para contato.
+*   **Telefone:** O número de telefone para contato.
+
+### Documentos a serem anexados:
+
+*   **Cópia do documento oficial de identificação:** Do solicitante (a pessoa física que representa a empresa).
+*   **Comprovante de endereço:** Pode ser da empresa ou do solicitante.
+*   **Contrato Social:** O documento que estabelece a constituição da empresa.
+*   **Certidão atualizada da JUCEG:** A Certidão da Junta Comercial do Estado de Goiás, que comprova a situação atual da empresa.
+*   **Procuração ou outros documentos de representação (se houver):** Caso a pessoa que está solicitando não seja um dos sócios administradores conforme o Contrato Social, é necessário enviar uma procuração ou outro documento que comprove que ela tem autoridade para representar a empresa.
+
+Certifique-se de que todos os documentos estejam legíveis e atualizados para evitar atrasos no processo.</bot_response>
+    <id>22</id>
+    <user_message>Quais são os dados e documentos obrigatórios que um contribuinte Pessoa Jurídica deve enviar para solicitar o cadastro inicial?</user_message>
+    <session_id>f52966fd-1c88-4c7f-a269-e4c20c4416f4</session_id>
+    <user_chars>127</user_chars>
+    <user_tokens>2076</user_tokens>
+    <request_start_time>2026-01-08 11:31:44.906986</request_start_time>
+    <response_end_time>2026-01-08 11:31:55.174641</response_end_time>
+    <generation_duration_sec>9.193584</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>1411</bot_chars>
+    <bot_tokens>351</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:31:45.981057</retrieval_end_time>
+    <retrieval_duration_sec>1.074071</retrieval_duration_sec>
+    <total_duration_sec>10.267655</total_duration_sec>
+    <feedback>
+      <id>22</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 11:32:17.113779</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Desculpe, não encontrei essa informação específica sobre as três classificações do grau de recuperabilidade da dívida de acordo com a pontuação da Portaria nº 55-GAB/2025 nos documentos oficiais do Programa Quita Goiás aos quais tenho acesso.
+
+Os documentos explicam que o grau de recuperabilidade é determinado pela Secretaria de Estado da Economia, usando critérios como valor da dívida, idade do auto de infração e situação cadastral, para classificar se a dívida é fácil ou difícil de ser cobrada. No entanto, as classificações específicas por pontuação não estão detalhadas aqui.
+
+Sou um assistente focado estritamente nas regras e informações contidas nos documentos oficiais do programa. Poderia perguntar sobre outro tópico?</bot_response>
+    <id>23</id>
+    <user_message>Quais são as três classificações do grau de recuperabilidade da dívida de acordo com a pontuação (Portaria nº 55-GAB/2025)?</user_message>
+    <session_id>f52966fd-1c88-4c7f-a269-e4c20c4416f4</session_id>
+    <user_chars>123</user_chars>
+    <user_tokens>2390</user_tokens>
+    <request_start_time>2026-01-08 11:32:49.752238</request_start_time>
+    <response_end_time>2026-01-08 11:32:58.074074</response_end_time>
+    <generation_duration_sec>7.243947</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>732</bot_chars>
+    <bot_tokens>159</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:32:50.830127</retrieval_end_time>
+    <retrieval_duration_sec>1.077889</retrieval_duration_sec>
+    <total_duration_sec>8.321836</total_duration_sec>
+    <feedback>
+      <id>23</id>
+      <rating>dislike</rating>
+      <timestamp>2026-01-08 11:33:31.768779</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Não, a **proposta de transação, por si só, não suspende a exigibilidade dos créditos** (ou seja, a capacidade do Estado de cobrar a dívida) que ela abrange.
+
+Veja como funciona:
+
+*   **Proposta não suspende:** A simples apresentação da proposta de transação ou mesmo a assinatura do termo de acordo (sem o pagamento inicial) não interrompe a cobrança dos débitos nem o andamento das ações judiciais (execuções fiscais).
+*   **Quando a suspensão ocorre:** A suspensão da exigibilidade e das execuções fiscais só acontece **depois que o acordo é formalizado e homologado** (judicial ou administrativamente) e, especificamente, quando a modalidade de transação envolve **parcelamento**, após o pagamento da primeira parcela.
+
+Em resumo, a suspensão da cobrança não é automática com a proposta; ela depende da efetivação do acordo e do início do cumprimento das condições, especialmente o parcelamento.</bot_response>
+    <id>24</id>
+    <user_message>A proposta de transação, por si só, suspende a exigibilidade dos créditos por ela abrangidos?</user_message>
+    <session_id>f52966fd-1c88-4c7f-a269-e4c20c4416f4</session_id>
+    <user_chars>93</user_chars>
+    <user_tokens>2600</user_tokens>
+    <request_start_time>2026-01-08 11:34:02.268042</request_start_time>
+    <response_end_time>2026-01-08 11:34:13.492981</response_end_time>
+    <generation_duration_sec>10.230574</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>898</bot_chars>
+    <bot_tokens>209</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:34:03.262407</retrieval_end_time>
+    <retrieval_duration_sec>0.994365</retrieval_duration_sec>
+    <total_duration_sec>11.224939</total_duration_sec>
+    <feedback>
+      <id>24</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 11:34:25.301752</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Se você optar por incluir dívidas que estão em diferentes faixas de pontuação (ou seja, com diferentes graus de recuperabilidade) na mesma transação, a regra é a seguinte:
+
+O percentual de desconto que será aplicado a **todas as dívidas reunidas** será o da **faixa de pontuação que tiver o maior valor total** entre as dívidas incluídas.
+
+Isso significa que, se você tiver, por exemplo, uma grande parte da sua dívida na faixa de &quot;DIFÍCIL RECUPERAÇÃO&quot; e uma parte menor na faixa de &quot;IRRECUPERÁVEIS&quot;, o desconto aplicado a todo o montante será o correspondente à faixa de &quot;DIFÍCIL RECUPERAÇÃO&quot;, pois ela tem o maior valor total.
+
+Os descontos e prazos máximos por classificação de dívida e tipo de contribuinte são:
+
+*   **TODOS OS CRÉDITOS APTOS (Pessoa física, MEI, ou Empresa em recuperação/falência):**
+    *   **70%** de desconto
+    *   145 meses de prazo
+*   **IRRECUPERÁVEIS (Até 200 pontos):**
+    *   Microempresa ou EPP: **70%** de desconto
+    *   Demais Contribuintes: **65%** de desconto
+    *   Prazo máximo: 145 meses (para ME/EPP) ou 120 meses (para Demais Contribuintes)
+*   **DIFÍCIL RECUPERAÇÃO (201 a 250 pontos):**
+    *   Microempresa ou EPP: **65%** de desconto
+    *   Demais Contribuintes: **60%** de desconto
+    *   Prazo máximo: 145 meses (para ME/EPP) ou 120 meses (para Demais Contribuintes)
+
+Lembre-se que o desconto específico dependerá também do seu tipo de contribuinte dentro da faixa de pontuação que tiver o maior valor total.</bot_response>
+    <id>25</id>
+    <user_message>Se o contribuinte optar por incluir dívidas em diferentes faixas de pontuação, qual percentual de desconto será aplicado?</user_message>
+    <session_id>f52966fd-1c88-4c7f-a269-e4c20c4416f4</session_id>
+    <user_chars>121</user_chars>
+    <user_tokens>3268</user_tokens>
+    <request_start_time>2026-01-08 11:37:57.731341</request_start_time>
+    <response_end_time>2026-01-08 11:38:33.090519</response_end_time>
+    <generation_duration_sec>34.280913</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>1469</bot_chars>
+    <bot_tokens>451</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:37:58.809606</retrieval_end_time>
+    <retrieval_duration_sec>1.078265</retrieval_duration_sec>
+    <total_duration_sec>35.359178</total_duration_sec>
+    <feedback>
+      <id>25</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 11:39:03.959885</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Para classificar o grau de recuperabilidade da dívida, a Secretaria de Estado da Economia considera, entre outras, as seguintes dimensões:
+
+1.  **Faixa de valor do PAT:** O valor do Processo Administrativo Tributário.
+2.  **Tipo de exequibilidade:** A facilidade ou dificuldade de se cobrar a dívida.
+3.  **Idade do auto de infração:** Há quanto tempo a infração foi registrada.
+4.  **Situação cadastral:** A situação do seu cadastro junto aos órgãos competentes.
+5.  **Status do ajuizamento:** Se a dívida já foi levada à justiça e em que fase está.
+6.  **Faixa de valor da dívida:** O valor total da dívida.
+7.  **Solidariedade:** Se há outros responsáveis solidários pela dívida.
+
+Esses critérios ajudam a determinar se a dívida é considerada irrecuperável, de difícil recuperação ou com outra classificação, influenciando os descontos e prazos oferecidos.</bot_response>
+    <id>26</id>
+    <user_message>Quais dimensões são consideradas, entre outras, para a classificação do grau de recuperabilidade da dívida?</user_message>
+    <session_id>f52966fd-1c88-4c7f-a269-e4c20c4416f4</session_id>
+    <user_chars>107</user_chars>
+    <user_tokens>3474</user_tokens>
+    <request_start_time>2026-01-08 11:40:20.832861</request_start_time>
+    <response_end_time>2026-01-08 11:40:31.291201</response_end_time>
+    <generation_duration_sec>9.500057</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>864</bot_chars>
+    <bot_tokens>225</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:40:21.791144</retrieval_end_time>
+    <retrieval_duration_sec>0.958283</retrieval_duration_sec>
+    <total_duration_sec>10.45834</total_duration_sec>
+    <feedback>
+      <id>26</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 11:41:04.591565</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Se uma parcela do seu parcelamento não for paga na data de vencimento, será acrescida uma **multa de caráter moratório** (multa por atraso).
+
+Essa multa é calculada à taxa de **0,33% (trinta e três centésimos por cento) por dia de atraso**, até o limite máximo de **20% (vinte por cento)** sobre o valor da parcela.</bot_response>
+    <id>27</id>
+    <user_message>Qual a taxa de multa de caráter moratório que incide sobre o valor da parcela não paga na data de vencimento?</user_message>
+    <session_id>f52966fd-1c88-4c7f-a269-e4c20c4416f4</session_id>
+    <user_chars>109</user_chars>
+    <user_tokens>3926</user_tokens>
+    <request_start_time>2026-01-08 11:43:40.179157</request_start_time>
+    <response_end_time>2026-01-08 11:43:51.253183</response_end_time>
+    <generation_duration_sec>10.013879</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>320</bot_chars>
+    <bot_tokens>90</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:43:41.239304</retrieval_end_time>
+    <retrieval_duration_sec>1.060147</retrieval_duration_sec>
+    <total_duration_sec>11.074026</total_duration_sec>
+    <feedback>
+      <id>27</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 11:47:52.808113</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Os juros incidentes sobre as parcelas do seu parcelamento no Programa Quita Goiás são calculados da seguinte forma:
+
+*   **Tipo de Juros:** São juros **não capitalizáveis**, o que significa que eles não são calculados sobre juros já existentes (juros sobre juros).
+*   **Taxa Utilizada:** A taxa de juros é a **SELIC** (Sistema Especial de Liquidação e de Custódia), que é a taxa básica de juros da economia.
+*   **Acúmulo:** A taxa SELIC é acumulada **mensalmente**.
+*   **Período de Cálculo:** Os juros são calculados:
+    *   A partir do **mês seguinte** ao mês em que a transação para quitação parcelada foi aprovada (deferimento).
+    *   Até o **mês anterior** ao mês em que você efetivamente pagar a parcela.
+
+Em resumo, a cada mês, a sua parcela terá um acréscimo de juros com base na taxa SELIC acumulada, considerando o período desde a aprovação do parcelamento até o mês anterior ao pagamento daquela parcela específica.</bot_response>
+    <id>28</id>
+    <user_message>Como são calculados os juros incidentes sobre as parcelas do parcelamento?</user_message>
+    <session_id>f52966fd-1c88-4c7f-a269-e4c20c4416f4</session_id>
+    <user_chars>74</user_chars>
+    <user_tokens>4044</user_tokens>
+    <request_start_time>2026-01-08 11:48:23.529085</request_start_time>
+    <response_end_time>2026-01-08 11:48:35.941954</response_end_time>
+    <generation_duration_sec>11.506911</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>936</bot_chars>
+    <bot_tokens>251</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:48:24.435043</retrieval_end_time>
+    <retrieval_duration_sec>0.905958</retrieval_duration_sec>
+    <total_duration_sec>12.412869</total_duration_sec>
+    <feedback>
+      <id>28</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 11:49:39.690248</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Desculpe, não encontrei essa informação específica sobre o valor mínimo da parcela mensal na transação nos documentos oficiais do Programa Quita Goiás aos quais tenho acesso.
+
+Sou um assistente focado estritamente nas regras atuais do programa. Poderia perguntar sobre outro tópico?</bot_response>
+    <id>29</id>
+    <user_message>Qual o valor mínimo da parcela mensal na transação?</user_message>
+    <session_id>f52966fd-1c88-4c7f-a269-e4c20c4416f4</session_id>
+    <user_chars>51</user_chars>
+    <user_tokens>3799</user_tokens>
+    <request_start_time>2026-01-08 11:51:03.521476</request_start_time>
+    <response_end_time>2026-01-08 11:51:15.791474</response_end_time>
+    <generation_duration_sec>11.338505</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>282</bot_chars>
+    <bot_tokens>57</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:51:04.452969</retrieval_end_time>
+    <retrieval_duration_sec>0.931493</retrieval_duration_sec>
+    <total_duration_sec>12.269998</total_duration_sec>
+    <feedback>
+      <id>29</id>
+      <rating>dislike</rating>
+      <timestamp>2026-01-08 11:51:27.175729</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Sim, a rescisão de uma transação **proíbe** o contribuinte de formalizar uma nova transação.
+
+Após a rescisão, você fica impedido de fazer um novo acordo pelo prazo de **2 (dois) anos**. Esse período é contado a partir da data em que a transação foi rescindida, e essa proibição vale mesmo que o novo pedido seja para negociar outras dívidas.</bot_response>
+    <id>30</id>
+    <user_message>A rescisão da transação proíbe o contribuinte de formalizar uma nova transação? Se sim, por qual período?</user_message>
+    <session_id>f52966fd-1c88-4c7f-a269-e4c20c4416f4</session_id>
+    <user_chars>105</user_chars>
+    <user_tokens>3841</user_tokens>
+    <request_start_time>2026-01-08 11:55:32.584814</request_start_time>
+    <response_end_time>2026-01-08 11:55:48.129095</response_end_time>
+    <generation_duration_sec>14.416328</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>342</bot_chars>
+    <bot_tokens>85</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:55:33.712767</retrieval_end_time>
+    <retrieval_duration_sec>1.127953</retrieval_duration_sec>
+    <total_duration_sec>15.544281</total_duration_sec>
+    <feedback>
+      <id>30</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 11:55:57.376144</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Se você não pagar a parcela única ou a primeira parcela do seu acordo de transação no prazo de vencimento, as consequências são as seguintes:
+
+1.  **Acordo Não Celebrado:** O principal efeito é que o **acordo de transação não será efetivamente celebrado**. Isso significa que a negociação não se concretiza.
+2.  **Sem Efeitos Jurídicos:** Como o acordo não é celebrado, **nenhum efeito jurídico será produzido**. É como se a transação nunca tivesse acontecido, e as dívidas continuam a ser cobradas normalmente, sem os benefícios do programa.
+3.  **Confissão de Dívida Mantida:** É importante notar que, mesmo que o acordo não seja celebrado, a **assinatura do termo de transação já implica a confissão irrevogável e irretratável dos débitos**. Isso quer dizer que, ao assinar, você reconheceu a existência e a validade das dívidas, e não poderá mais contestá-las judicialmente, mesmo que o acordo não avance por falta de pagamento inicial.
+
+Em resumo, o não pagamento da primeira parcela ou da parcela única no prazo anula a transação, mas mantém o seu reconhecimento da dívida.</bot_response>
+    <id>31</id>
+    <user_message>Quais as consequências para o devedor que não pagar a parcela única ou a primeira parcela no prazo de vencimento?</user_message>
+    <session_id>f52966fd-1c88-4c7f-a269-e4c20c4416f4</session_id>
+    <user_chars>113</user_chars>
+    <user_tokens>4132</user_tokens>
+    <request_start_time>2026-01-08 11:56:57.489402</request_start_time>
+    <response_end_time>2026-01-08 11:57:12.866880</response_end_time>
+    <generation_duration_sec>14.361952</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>1084</bot_chars>
+    <bot_tokens>255</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:56:58.504928</retrieval_end_time>
+    <retrieval_duration_sec>1.015526</retrieval_duration_sec>
+    <total_duration_sec>15.377478</total_duration_sec>
+    <feedback>
+      <id>31</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 11:57:25.827324</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! Após ser notificado da rescisão da transação, o devedor tem um prazo de **15 (quinze) dias úteis** para:
+
+*   **Regularizar o vício:** Se o problema que causou a rescisão for considerado sanável (ou seja, pode ser corrigido) e proveniente de um erro justificável.
+*   **Apresentar impugnação:** Caso você discorde das razões da rescisão, pode apresentar uma contestação.
+
+Durante esse período de 15 dias úteis, a transação é preservada em todos os seus termos. A impugnação deve ser enviada para o e-mail **ntt@pge.go.gov.br**.</bot_response>
+    <id>32</id>
+    <user_message>Qual o prazo que o devedor tem para regularizar o vício (se sanável) ou apresentar impugnação após ser notificado da rescisão?</user_message>
+    <session_id>f52966fd-1c88-4c7f-a269-e4c20c4416f4</session_id>
+    <user_chars>126</user_chars>
+    <user_tokens>4793</user_tokens>
+    <request_start_time>2026-01-08 11:59:26.897752</request_start_time>
+    <response_end_time>2026-01-08 11:59:42.470942</response_end_time>
+    <generation_duration_sec>14.598077</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>532</bot_chars>
+    <bot_tokens>153</bot_tokens>
+    <retrieval_end_time>2026-01-08 11:59:27.872865</retrieval_end_time>
+    <retrieval_duration_sec>0.975113</retrieval_duration_sec>
+    <total_duration_sec>15.57319</total_duration_sec>
+    <feedback>
+      <id>32</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 12:00:07.559029</timestamp>
+    </feedback>
+  </chat_message>
+  <chat_message>
+    <bot_response>Olá! O responsável por decidir sobre a transação que surge de uma proposta individual e por assinar o termo de acordo é o **Procurador-Geral do Estado**.
+
+Ele tem a faculdade de delegar essa função, e essa delegação pode, inclusive, prever valores de alçada (limites de valor) e condições para o seu exercício. No entanto, a autoridade principal é do Procurador-Geral do Estado.</bot_response>
+    <id>33</id>
+    <user_message>Quem é o responsável por decidir sobre a transação decorrente de proposta individual, independentemente do valor?</user_message>
+    <session_id>f52966fd-1c88-4c7f-a269-e4c20c4416f4</session_id>
+    <user_chars>113</user_chars>
+    <user_tokens>4893</user_tokens>
+    <request_start_time>2026-01-08 12:00:55.829242</request_start_time>
+    <response_end_time>2026-01-08 12:01:19.644041</response_end_time>
+    <generation_duration_sec>22.77057</generation_duration_sec>
+    <is_synthetic>True</is_synthetic>
+    <bot_chars>378</bot_chars>
+    <bot_tokens>92</bot_tokens>
+    <retrieval_end_time>2026-01-08 12:00:56.873471</retrieval_end_time>
+    <retrieval_duration_sec>1.044229</retrieval_duration_sec>
+    <total_duration_sec>23.814799</total_duration_sec>
+    <feedback>
+      <id>33</id>
+      <rating>like</rating>
+      <timestamp>2026-01-08 12:01:34.583491</timestamp>
+    </feedback>
+  </chat_message>
+</chat_database_export>

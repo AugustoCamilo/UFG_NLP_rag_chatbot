@@ -17,7 +17,7 @@ import streamlit as st
 import pandas as pd
 import os
 import xml.etree.ElementTree as ET
-import altair as alt  # IMPORTAÇÃO NOVA
+import altair as alt
 from xml.dom import minidom
 from datetime import datetime
 from sqlmodel import Session, create_engine, select, func, desc
@@ -192,9 +192,11 @@ def run_list_feedback():
 def run_feedback_summary():
     """Modo 4: Resumo dos Feedbacks"""
     st.subheader("Modo 4: Resumo dos Feedbacks (Estatísticas)")
-    st.info("Estatísticas consolidadas de satisfação, separadas por tipo de interação.")
+    st.info(
+        "Estatísticas consolidadas de satisfação e performance, separadas por origem."
+    )
 
-    # --- NOVO FILTRO DE ORIGEM ---
+    # --- FILTRO DE ORIGEM ---
     origin_filter = st.selectbox(
         "Filtrar Dados por Origem:", ["Todos", "Usuário Real", "Teste Sintético"]
     )
@@ -233,6 +235,20 @@ def run_feedback_summary():
                 if total_msgs == 0:
                     continue
 
+                # --- Médias de Tempo ---
+                avg_times = session.exec(
+                    select(
+                        func.avg(ChatHistory.retrieval_duration_sec),
+                        func.avg(ChatHistory.generation_duration_sec),
+                        func.avg(ChatHistory.total_duration_sec),
+                    ).where(ChatHistory.is_synthetic == is_synth)
+                ).one()
+
+                # Tratamento para None
+                avg_ret = avg_times[0] if avg_times[0] else 0.0
+                avg_gen = avg_times[1] if avg_times[1] else 0.0
+                avg_tot = avg_times[2] if avg_times[2] else 0.0
+
                 # 2. Likes
                 likes = session.exec(
                     select(func.count(Feedback.id))
@@ -255,44 +271,34 @@ def run_feedback_summary():
                 if blanks < 0:
                     blanks = 0
 
-                # 5. Cálculos
+                # 5. Cálculos Percentuais
                 pct_likes = (likes / total_msgs) * 100
                 pct_dislikes = (dislikes / total_msgs) * 100
                 pct_blanks = (blanks / total_msgs) * 100
 
-                # Adicionar à tabela
-                consolidated_data.append(
-                    {
+                # Helper para criar a linha da tabela
+                def create_row(metric, total, pct):
+                    return {
                         "Origem": label_origin,
-                        "Métrica": "👍 Likes",
-                        "Total": likes,
-                        "Porcentagem": f"{pct_likes:.2f}%",
+                        "Métrica": metric,
+                        "Total": total,
+                        "Porcentagem": pct,
+                        "Tempo médio RAG": f"{avg_ret:.2f}s",
+                        "Tempo médio LLM": f"{avg_gen:.2f}s",
+                        "Tempo médio Total": f"{avg_tot:.2f}s",
                     }
+
+                # Adicionar linhas à tabela
+                consolidated_data.append(
+                    create_row("👍 Likes", likes, f"{pct_likes:.2f}%")
                 )
                 consolidated_data.append(
-                    {
-                        "Origem": label_origin,
-                        "Métrica": "👎 Dislikes",
-                        "Total": dislikes,
-                        "Porcentagem": f"{pct_dislikes:.2f}%",
-                    }
+                    create_row("👎 Dislikes", dislikes, f"{pct_dislikes:.2f}%")
                 )
                 consolidated_data.append(
-                    {
-                        "Origem": label_origin,
-                        "Métrica": "⬜ Em Branco",
-                        "Total": blanks,
-                        "Porcentagem": f"{pct_blanks:.2f}%",
-                    }
+                    create_row("⬜ Em Branco", blanks, f"{pct_blanks:.2f}%")
                 )
-                consolidated_data.append(
-                    {
-                        "Origem": label_origin,
-                        "Métrica": "TOTAL",
-                        "Total": total_msgs,
-                        "Porcentagem": "100%",
-                    }
-                )
+                consolidated_data.append(create_row("TOTAL", total_msgs, "100%"))
 
                 # Dados para o Gráfico
                 charts_payload.append(
@@ -317,28 +323,49 @@ def run_feedback_summary():
                 return
 
             # Exibir Tabela
-            st.markdown("### 📋 Tabela de Dados")
+            st.markdown("### 📋 Tabela de Dados e Performance")
             df = pd.DataFrame(consolidated_data)
-            df = df[["Origem", "Métrica", "Total", "Porcentagem"]]
+
+            # Ordenação das colunas
+            cols_order = [
+                "Origem",
+                "Métrica",
+                "Total",
+                "Porcentagem",
+                "Tempo médio RAG",
+                "Tempo médio LLM",
+                "Tempo médio Total",
+            ]
+            df = df[cols_order]
+
             st.table(df)
+
+            # --- LEGENDA DESCRITIVA ---
+            with st.expander(
+                "ℹ️ Legenda das Colunas (Entenda os dados)", expanded=False
+            ):
+                st.markdown(
+                    """
+                * **Origem:** Tipo de interação (Usuário Real ou Teste Sintético).
+                * **Métrica:** Categoria da avaliação (Like, Dislike, Em Branco).
+                * **Tempo médio RAG:** Tempo médio gasto na etapa de busca vetorial e re-ranking (Recuperação de Contexto).
+                * **Tempo médio LLM:** Tempo médio de processamento do modelo (Gemini) para gerar a resposta final.
+                * **Tempo médio Total:** Tempo total de ponta a ponta percebido (Latência Total).
+                """
+                )
 
             st.divider()
 
-            # --- CORREÇÃO DE IMPRESSÃO (CSS INJETADO) ---
-            # 1. Page Break: Força nova página para os gráficos
-            # 2. Fix Selectbox: Força fundo branco e borda no filtro para ser legível
+            # --- CSS PARA IMPRESSÃO ---
             st.markdown(
                 """
             <style>
             @media print {
-                /* Quebra de página antes dos gráficos */
                 .page-break { 
                     page-break-before: always; 
                     margin-top: 2rem;
                     display: block;
                 }
-                
-                /* Força fundo branco nos componentes de Input e Select */
                 div[data-baseweb="select"] > div,
                 div[data-baseweb="base-input"] {
                     background-color: #ffffff !important;
@@ -346,8 +373,6 @@ def run_feedback_summary():
                     color: #000000 !important;
                     -webkit-print-color-adjust: exact;
                 }
-                
-                /* Garante que o texto dentro do select (SVG/Labels) seja preto */
                 div[data-baseweb="select"] span, 
                 div[data-baseweb="select"] div {
                     color: #000000 !important;
@@ -358,12 +383,10 @@ def run_feedback_summary():
             """,
                 unsafe_allow_html=True,
             )
-            # ---------------------------------------------
 
             # Exibir Gráficos
             st.markdown("### 📊 Visualização Gráfica")
 
-            # Cria colunas dinamicamente baseado na quantidade de origens encontradas
             if charts_payload:
                 cols = st.columns(len(charts_payload))
 
@@ -371,25 +394,25 @@ def run_feedback_summary():
                     with cols[idx]:
                         st.markdown(f"**{item['origin']}**")
 
+                        # 1. Base SEM propriedade de background
                         base = alt.Chart(item["data"]).encode(
                             theta=alt.Theta("Quantidade", stack=True)
                         )
 
-                        # Gráfico de Pizza (Arcos)
+                        # 2. Camada Pie (Arcos)
                         pie = base.mark_arc(outerRadius=100).encode(
                             color=alt.Color(
                                 "Categoria",
                                 scale=alt.Scale(
                                     domain=["Likes", "Dislikes", "Em Branco"],
-                                    range=[
-                                        "#28a745",
-                                        "#dc3545",
-                                        "#eaeaea",
-                                    ],  # Verde, Vermelho, Cinza
+                                    range=["#28a745", "#dc3545", "#eaeaea"],
                                 ),
-                                # Mantendo a legenda ajustada para impressão (abaixo)
                                 legend=alt.Legend(
-                                    orient="bottom", direction="horizontal"
+                                    orient="bottom",
+                                    direction="horizontal",
+                                    titleColor="black",
+                                    labelColor="black",
+                                    titleFontWeight="bold",
                                 ),
                             ),
                             tooltip=[
@@ -399,14 +422,17 @@ def run_feedback_summary():
                             ],
                         )
 
-                        # Labels de Porcentagem
+                        # 3. Camada Texto (Labels)
                         text = base.mark_text(radius=120).encode(
                             text=alt.Text("Porcentagem", format=".1%"),
                             order=alt.Order("Quantidade", sort="descending"),
                             color=alt.value("black"),
                         )
 
-                        st.altair_chart(pie + text, use_container_width=True)
+                        # 4. Combinação (CORREÇÃO: background aplicado AQUI)
+                        final_chart = (pie + text).properties(background="white")
+
+                        st.altair_chart(final_chart, use_container_width=True)
 
 
 def run_export_csv():
