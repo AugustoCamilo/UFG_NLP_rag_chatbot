@@ -11,6 +11,7 @@ Atualizado para:
 6. Importação e Exportação de XML (Backup completo).
 7. Gráficos de Pizza (Pie Charts) com Altair para visualização de feedbacks.
 8. Filtro dinâmico de Origem no Resumo dos Feedbacks.
+9. Cálculo granular de médias de tempo por métrica (Like/Dislike/Blank).
 """
 
 import streamlit as st
@@ -193,7 +194,7 @@ def run_feedback_summary():
     """Modo 4: Resumo dos Feedbacks"""
     st.subheader("Modo 4: Resumo dos Feedbacks (Estatísticas)")
     st.info(
-        "Estatísticas consolidadas de satisfação e performance, separadas por origem."
+        "Estatísticas consolidadas de satisfação e performance, separadas por origem e métrica."
     )
 
     # --- FILTRO DE ORIGEM ---
@@ -225,7 +226,41 @@ def run_feedback_summary():
                 is_synth = origin["is_synthetic"]
                 label_origin = origin["label"]
 
-                # 1. Total de Interações desta origem
+                # --- HELPER: Calcula médias para um subset específico ---
+                def get_avg_times(rating_filter=None, only_blanks=False):
+                    """
+                    Calcula médias de tempo filtrando por rating.
+                    rating_filter: 'like' ou 'dislike'
+                    only_blanks: True para pegar mensagens sem feedback
+                    """
+                    query = select(
+                        func.avg(ChatHistory.retrieval_duration_sec),
+                        func.avg(ChatHistory.generation_duration_sec),
+                        func.avg(ChatHistory.total_duration_sec),
+                    ).where(ChatHistory.is_synthetic == is_synth)
+
+                    if only_blanks:
+                        # Left Join para encontrar onde Feedback é Nulo
+                        query = query.outerjoin(
+                            Feedback, ChatHistory.id == Feedback.message_id
+                        ).where(Feedback.id == None)
+                    elif rating_filter:
+                        # Inner Join para filtrar por rating específico
+                        query = query.join(
+                            Feedback, ChatHistory.id == Feedback.message_id
+                        ).where(Feedback.rating == rating_filter)
+
+                    # Executa a query
+                    result = session.exec(query).one()
+
+                    # Trata None (caso não haja registros no filtro)
+                    return (
+                        result[0] if result[0] else 0.0,
+                        result[1] if result[1] else 0.0,
+                        result[2] if result[2] else 0.0,
+                    )
+
+                # 1. Total de Interações (Geral da Origem)
                 total_msgs = session.exec(
                     select(func.count(ChatHistory.id)).where(
                         ChatHistory.is_synthetic == is_synth
@@ -235,70 +270,98 @@ def run_feedback_summary():
                 if total_msgs == 0:
                     continue
 
-                # --- Médias de Tempo ---
-                avg_times = session.exec(
-                    select(
-                        func.avg(ChatHistory.retrieval_duration_sec),
-                        func.avg(ChatHistory.generation_duration_sec),
-                        func.avg(ChatHistory.total_duration_sec),
-                    ).where(ChatHistory.is_synthetic == is_synth)
-                ).one()
-
-                # Tratamento para None
-                avg_ret = avg_times[0] if avg_times[0] else 0.0
-                avg_gen = avg_times[1] if avg_times[1] else 0.0
-                avg_tot = avg_times[2] if avg_times[2] else 0.0
-
-                # 2. Likes
+                # 2. Likes (Contagem e Médias)
                 likes = session.exec(
                     select(func.count(Feedback.id))
                     .join(ChatHistory, Feedback.message_id == ChatHistory.id)
                     .where(Feedback.rating == "like")
                     .where(ChatHistory.is_synthetic == is_synth)
                 ).one()
+                avg_ret_like, avg_gen_like, avg_tot_like = get_avg_times(
+                    rating_filter="like"
+                )
 
-                # 3. Dislikes
+                # 3. Dislikes (Contagem e Médias)
                 dislikes = session.exec(
                     select(func.count(Feedback.id))
                     .join(ChatHistory, Feedback.message_id == ChatHistory.id)
                     .where(Feedback.rating == "dislike")
                     .where(ChatHistory.is_synthetic == is_synth)
                 ).one()
+                avg_ret_dislike, avg_gen_dislike, avg_tot_dislike = get_avg_times(
+                    rating_filter="dislike"
+                )
 
-                # 4. Em Branco
+                # 4. Em Branco (Contagem e Médias)
                 total_feedbacks = likes + dislikes
                 blanks = total_msgs - total_feedbacks
                 if blanks < 0:
                     blanks = 0
+                avg_ret_blank, avg_gen_blank, avg_tot_blank = get_avg_times(
+                    only_blanks=True
+                )
 
-                # 5. Cálculos Percentuais
+                # 5. Médias Gerais (TOTAL da Origem)
+                avg_ret_total, avg_gen_total, avg_tot_total = get_avg_times()
+
+                # --- Cálculos Percentuais ---
                 pct_likes = (likes / total_msgs) * 100
                 pct_dislikes = (dislikes / total_msgs) * 100
                 pct_blanks = (blanks / total_msgs) * 100
 
-                # Helper para criar a linha da tabela
-                def create_row(metric, total, pct):
+                # Helper para criar a linha da tabela formatada
+                def create_row(metric, total, pct, ret_time, gen_time, tot_time):
                     return {
                         "Origem": label_origin,
                         "Métrica": metric,
                         "Total": total,
                         "Porcentagem": pct,
-                        "Tempo médio RAG": f"{avg_ret:.2f}s",
-                        "Tempo médio LLM": f"{avg_gen:.2f}s",
-                        "Tempo médio Total": f"{avg_tot:.2f}s",
+                        "Tempo médio RAG": f"{ret_time:.2f}s",
+                        "Tempo médio LLM": f"{gen_time:.2f}s",
+                        "Tempo médio Total": f"{tot_time:.2f}s",
                     }
 
-                # Adicionar linhas à tabela
+                # Adicionar linhas à tabela com as médias ESPECÍFICAS
                 consolidated_data.append(
-                    create_row("👍 Likes", likes, f"{pct_likes:.2f}%")
+                    create_row(
+                        "👍 Likes",
+                        likes,
+                        f"{pct_likes:.2f}%",
+                        avg_ret_like,
+                        avg_gen_like,
+                        avg_tot_like,
+                    )
                 )
                 consolidated_data.append(
-                    create_row("👎 Dislikes", dislikes, f"{pct_dislikes:.2f}%")
+                    create_row(
+                        "👎 Dislikes",
+                        dislikes,
+                        f"{pct_dislikes:.2f}%",
+                        avg_ret_dislike,
+                        avg_gen_dislike,
+                        avg_tot_dislike,
+                    )
                 )
                 consolidated_data.append(
-                    create_row("⬜ Em Branco", blanks, f"{pct_blanks:.2f}%")
+                    create_row(
+                        "⬜ Em Branco",
+                        blanks,
+                        f"{pct_blanks:.2f}%",
+                        avg_ret_blank,
+                        avg_gen_blank,
+                        avg_tot_blank,
+                    )
                 )
-                consolidated_data.append(create_row("TOTAL", total_msgs, "100%"))
+                consolidated_data.append(
+                    create_row(
+                        "TOTAL",
+                        total_msgs,
+                        "100%",
+                        avg_ret_total,
+                        avg_gen_total,
+                        avg_tot_total,
+                    )
+                )
 
                 # Dados para o Gráfico
                 charts_payload.append(
@@ -348,9 +411,11 @@ def run_feedback_summary():
                     """
                 * **Origem:** Tipo de interação (Usuário Real ou Teste Sintético).
                 * **Métrica:** Categoria da avaliação (Like, Dislike, Em Branco).
-                * **Tempo médio RAG:** Tempo médio gasto na etapa de busca vetorial e re-ranking (Recuperação de Contexto).
-                * **Tempo médio LLM:** Tempo médio de processamento do modelo (Gemini) para gerar a resposta final.
-                * **Tempo médio Total:** Tempo total de ponta a ponta percebido (Latência Total).
+                * **Tempo médio RAG:** Tempo médio gasto na etapa de busca vetorial e re-ranking (Recuperação de Contexto) para este grupo.
+                * **Tempo médio LLM:** Tempo médio de processamento do modelo (Gemini) para gerar a resposta final para este grupo.
+                * **Tempo médio Total:** Tempo total de ponta a ponta percebido (Latência Total) para este grupo.
+                * **Os tempos médios são calculados separadamente para cada métrica, permitindo uma análise granular da performance.**
+                * **A unidade de medida de tempo é segundos.**
                 """
                 )
 
