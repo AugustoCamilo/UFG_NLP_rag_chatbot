@@ -12,8 +12,8 @@ from sqlmodel import select
 
 # Importações Locais
 from settings import settings
-import database  # Módulo refatorado
-from database import ChatHistory, Feedback  # Modelos SQLModel
+import database
+from database import ChatHistory, Feedback
 from vector_retriever import VectorRetriever
 
 # Carregar variáveis de ambiente
@@ -30,6 +30,7 @@ class RAGState(TypedDict):
     request_start_time: datetime
     retrieval_end_time: datetime
     new_message_id: Optional[int]
+    is_synthetic: bool  # <-- NOVO CAMPO NO STATE
 
 
 class RAGChain:
@@ -58,7 +59,8 @@ Sua função é atuar como um especialista em Transação Tributária, prestando
 **Data atual do sistema:** {{DATA_ATUAL}}
 
 ## Contexto de Conhecimento (Fonte da Verdade)
-Você deve responder às perguntas baseando-se **exclusivamente** nas informações contidas nas tags `<documentos_oficiais>` abaixo. Ignore qualquer conhecimento externo sobre leis que não esteja explícito aqui, para evitar alucinações sobre prazos ou regras antigas.
+Você deve responder às perguntas baseando-se **exclusivamente** nas informações contidas nas tags `<documentos_oficiais>` abaixo.
+Ignore qualquer conhecimento externo sobre leis que não esteja explícito aqui, para evitar alucinações sobre prazos ou regras antigas.
 
 <documentos_oficiais>
 {{INSERIR_CONTEXTO_AQUI}}
@@ -73,29 +75,28 @@ Você deve responder às perguntas baseando-se **exclusivamente** nas informaç�
 
 ## Gerenciamento da Conversa
 Use o histórico fornecido para manter o contexto (ex: entender referências como "e qual é o prazo disso?").
-* **Regra de Prioridade:** A informação dentro de `<documentos_oficiais>` sempre prevalece sobre o histórico ou conhecimento prévio.
+   * **Regra de Prioridade:** A informação dentro de `<documentos_oficiais>` sempre prevalece sobre o histórico ou conhecimento prévio.
 
 ## Protocolos de Resposta (Chain of Thought)
 
 ### Passo 1: Verificação de Disponibilidade
 Antes de responder, verifique se a resposta para a dúvida do usuário consta explicitamente em `<documentos_oficiais>`.
-* **Se NÃO constar:** Responda: "Desculpe, não encontrei essa informação específica nos documentos oficiais do Programa Quita Goiás aos quais tenho acesso. Sou um assistente focado estritamente nas regras atuais do programa. Poderia reformular sua pergunta?"
-* **Se constar:** Prossiga para o Passo 2.
+   * **Se NÃO constar:** Responda: "Desculpe, não encontrei essa informação específica nos documentos oficiais do Programa Quita Goiás aos quais tenho acesso. Sou um assistente focado estritamente nas regras atuais do programa. Poderia reformular sua pergunta?"
+   * **Se constar:** Prossiga para o Passo 2.
 
 ### Passo 2: Construção da Resposta
 1. **Cenário: Saudação Pura** (Ex: "Olá", "Bom dia")
    * Resposta: "Olá! Sou o assistente virtual do Quita Goiás. Estou aqui para tirar suas dúvidas sobre o programa de regularização fiscal. Como posso ajudar?"
-
 2. **Cenário: Saudação + Pergunta** (Ex: "Oi, como parcelo?")
    * Ação: Ignore a saudação formal e responda diretamente à dúvida de forma cordial.
    * Resposta: "Olá! Para realizar o parcelamento, as regras são..." (Seguir contexto).
-
 3. **Cenário: Dúvida Específica**
    * Resposta: Forneça a informação extraída do contexto, simplificando a linguagem conforme as diretrizes de didática.
 
 ## Regras de Segurança (Safety Rails)
 * **Alucinação Zero:** Jamais invente datas, leis ou procedimentos não listados.
-* **Formatação:** Use Markdown para facilitar a leitura (listas com marcadores, negrito para prazos e valores importantes). Evite blocos de texto densos.
+* **Formatação:** Use Markdown para facilitar a leitura (listas com marcadores, negrito para prazos e valores importantes).
+Evite blocos de texto densos.
 """
 
         # 4. Construir o Grafo
@@ -122,7 +123,6 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
                 .where(ChatHistory.session_id == self.session_id)
                 .order_by(ChatHistory.request_start_time)
             )
-            # CORREÇÃO: Usa execute() + scalars() em vez de exec()
             result = await session.execute(statement)
             history_records = result.scalars().all()
 
@@ -132,16 +132,13 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
 
         return {
             "history": messages,
-            "request_start_time": state[
-                "request_start_time"
-            ],  # Mantém o timestamp inicial
+            "request_start_time": state["request_start_time"],
             "new_message_id": None,
+            "is_synthetic": state.get("is_synthetic", False),  # Mantém o estado
         }
 
     async def retrieve(self, state: RAGState) -> RAGState:
-        """
-        Recupera contexto.
-        """
+        """Recupera contexto."""
         question = state["question"]
 
         # Executa operação bloqueante em thread separada
@@ -157,6 +154,7 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
         # Timestamps
         request_start_time = state["request_start_time"]
         retrieval_end_time = state["retrieval_end_time"]
+        is_synthetic = state.get("is_synthetic", False)
 
         user_msg = state["question"]
         docs_content = "\n\n".join(doc.page_content for doc in state["context"])
@@ -195,6 +193,7 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
         new_message_id = await self.save_message_async(
             user_msg=user_msg,
             bot_msg=answer,
+            is_synthetic=is_synthetic,  # Passando a flag
             metrics={
                 "user_chars": len(user_msg),
                 "bot_chars": len(answer),
@@ -211,7 +210,7 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
     # --- Métodos Auxiliares (Async) ---
 
     async def save_message_async(
-        self, user_msg: str, bot_msg: str, metrics: dict
+        self, user_msg: str, bot_msg: str, is_synthetic: bool, metrics: dict
     ) -> int:
         """Persiste a interação usando SQLModel."""
 
@@ -224,6 +223,7 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
             session_id=self.session_id,
             user_message=user_msg,
             bot_response=bot_msg,
+            is_synthetic=is_synthetic,  # Salva no banco
             user_chars=metrics["user_chars"],
             bot_chars=metrics["bot_chars"],
             user_tokens=metrics["user_tokens"],
@@ -242,9 +242,12 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
             await session.refresh(chat_entry)
             return chat_entry.id
 
-    async def generate_response(self, question: str) -> dict:
+    async def generate_response(
+        self, question: str, is_synthetic: bool = False
+    ) -> dict:
         """
         Ponto de entrada PÚBLICO e ASYNC.
+        Aceita o parâmetro is_synthetic.
         """
         initial_state = {
             "question": question,
@@ -252,8 +255,9 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
             "answer": "",
             "history": [],
             "request_start_time": datetime.now(),
-            "retrieval_end_time": datetime.now(),  # Placeholder
+            "retrieval_end_time": datetime.now(),
             "new_message_id": None,
+            "is_synthetic": is_synthetic,  # Injeta no estado inicial
         }
 
         result = await self.graph.ainvoke(initial_state)
@@ -261,11 +265,8 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
         return {"answer": result["answer"], "message_id": result["new_message_id"]}
 
     async def get_history_for_display(self) -> List[tuple]:
-        """
-        Retorna o histórico para a UI (Streamlit).
-        """
+        """Retorna o histórico para a UI (Streamlit)."""
         async with database.AsyncSessionFactory() as session:
-            # CORREÇÃO: select join
             query = (
                 select(ChatHistory, Feedback.rating)
                 .outerjoin(Feedback, ChatHistory.id == Feedback.message_id)
@@ -273,11 +274,7 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
                 .order_by(ChatHistory.request_start_time)
             )
 
-            # CORREÇÃO: Usa execute() em vez de exec()
             result = await session.execute(query)
-
-            # Como é uma tupla (ChatHistory, rating), usamos .all() diretamente no result
-            # (Não use scalars() aqui, pois queremos as duas colunas)
             formatted_history = []
             for history, rating in result.all():
                 formatted_history.append(
@@ -290,8 +287,6 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
         """Salva ou atualiza feedback."""
         async with database.AsyncSessionFactory() as session:
             statement = select(Feedback).where(Feedback.message_id == message_id)
-
-            # CORREÇÃO: execute() + scalars() + first()
             result = await session.execute(statement)
             existing_feedback = result.scalars().first()
 
