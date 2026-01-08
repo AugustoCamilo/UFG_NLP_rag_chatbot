@@ -9,12 +9,14 @@ Atualizado para:
 4. Usar SQLModel.
 5. Resumo Estatístico agrupado por Origem (Real vs Sintético).
 6. Importação e Exportação de XML (Backup completo).
+7. Gráficos de Pizza (Pie Charts) com Altair para visualização de feedbacks.
 """
 
 import streamlit as st
 import pandas as pd
 import os
 import xml.etree.ElementTree as ET
+import altair as alt  # IMPORTAÇÃO NOVA
 from xml.dom import minidom
 from datetime import datetime
 from sqlmodel import Session, create_engine, select, func, desc
@@ -194,13 +196,13 @@ def run_feedback_summary():
     if st.button("Calcular Estatísticas"):
         with get_session_sync() as session:
 
-            # Vamos iterar pelos dois tipos de origem: Real (False) e Sintético (True)
             origins_to_check = [
                 {"label": "👤 Usuário Real", "is_synthetic": False},
                 {"label": "🧪 Teste Sintético", "is_synthetic": True},
             ]
 
             consolidated_data = []
+            charts_payload = []  # Para armazenar dados para os gráficos
 
             for origin in origins_to_check:
                 is_synth = origin["is_synthetic"]
@@ -216,7 +218,7 @@ def run_feedback_summary():
                 if total_msgs == 0:
                     continue
 
-                # 2. Likes (Join necessário para filtrar por origem no ChatHistory)
+                # 2. Likes
                 likes = session.exec(
                     select(func.count(Feedback.id))
                     .join(ChatHistory, Feedback.message_id == ChatHistory.id)
@@ -243,7 +245,7 @@ def run_feedback_summary():
                 pct_dislikes = (dislikes / total_msgs) * 100
                 pct_blanks = (blanks / total_msgs) * 100
 
-                # Adicionar linhas ao dataset
+                # Adicionar à tabela
                 consolidated_data.append(
                     {
                         "Origem": label_origin,
@@ -277,16 +279,79 @@ def run_feedback_summary():
                     }
                 )
 
+                # Dados para o Gráfico
+                charts_payload.append(
+                    {
+                        "origin": label_origin,
+                        "data": pd.DataFrame(
+                            {
+                                "Categoria": ["Likes", "Dislikes", "Em Branco"],
+                                "Quantidade": [likes, dislikes, blanks],
+                                "Porcentagem": [
+                                    likes / total_msgs,
+                                    dislikes / total_msgs,
+                                    blanks / total_msgs,
+                                ],
+                            }
+                        ),
+                    }
+                )
+
             if not consolidated_data:
                 st.warning("Nenhum dado encontrado para gerar estatísticas.")
                 return
 
+            # Exibir Tabela
+            st.markdown("### 📋 Tabela de Dados")
             df = pd.DataFrame(consolidated_data)
-
-            # Reordenar colunas
             df = df[["Origem", "Métrica", "Total", "Porcentagem"]]
-
             st.table(df)
+
+            st.divider()
+
+            # Exibir Gráficos
+            st.markdown("### 📊 Visualização Gráfica")
+
+            # Cria colunas dinamicamente baseado na quantidade de origens encontradas
+            if charts_payload:
+                cols = st.columns(len(charts_payload))
+
+                for idx, item in enumerate(charts_payload):
+                    with cols[idx]:
+                        st.markdown(f"**{item['origin']}**")
+
+                        base = alt.Chart(item["data"]).encode(
+                            theta=alt.Theta("Quantidade", stack=True)
+                        )
+
+                        # Gráfico de Pizza (Arcos)
+                        pie = base.mark_arc(outerRadius=100).encode(
+                            color=alt.Color(
+                                "Categoria",
+                                scale=alt.Scale(
+                                    domain=["Likes", "Dislikes", "Em Branco"],
+                                    range=[
+                                        "#28a745",
+                                        "#dc3545",
+                                        "#eaeaea",
+                                    ],  # Verde, Vermelho, Cinza
+                                ),
+                            ),
+                            tooltip=[
+                                "Categoria",
+                                "Quantidade",
+                                alt.Tooltip("Porcentagem", format=".1%"),
+                            ],
+                        )
+
+                        # Labels de Porcentagem
+                        text = base.mark_text(radius=120).encode(
+                            text=alt.Text("Porcentagem", format=".1%"),
+                            order=alt.Order("Quantidade", sort="descending"),
+                            color=alt.value("black"),
+                        )
+
+                        st.altair_chart(pie + text, use_container_width=True)
 
 
 def run_export_csv():
@@ -372,7 +437,7 @@ def run_export_xml():
             # Pretty Print
             xml_str = minidom.parseString(ET.tostring(root)).toprettyxml(indent="  ")
             file_timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
-            filename = f"historico_backup_{file_timestamp}.xml"
+            filename = f"historico_chat_validacao_{file_timestamp}.xml"
 
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(xml_str)
@@ -389,7 +454,7 @@ def run_import_xml():
     )
 
     uploaded_file = st.file_uploader(
-        "Selecione arquivo XML (historico_backup_*.xml)", type=["xml"]
+        "Selecione arquivo XML (historico_chat_validacao_*.xml)", type=["xml"]
     )
 
     if uploaded_file and st.button("Iniciar Importação"):

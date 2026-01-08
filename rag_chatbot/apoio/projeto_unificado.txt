@@ -103,7 +103,7 @@ settings = Settings()
 # database.py
 import asyncio
 from datetime import datetime
-from typing import Optional
+from typing import Optional, AsyncGenerator
 from sqlmodel import Field, SQLModel
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -121,7 +121,7 @@ engine = create_async_engine(settings.DATABASE_URL, echo=False, future=True)
 AsyncSessionFactory = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
-# --- Modelos de Dados (Inalterados, mas mantidos aqui para contexto) ---
+# --- Modelos de Dados ---
 class ChatHistory(SQLModel, table=True):
     __tablename__ = "chat_history"
     __table_args__ = {"extend_existing": True}
@@ -130,6 +130,13 @@ class ChatHistory(SQLModel, table=True):
     session_id: str = Field(index=True)
     user_message: str
     bot_response: str
+
+    # --- NOVA FLAG ---
+    is_synthetic: bool = Field(
+        default=False,
+        description="Indica se é teste sintético (True) ou usuário real (False)",
+    )
+
     user_chars: int = 0
     bot_chars: int = 0
     user_tokens: int = 0
@@ -190,7 +197,7 @@ async def init_db():
     print(f"Banco de dados (Async) inicializado em: {settings.DB_PATH}")
 
 
-async def get_session() -> AsyncSession:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionFactory() as session:
         yield session
 
@@ -504,8 +511,8 @@ from sqlmodel import select
 
 # Importações Locais
 from settings import settings
-import database  # Módulo refatorado
-from database import ChatHistory, Feedback  # Modelos SQLModel
+import database
+from database import ChatHistory, Feedback
 from vector_retriever import VectorRetriever
 
 # Carregar variáveis de ambiente
@@ -522,6 +529,7 @@ class RAGState(TypedDict):
     request_start_time: datetime
     retrieval_end_time: datetime
     new_message_id: Optional[int]
+    is_synthetic: bool  # <-- NOVO CAMPO NO STATE
 
 
 class RAGChain:
@@ -550,7 +558,8 @@ Sua função é atuar como um especialista em Transação Tributária, prestando
 **Data atual do sistema:** {{DATA_ATUAL}}
 
 ## Contexto de Conhecimento (Fonte da Verdade)
-Você deve responder às perguntas baseando-se **exclusivamente** nas informações contidas nas tags `<documentos_oficiais>` abaixo. Ignore qualquer conhecimento externo sobre leis que não esteja explícito aqui, para evitar alucinações sobre prazos ou regras antigas.
+Você deve responder às perguntas baseando-se **exclusivamente** nas informações contidas nas tags `<documentos_oficiais>` abaixo.
+Ignore qualquer conhecimento externo sobre leis que não esteja explícito aqui, para evitar alucinações sobre prazos ou regras antigas.
 
 <documentos_oficiais>
 {{INSERIR_CONTEXTO_AQUI}}
@@ -565,29 +574,28 @@ Você deve responder às perguntas baseando-se **exclusivamente** nas informaç�
 
 ## Gerenciamento da Conversa
 Use o histórico fornecido para manter o contexto (ex: entender referências como "e qual é o prazo disso?").
-* **Regra de Prioridade:** A informação dentro de `<documentos_oficiais>` sempre prevalece sobre o histórico ou conhecimento prévio.
+   * **Regra de Prioridade:** A informação dentro de `<documentos_oficiais>` sempre prevalece sobre o histórico ou conhecimento prévio.
 
 ## Protocolos de Resposta (Chain of Thought)
 
 ### Passo 1: Verificação de Disponibilidade
 Antes de responder, verifique se a resposta para a dúvida do usuário consta explicitamente em `<documentos_oficiais>`.
-* **Se NÃO constar:** Responda: "Desculpe, não encontrei essa informação específica nos documentos oficiais do Programa Quita Goiás aos quais tenho acesso. Sou um assistente focado estritamente nas regras atuais do programa. Poderia reformular sua pergunta?"
-* **Se constar:** Prossiga para o Passo 2.
+   * **Se NÃO constar:** Responda: "Desculpe, não encontrei essa informação específica nos documentos oficiais do Programa Quita Goiás aos quais tenho acesso. Sou um assistente focado estritamente nas regras atuais do programa. Poderia reformular sua pergunta?"
+   * **Se constar:** Prossiga para o Passo 2.
 
 ### Passo 2: Construção da Resposta
 1. **Cenário: Saudação Pura** (Ex: "Olá", "Bom dia")
    * Resposta: "Olá! Sou o assistente virtual do Quita Goiás. Estou aqui para tirar suas dúvidas sobre o programa de regularização fiscal. Como posso ajudar?"
-
 2. **Cenário: Saudação + Pergunta** (Ex: "Oi, como parcelo?")
    * Ação: Ignore a saudação formal e responda diretamente à dúvida de forma cordial.
    * Resposta: "Olá! Para realizar o parcelamento, as regras são..." (Seguir contexto).
-
 3. **Cenário: Dúvida Específica**
    * Resposta: Forneça a informação extraída do contexto, simplificando a linguagem conforme as diretrizes de didática.
 
 ## Regras de Segurança (Safety Rails)
 * **Alucinação Zero:** Jamais invente datas, leis ou procedimentos não listados.
-* **Formatação:** Use Markdown para facilitar a leitura (listas com marcadores, negrito para prazos e valores importantes). Evite blocos de texto densos.
+* **Formatação:** Use Markdown para facilitar a leitura (listas com marcadores, negrito para prazos e valores importantes).
+Evite blocos de texto densos.
 """
 
         # 4. Construir o Grafo
@@ -614,7 +622,6 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
                 .where(ChatHistory.session_id == self.session_id)
                 .order_by(ChatHistory.request_start_time)
             )
-            # CORREÇÃO: Usa execute() + scalars() em vez de exec()
             result = await session.execute(statement)
             history_records = result.scalars().all()
 
@@ -624,16 +631,13 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
 
         return {
             "history": messages,
-            "request_start_time": state[
-                "request_start_time"
-            ],  # Mantém o timestamp inicial
+            "request_start_time": state["request_start_time"],
             "new_message_id": None,
+            "is_synthetic": state.get("is_synthetic", False),  # Mantém o estado
         }
 
     async def retrieve(self, state: RAGState) -> RAGState:
-        """
-        Recupera contexto.
-        """
+        """Recupera contexto."""
         question = state["question"]
 
         # Executa operação bloqueante em thread separada
@@ -649,6 +653,7 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
         # Timestamps
         request_start_time = state["request_start_time"]
         retrieval_end_time = state["retrieval_end_time"]
+        is_synthetic = state.get("is_synthetic", False)
 
         user_msg = state["question"]
         docs_content = "\n\n".join(doc.page_content for doc in state["context"])
@@ -687,6 +692,7 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
         new_message_id = await self.save_message_async(
             user_msg=user_msg,
             bot_msg=answer,
+            is_synthetic=is_synthetic,  # Passando a flag
             metrics={
                 "user_chars": len(user_msg),
                 "bot_chars": len(answer),
@@ -703,7 +709,7 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
     # --- Métodos Auxiliares (Async) ---
 
     async def save_message_async(
-        self, user_msg: str, bot_msg: str, metrics: dict
+        self, user_msg: str, bot_msg: str, is_synthetic: bool, metrics: dict
     ) -> int:
         """Persiste a interação usando SQLModel."""
 
@@ -716,6 +722,7 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
             session_id=self.session_id,
             user_message=user_msg,
             bot_response=bot_msg,
+            is_synthetic=is_synthetic,  # Salva no banco
             user_chars=metrics["user_chars"],
             bot_chars=metrics["bot_chars"],
             user_tokens=metrics["user_tokens"],
@@ -734,9 +741,12 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
             await session.refresh(chat_entry)
             return chat_entry.id
 
-    async def generate_response(self, question: str) -> dict:
+    async def generate_response(
+        self, question: str, is_synthetic: bool = False
+    ) -> dict:
         """
         Ponto de entrada PÚBLICO e ASYNC.
+        Aceita o parâmetro is_synthetic.
         """
         initial_state = {
             "question": question,
@@ -744,8 +754,9 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
             "answer": "",
             "history": [],
             "request_start_time": datetime.now(),
-            "retrieval_end_time": datetime.now(),  # Placeholder
+            "retrieval_end_time": datetime.now(),
             "new_message_id": None,
+            "is_synthetic": is_synthetic,  # Injeta no estado inicial
         }
 
         result = await self.graph.ainvoke(initial_state)
@@ -753,11 +764,8 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
         return {"answer": result["answer"], "message_id": result["new_message_id"]}
 
     async def get_history_for_display(self) -> List[tuple]:
-        """
-        Retorna o histórico para a UI (Streamlit).
-        """
+        """Retorna o histórico para a UI (Streamlit)."""
         async with database.AsyncSessionFactory() as session:
-            # CORREÇÃO: select join
             query = (
                 select(ChatHistory, Feedback.rating)
                 .outerjoin(Feedback, ChatHistory.id == Feedback.message_id)
@@ -765,11 +773,7 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
                 .order_by(ChatHistory.request_start_time)
             )
 
-            # CORREÇÃO: Usa execute() em vez de exec()
             result = await session.execute(query)
-
-            # Como é uma tupla (ChatHistory, rating), usamos .all() diretamente no result
-            # (Não use scalars() aqui, pois queremos as duas colunas)
             formatted_history = []
             for history, rating in result.all():
                 formatted_history.append(
@@ -782,8 +786,6 @@ Antes de responder, verifique se a resposta para a dúvida do usuário consta ex
         """Salva ou atualiza feedback."""
         async with database.AsyncSessionFactory() as session:
             statement = select(Feedback).where(Feedback.message_id == message_id)
-
-            # CORREÇÃO: execute() + scalars() + first()
             result = await session.execute(statement)
             existing_feedback = result.scalars().first()
 
@@ -1093,8 +1095,7 @@ if __name__ == "__main__":
 # app.py
 """
 Ponto de Entrada Principal (Frontend) da Aplicação de Chat RAG.
-
-Atualizado para consumir a arquitetura ASYNC do RAGChain e SQLModel.
+Atualizado para incluir flag de teste sintético.
 """
 
 import streamlit as st
@@ -1107,9 +1108,7 @@ from rag_chain import RAGChain
 
 # --- FUNÇÃO PARA FOCAR O INPUT ---
 def set_focus():
-    """
-    Injeta JavaScript para focar automaticamente a caixa de chat_input.
-    """
+    """Injeta JavaScript para focar automaticamente a caixa de chat_input."""
     script = """
     <script>
     setTimeout(function() {
@@ -1125,23 +1124,15 @@ def set_focus():
 
 # --- FUNÇÃO DE CALLBACK (ADAPTADA PARA ASYNC) ---
 def handle_feedback(chain_instance, message_id, rating):
-    """
-    Chamada quando um botão de feedback (like/dislike) é clicado.
-    Agora usa asyncio.run() para chamar o método async do backend.
-    """
-    # Bridge Sync -> Async para o callback
+    """Bridge Sync -> Async para o callback."""
     asyncio.run(chain_instance.save_feedback(message_id, rating))
-
-    # Atualiza o estado da sessão para desabilitar os botões
     st.session_state.feedback[message_id] = rating
     st.toast("Obrigado pelo seu feedback!", icon="👍")
 
 
 # --- FUNÇÃO PARA EXIBIR OS BOTÕES ---
 def display_feedback_buttons(chain_instance, message_id, existing_rating=None):
-    """
-    Exibe os botões de like/dislike (👍/👎) para uma determinada mensagem.
-    """
+    """Exibe os botões de like/dislike."""
     feedback_given = existing_rating or st.session_state.feedback.get(message_id)
 
     col1, col2, rest = st.columns([1, 1, 10])
@@ -1174,7 +1165,6 @@ st.caption("Processamento em Linguagem Natural - Turma 2 - Grupo 25")
 # 1. Gerenciar o ID da Sessão
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
-    # print(f"Nova sessão criada: {st.session_state.session_id}")
 
 # Inicializa o estado de feedback
 if "feedback" not in st.session_state:
@@ -1182,7 +1172,6 @@ if "feedback" not in st.session_state:
 
 # 2. Inicializar o RAGChain
 try:
-    # A inicialização (__init__) do RAGChain ainda é síncrona, então ok.
     chain = RAGChain(st.session_state.session_id)
 except FileNotFoundError as e:
     st.error(f"Erro: Banco de vetores não encontrado em '{e}'.")
@@ -1192,17 +1181,32 @@ except Exception as e:
     st.error(f"Erro ao inicializar a RAG Chain: {e}")
     st.stop()
 
-# Botão de Sair na Barra Lateral
+# --- SIDEBAR: CONTROLE DA APLICAÇÃO ---
 with st.sidebar:
     st.header("Controle da Aplicação")
+
+    # --- NOVA FUNCIONALIDADE: FLAG DE TESTE SINTÉTICO ---
+    st.markdown("### Origem da Pergunta")
+    origin_option = st.radio(
+        "Identifique a origem:",
+        options=["Usuário Real", "Teste Sintético"],
+        index=0,  # Padrão: Usuário Real
+        key="origin_flag_radio",
+        help="Use 'Teste Sintético' para perguntas de validação do sistema. Isso será gravado no banco de dados.",
+    )
+
+    # Define o booleano com base na escolha
+    is_synthetic_flag = origin_option == "Teste Sintético"
+
+    st.divider()
+
     st.warning("Clicar em 'Sair' encerrará o servidor do Streamlit.")
     if st.button("Sair e Encerrar Aplicação"):
         print("Botão 'Sair' clicado. Encerrando o processo do servidor.")
         os._exit(0)
 
 
-# 3. Exibir o histórico do chat (Carregado via Bridge Async)
-# chain.get_history_for_display() é async, precisamos rodar no event loop
+# 3. Exibir o histórico do chat
 try:
     messages = asyncio.run(chain.get_history_for_display())
 except Exception as e:
@@ -1228,12 +1232,13 @@ if prompt:
     # Gera e exibe a resposta do assistente
     with st.chat_message("assistant"):
         with st.spinner("Buscando, re-rankeando e pensando..."):
-            # Bridge Sync -> Async para gerar a resposta
             try:
-                response_dict = asyncio.run(chain.generate_response(prompt))
+                # PASSAGEM DA FLAG PARA O BACKEND
+                response_dict = asyncio.run(
+                    chain.generate_response(prompt, is_synthetic=is_synthetic_flag)
+                )
                 st.write(response_dict["answer"])
 
-                # Exibe os botões de feedback para a *nova* mensagem
                 if response_dict["message_id"]:
                     display_feedback_buttons(chain, response_dict["message_id"])
             except Exception as e:
@@ -2160,14 +2165,19 @@ Módulo de Dashboard de Auditoria do Histórico de Produção.
 Atualizado para:
 1. Usar Callbacks no botão de navegação.
 2. Usar settings.py.
-3. Exportar CSV com timestamp.
+3. Exportar CSV com timestamp e identificação de origem.
 4. Usar SQLModel.
-5. Nova funcionalidade: Resumo Estatístico dos Feedbacks.
+5. Resumo Estatístico agrupado por Origem (Real vs Sintético).
+6. Importação e Exportação de XML (Backup completo).
+7. Gráficos de Pizza (Pie Charts) com Altair para visualização de feedbacks.
 """
 
 import streamlit as st
 import pandas as pd
 import os
+import xml.etree.ElementTree as ET
+import altair as alt  # IMPORTAÇÃO NOVA
+from xml.dom import minidom
 from datetime import datetime
 from sqlmodel import Session, create_engine, select, func, desc
 
@@ -2183,6 +2193,14 @@ engine = create_engine(settings.SYNC_DATABASE_URL)
 def get_session_sync():
     """Retorna uma sessão síncrona."""
     return Session(engine)
+
+
+def _safe_get_text(element, tag, default=None):
+    """Helper para ler XML de forma segura."""
+    found = element.find(tag)
+    if found is not None and found.text is not None:
+        return found.text
+    return default
 
 
 # --- CALLBACK DE NAVEGAÇÃO ---
@@ -2208,6 +2226,8 @@ def run_list_sessions():
                         func.count(ChatHistory.id).label("msg_count"),
                         func.max(ChatHistory.response_end_time).label("last_activity"),
                         func.avg(ChatHistory.total_duration_sec).label("avg_duration"),
+                        # Pegamos o max(is_synthetic) para saber se a sessão teve flag de teste
+                        func.max(ChatHistory.is_synthetic).label("is_synthetic_flag"),
                     )
                     .group_by(ChatHistory.session_id)
                     .order_by(desc("last_activity"))
@@ -2222,22 +2242,25 @@ def run_list_sessions():
                 st.markdown("---")
 
                 # Cabeçalho da Tabela
-                c1, c2, c3, c4, c5 = st.columns([4, 1, 2, 1, 1.5])
+                c1, c2, c3, c4, c5 = st.columns([3, 1, 1, 2, 1.5])
                 c1.markdown("**ID da Sessão**")
-                c2.markdown("**Msgs**")
-                c3.markdown("**Última Atividade**")
-                c4.markdown("**Tempo**")
+                c2.markdown("**Origem**")
+                c3.markdown("**Msgs**")
+                c4.markdown("**Última Atividade**")
                 c5.markdown("**Ação**")
                 st.divider()
 
                 for row in results:
-                    c1, c2, c3, c4, c5 = st.columns([4, 1, 2, 1, 1.5])
+                    c1, c2, c3, c4, c5 = st.columns([3, 1, 1, 2, 1.5])
+
+                    origin_icon = "🧪" if row.is_synthetic_flag else "👤"
+
                     c1.code(row.session_id, language="text")
-                    c2.write(f"{row.msg_count}")
-                    c3.write(
+                    c2.write(origin_icon)
+                    c3.write(f"{row.msg_count}")
+                    c4.write(
                         f"{row.last_activity.strftime('%d/%m %H:%M') if row.last_activity else 'N/A'}"
                     )
-                    c4.write(f"{row.avg_duration:.2f}s")
                     c5.button(
                         "📂 Abrir",
                         key=f"btn_open_{row.session_id}",
@@ -2273,8 +2296,12 @@ def run_search_by_session():
 
                 st.success(f"Encontradas {len(messages)} mensagens.")
                 for msg in messages:
+                    origin_lbl = "🧪 Teste" if msg.is_synthetic else "👤 Real"
                     with st.container(border=True):
-                        st.markdown(f"**ID: {msg.id}** | {msg.request_start_time}")
+                        col_top, col_origin = st.columns([5, 1])
+                        col_top.markdown(f"**ID: {msg.id}** | {msg.request_start_time}")
+                        col_origin.caption(f"Origem: {origin_lbl}")
+
                         st.text(f"USER: {msg.user_message}")
                         st.text(f"BOT:  {msg.bot_response}")
                         st.caption(f"Tokens: U={msg.user_tokens} / B={msg.bot_tokens}")
@@ -2299,10 +2326,22 @@ def run_list_feedback():
 
             for feedback, history in results:
                 icon = "👍" if feedback.rating == "like" else "👎"
+
+                # Definição do Label de Origem
+                if history.is_synthetic:
+                    origin_label = "🧪 Teste Sintético"
+                    origin_color = "orange"
+                else:
+                    origin_label = "👤 Usuário Real"
+                    origin_color = "blue"
+
                 with st.container(border=True):
-                    st.markdown(
+                    c1, c2 = st.columns([3, 1])
+                    c1.markdown(
                         f"**{icon} {feedback.rating.upper()}** | {feedback.timestamp}"
                     )
+                    c2.markdown(f":{origin_color}[**{origin_label}**]")
+
                     if feedback.comment:
                         st.info(f"Comentário: {feedback.comment}")
                     st.text(f"Q: {history.user_message}")
@@ -2311,81 +2350,173 @@ def run_list_feedback():
 
 def run_feedback_summary():
     """Modo 4: Resumo dos Feedbacks"""
-    st.subheader("Modo 4: Resumo dos Feedbacks (Estatísticas)")
-    st.info("Estatísticas consolidadas de satisfação do usuário.")
+    st.subheader("Modo 4: Resumo dos Feedbacks (Estatísticas por Origem)")
+    st.info("Estatísticas consolidadas de satisfação, separadas por tipo de interação.")
 
     if st.button("Calcular Estatísticas"):
         with get_session_sync() as session:
-            # 1. Total de Interações (Respostas do Bot)
-            total_msgs = session.exec(select(func.count(ChatHistory.id))).one()
 
-            if total_msgs == 0:
-                st.warning("O histórico de conversas está vazio.")
-                return
-
-            # 2. Contagem de Feedbacks (Likes e Dislikes)
-            likes = session.exec(
-                select(func.count(Feedback.id)).where(Feedback.rating == "like")
-            ).one()
-
-            dislikes = session.exec(
-                select(func.count(Feedback.id)).where(Feedback.rating == "dislike")
-            ).one()
-
-            # 3. Cálculo de "Em Branco"
-            total_feedbacks = likes + dislikes
-            blanks = total_msgs - total_feedbacks
-
-            if blanks < 0:
-                blanks = 0
-
-            # 4. Cálculo de Porcentagens
-            pct_likes = (likes / total_msgs) * 100
-            pct_dislikes = (dislikes / total_msgs) * 100
-            pct_blanks = (blanks / total_msgs) * 100
-
-            # 5. Montagem da Tabela
-            data = [
-                {
-                    "Métrica": "👍 Likes (Positivo)",
-                    "Total": likes,
-                    "Porcentagem": f"{pct_likes:.2f}%",
-                },
-                {
-                    "Métrica": "👎 Dislikes (Negativo)",
-                    "Total": dislikes,
-                    "Porcentagem": f"{pct_dislikes:.2f}%",
-                },
-                {
-                    "Métrica": "⬜ Em Branco (Sem Avaliação)",
-                    "Total": blanks,
-                    "Porcentagem": f"{pct_blanks:.2f}%",
-                },
-                {
-                    "Métrica": "TOTAL DE INTERAÇÕES",
-                    "Total": total_msgs,
-                    "Porcentagem": "100.00%",
-                },
+            origins_to_check = [
+                {"label": "👤 Usuário Real", "is_synthetic": False},
+                {"label": "🧪 Teste Sintético", "is_synthetic": True},
             ]
 
-            df = pd.DataFrame(data)
+            consolidated_data = []
+            charts_payload = []  # Para armazenar dados para os gráficos
+
+            for origin in origins_to_check:
+                is_synth = origin["is_synthetic"]
+                label_origin = origin["label"]
+
+                # 1. Total de Interações desta origem
+                total_msgs = session.exec(
+                    select(func.count(ChatHistory.id)).where(
+                        ChatHistory.is_synthetic == is_synth
+                    )
+                ).one()
+
+                if total_msgs == 0:
+                    continue
+
+                # 2. Likes
+                likes = session.exec(
+                    select(func.count(Feedback.id))
+                    .join(ChatHistory, Feedback.message_id == ChatHistory.id)
+                    .where(Feedback.rating == "like")
+                    .where(ChatHistory.is_synthetic == is_synth)
+                ).one()
+
+                # 3. Dislikes
+                dislikes = session.exec(
+                    select(func.count(Feedback.id))
+                    .join(ChatHistory, Feedback.message_id == ChatHistory.id)
+                    .where(Feedback.rating == "dislike")
+                    .where(ChatHistory.is_synthetic == is_synth)
+                ).one()
+
+                # 4. Em Branco
+                total_feedbacks = likes + dislikes
+                blanks = total_msgs - total_feedbacks
+                if blanks < 0:
+                    blanks = 0
+
+                # 5. Cálculos
+                pct_likes = (likes / total_msgs) * 100
+                pct_dislikes = (dislikes / total_msgs) * 100
+                pct_blanks = (blanks / total_msgs) * 100
+
+                # Adicionar à tabela
+                consolidated_data.append(
+                    {
+                        "Origem": label_origin,
+                        "Métrica": "👍 Likes",
+                        "Total": likes,
+                        "Porcentagem": f"{pct_likes:.2f}%",
+                    }
+                )
+                consolidated_data.append(
+                    {
+                        "Origem": label_origin,
+                        "Métrica": "👎 Dislikes",
+                        "Total": dislikes,
+                        "Porcentagem": f"{pct_dislikes:.2f}%",
+                    }
+                )
+                consolidated_data.append(
+                    {
+                        "Origem": label_origin,
+                        "Métrica": "⬜ Em Branco",
+                        "Total": blanks,
+                        "Porcentagem": f"{pct_blanks:.2f}%",
+                    }
+                )
+                consolidated_data.append(
+                    {
+                        "Origem": label_origin,
+                        "Métrica": "TOTAL",
+                        "Total": total_msgs,
+                        "Porcentagem": "100%",
+                    }
+                )
+
+                # Dados para o Gráfico
+                charts_payload.append(
+                    {
+                        "origin": label_origin,
+                        "data": pd.DataFrame(
+                            {
+                                "Categoria": ["Likes", "Dislikes", "Em Branco"],
+                                "Quantidade": [likes, dislikes, blanks],
+                                "Porcentagem": [
+                                    likes / total_msgs,
+                                    dislikes / total_msgs,
+                                    blanks / total_msgs,
+                                ],
+                            }
+                        ),
+                    }
+                )
+
+            if not consolidated_data:
+                st.warning("Nenhum dado encontrado para gerar estatísticas.")
+                return
+
+            # Exibir Tabela
+            st.markdown("### 📋 Tabela de Dados")
+            df = pd.DataFrame(consolidated_data)
+            df = df[["Origem", "Métrica", "Total", "Porcentagem"]]
             st.table(df)
 
-            # 6. Gráfico de Barras Simples
-            st.markdown("### Distribuição Visual")
-            chart_df = pd.DataFrame(
-                {
-                    "Tipo": ["Likes", "Dislikes", "Em Branco"],
-                    "Quantidade": [likes, dislikes, blanks],
-                }
-            ).set_index("Tipo")
+            st.divider()
 
-            st.bar_chart(chart_df)
+            # Exibir Gráficos
+            st.markdown("### 📊 Visualização Gráfica")
+
+            # Cria colunas dinamicamente baseado na quantidade de origens encontradas
+            if charts_payload:
+                cols = st.columns(len(charts_payload))
+
+                for idx, item in enumerate(charts_payload):
+                    with cols[idx]:
+                        st.markdown(f"**{item['origin']}**")
+
+                        base = alt.Chart(item["data"]).encode(
+                            theta=alt.Theta("Quantidade", stack=True)
+                        )
+
+                        # Gráfico de Pizza (Arcos)
+                        pie = base.mark_arc(outerRadius=100).encode(
+                            color=alt.Color(
+                                "Categoria",
+                                scale=alt.Scale(
+                                    domain=["Likes", "Dislikes", "Em Branco"],
+                                    range=[
+                                        "#28a745",
+                                        "#dc3545",
+                                        "#eaeaea",
+                                    ],  # Verde, Vermelho, Cinza
+                                ),
+                            ),
+                            tooltip=[
+                                "Categoria",
+                                "Quantidade",
+                                alt.Tooltip("Porcentagem", format=".1%"),
+                            ],
+                        )
+
+                        # Labels de Porcentagem
+                        text = base.mark_text(radius=120).encode(
+                            text=alt.Text("Porcentagem", format=".1%"),
+                            order=alt.Order("Quantidade", sort="descending"),
+                            color=alt.value("black"),
+                        )
+
+                        st.altair_chart(pie + text, use_container_width=True)
 
 
 def run_export_csv():
     """Modo 5: Exportar para CSV"""
-    st.subheader("Modo 5: Exportar Histórico Completo")
+    st.subheader("Modo 5: Exportar Histórico Completo (CSV)")
 
     if st.button("Gerar Arquivo CSV"):
         file_timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
@@ -2400,6 +2531,16 @@ def run_export_csv():
                     st.warning("Histórico vazio.")
                     return
 
+                # Melhoria: Adicionar coluna descritiva para a origem
+                df["origem_desc"] = df["is_synthetic"].apply(
+                    lambda x: "Teste Sintético" if x else "Usuário Real"
+                )
+
+                # Reordenar para colocar a origem logo no início
+                cols = list(df.columns)
+                cols.insert(2, cols.pop(cols.index("origem_desc")))
+                df = df[cols]
+
                 df.to_csv(output_filename, index=False)
                 st.success(f"Sucesso! Exportado para: {output_filename}")
                 st.code(output_filename, language="text")
@@ -2408,9 +2549,187 @@ def run_export_csv():
                 st.error(f"Erro ao exportar CSV: {e}")
 
 
+def run_export_xml():
+    """Modo 6: Exportar XML"""
+    st.subheader("Modo 6: Exportar Histórico (XML)")
+    st.info("Gera um backup completo em XML, incluindo feedbacks aninhados.")
+
+    if st.button("Gerar Arquivo XML"):
+        with get_session_sync() as session:
+            # Busca todas as mensagens
+            history_records = session.exec(
+                select(ChatHistory).order_by(ChatHistory.request_start_time)
+            ).all()
+
+            if not history_records:
+                st.warning("Histórico vazio.")
+                return
+
+            root = ET.Element("chat_database_export")
+            timestamp_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            root.insert(
+                0,
+                ET.Comment(
+                    f" Exportado em: {timestamp_now} | Total msgs: {len(history_records)} "
+                ),
+            )
+
+            for record in history_records:
+                msg_el = ET.SubElement(root, "chat_message")
+
+                # Adiciona campos do ChatHistory
+                for k, v in record.model_dump().items():
+                    if v is not None:
+                        ET.SubElement(msg_el, k).text = str(v)
+
+                # Verifica e adiciona Feedback se existir
+                feedback = session.exec(
+                    select(Feedback).where(Feedback.message_id == record.id)
+                ).first()
+                if feedback:
+                    fb_el = ET.SubElement(msg_el, "feedback")
+                    for k, v in feedback.model_dump().items():
+                        if (
+                            k != "message_id" and v is not None
+                        ):  # message_id é redundante aqui
+                            ET.SubElement(fb_el, k).text = str(v)
+
+            # Pretty Print
+            xml_str = minidom.parseString(ET.tostring(root)).toprettyxml(indent="  ")
+            file_timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+            filename = f"historico_chat_validacao_{file_timestamp}.xml"
+
+            with open(filename, "w", encoding="utf-8") as f:
+                f.write(xml_str)
+
+            st.success("Exportação XML concluída!")
+            st.code(filename, language="text")
+
+
+def run_import_xml():
+    """Modo 7: Importar XML"""
+    st.subheader("Modo 7: Importar Histórico (XML)")
+    st.info(
+        "Importa mensagens e feedbacks. Evita duplicatas baseando-se no ID da Sessão + Timestamp."
+    )
+
+    uploaded_file = st.file_uploader(
+        "Selecione arquivo XML (historico_chat_validacao_*.xml)", type=["xml"]
+    )
+
+    if uploaded_file and st.button("Iniciar Importação"):
+        imported_count = 0
+        skipped_count = 0
+
+        try:
+            tree = ET.parse(uploaded_file)
+            root = tree.getroot()
+
+            messages_nodes = root.findall("chat_message")
+
+            with get_session_sync() as session:
+                for msg_node in messages_nodes:
+                    # 1. Identificação para evitar duplicatas
+                    sess_id = _safe_get_text(msg_node, "session_id")
+                    ts_str = _safe_get_text(msg_node, "request_start_time")
+
+                    if not sess_id or not ts_str:
+                        continue
+
+                    try:
+                        ts_dt = datetime.fromisoformat(ts_str)
+                    except ValueError:
+                        try:
+                            ts_dt = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S.%f")
+                        except:
+                            ts_dt = datetime.now()  # Fallback
+
+                    # Verifica duplicidade
+                    existing = session.exec(
+                        select(ChatHistory)
+                        .where(ChatHistory.session_id == sess_id)
+                        .where(ChatHistory.request_start_time == ts_dt)
+                    ).first()
+
+                    if existing:
+                        skipped_count += 1
+                        continue
+
+                    # 2. Criar Objeto ChatHistory
+                    # Precisamos converter strings booleanas corretamente
+                    is_synth_str = _safe_get_text(msg_node, "is_synthetic", "False")
+                    is_synth_val = is_synth_str == "True"
+
+                    chat_entry = ChatHistory(
+                        session_id=sess_id,
+                        user_message=_safe_get_text(msg_node, "user_message", ""),
+                        bot_response=_safe_get_text(msg_node, "bot_response", ""),
+                        is_synthetic=is_synth_val,
+                        request_start_time=ts_dt,
+                        # Campos numéricos
+                        user_chars=int(_safe_get_text(msg_node, "user_chars", 0)),
+                        bot_chars=int(_safe_get_text(msg_node, "bot_chars", 0)),
+                        user_tokens=int(_safe_get_text(msg_node, "user_tokens", 0)),
+                        bot_tokens=int(_safe_get_text(msg_node, "bot_tokens", 0)),
+                        retrieval_duration_sec=float(
+                            _safe_get_text(msg_node, "retrieval_duration_sec", 0.0)
+                        ),
+                        generation_duration_sec=float(
+                            _safe_get_text(msg_node, "generation_duration_sec", 0.0)
+                        ),
+                        total_duration_sec=float(
+                            _safe_get_text(msg_node, "total_duration_sec", 0.0)
+                        ),
+                    )
+
+                    # Tratamento de timestamps opcionais
+                    ret_end_str = _safe_get_text(msg_node, "retrieval_end_time")
+                    if ret_end_str:
+                        chat_entry.retrieval_end_time = datetime.fromisoformat(
+                            ret_end_str
+                        )
+
+                    res_end_str = _safe_get_text(msg_node, "response_end_time")
+                    if res_end_str:
+                        chat_entry.response_end_time = datetime.fromisoformat(
+                            res_end_str
+                        )
+
+                    session.add(chat_entry)
+                    session.commit()
+                    session.refresh(chat_entry)
+
+                    # 3. Processar Feedback Aninhado (se houver)
+                    fb_node = msg_node.find("feedback")
+                    if fb_node is not None:
+                        fb_ts_str = _safe_get_text(fb_node, "timestamp")
+                        fb_ts = datetime.now()
+                        if fb_ts_str:
+                            fb_ts = datetime.fromisoformat(fb_ts_str)
+
+                        feedback_entry = Feedback(
+                            message_id=chat_entry.id,  # Link com o novo ID gerado
+                            rating=_safe_get_text(fb_node, "rating", "like"),
+                            comment=_safe_get_text(fb_node, "comment"),
+                            timestamp=fb_ts,
+                        )
+                        session.add(feedback_entry)
+                        session.commit()
+
+                    imported_count += 1
+
+            st.success("Importação finalizada!")
+            c1, c2 = st.columns(2)
+            c1.metric("Importados (Novos)", imported_count)
+            c2.metric("Ignorados (Já existiam)", skipped_count)
+
+        except Exception as e:
+            st.error(f"Erro crítico na importação: {e}")
+
+
 def run_shutdown():
-    """Modo 6: Sair"""
-    st.subheader("Modo 6: Sair")
+    """Modo 8: Sair"""
+    st.subheader("Modo 8: Sair")
     st.warning("Clicar neste botão encerrará este servidor Streamlit.")
     if st.button("Encerrar Aplicação"):
         st.success("Encerrando servidor...")
@@ -2435,7 +2754,9 @@ def main():
         "3. Ver Feedbacks (Detalhes)": run_list_feedback,
         "4. Resumo dos Feedbacks": run_feedback_summary,
         "5. Exportar CSV": run_export_csv,
-        "6. Sair": run_shutdown,
+        "6. Exportar XML": run_export_xml,
+        "7. Importar XML": run_import_xml,
+        "8. Sair": run_shutdown,
     }
 
     if "sb_menu" not in st.session_state:
