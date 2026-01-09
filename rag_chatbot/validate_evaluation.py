@@ -12,6 +12,7 @@ Atualizado para:
 4. Filtro por tipo de busca na listagem.
 5. Nova Métrica: Precisão@1.
 6. Legendas das Métricas (Texto Evoluído e Didático).
+7. Filtros avançados na listagem (Hit Rate, MRR, P@K).
 """
 
 import streamlit as st
@@ -155,14 +156,43 @@ def run_metrics_summary():
 def run_list_evaluations():
     st.subheader("Modo 2: Listar Avaliações Detalhadas")
 
-    # 1. Carregar Tipos de Busca
+    # 1. Carregar Tipos de Busca Disponíveis
     with get_session() as session:
         types_statement = select(ValidationRun.search_type).distinct()
         available_types = session.exec(types_statement).all()
 
-    # Opções do Filtro
-    filter_options = ["Todos"] + list(available_types)
-    selected_type = st.selectbox("Filtrar por Tipo de Busca:", filter_options)
+    # --- INTERFACE DE FILTROS AVANÇADOS ---
+    with st.expander("🔎 Filtros de Pesquisa", expanded=True):
+        c1, c2, c3, c4 = st.columns(4)
+
+        with c1:
+            filter_options = ["Todos"] + list(available_types)
+            selected_type = st.selectbox("Tipo de Busca:", filter_options)
+
+        with c2:
+            filter_hit = st.selectbox(
+                "Hit Rate (Status):", ["Todos", "Sucesso (1)", "Falha (0)"]
+            )
+
+        with c3:
+            mrr_range = st.slider(
+                "Intervalo MRR:",
+                min_value=0.0,
+                max_value=1.0,
+                value=(0.0, 1.0),
+                step=0.1,
+                help="Filtre pela qualidade do ranking. 1.0 = Perfeito.",
+            )
+
+        with c4:
+            pak_range = st.slider(
+                "Intervalo P@K:",
+                min_value=0.0,
+                max_value=1.0,
+                value=(0.0, 1.0),
+                step=0.1,
+                help="Filtre pela densidade de acertos.",
+            )
 
     if st.button("Carregar Avaliações"):
         with get_session() as session:
@@ -170,15 +200,33 @@ def run_list_evaluations():
             # 2. Query Base
             statement = select(ValidationRun).order_by(desc(ValidationRun.timestamp))
 
-            # 3. Aplicar Filtro
+            # 3. Aplicar Filtro de Tipo
             if selected_type != "Todos":
                 statement = statement.where(ValidationRun.search_type == selected_type)
+
+            # 4. Aplicar Filtro de Hit Rate
+            if filter_hit == "Sucesso (1)":
+                statement = statement.where(ValidationRun.hit_rate_eval == 1)
+            elif filter_hit == "Falha (0)":
+                statement = statement.where(ValidationRun.hit_rate_eval == 0)
+
+            # 5. Aplicar Filtro de Intervalo MRR
+            statement = statement.where(ValidationRun.mrr_eval >= mrr_range[0])
+            statement = statement.where(ValidationRun.mrr_eval <= mrr_range[1])
+
+            # 6. Aplicar Filtro de Intervalo P@K
+            statement = statement.where(
+                ValidationRun.precision_at_k_eval >= pak_range[0]
+            )
+            statement = statement.where(
+                ValidationRun.precision_at_k_eval <= pak_range[1]
+            )
 
             runs = session.exec(statement).all()
 
             if not runs:
                 st.warning(
-                    f"Nenhuma avaliação encontrada para o filtro: {selected_type}"
+                    f"Nenhuma avaliação encontrada para os filtros selecionados."
                 )
                 return
 

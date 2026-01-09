@@ -12,6 +12,7 @@ Atualizado para:
 7. Gráficos de Pizza (Pie Charts) com Altair para visualização de feedbacks.
 8. Filtro dinâmico de Origem no Resumo dos Feedbacks.
 9. Cálculo granular de médias de tempo por métrica (Like/Dislike/Blank).
+10. Filtros de Origem e Métrica na listagem detalhada de feedbacks.
 """
 
 import streamlit as st
@@ -153,21 +154,62 @@ def run_list_feedback():
     """Modo 3: Ver Avaliações Detalhadas"""
     st.subheader("Modo 3: Ver Avaliações (Detalhado)")
 
+    # --- FILTROS ---
+    c1, c2 = st.columns(2)
+    with c1:
+        origin_filter = st.selectbox(
+            "Filtrar por Origem:", ["Todos", "Usuário Real", "Teste Sintético"]
+        )
+    with c2:
+        metric_filter = st.selectbox(
+            "Filtrar por Métrica:", ["Todos", "👍 Likes", "👎 Dislikes", "⬜ Em Branco"]
+        )
+
     if st.button("Carregar Lista de Feedbacks"):
         with get_session_sync() as session:
+            # Construção da Query: ChatHistory LEFT JOIN Feedback
+            # Usamos outerjoin para garantir que trazemos mensagens SEM feedback (Em Branco)
             statement = (
-                select(Feedback, ChatHistory)
-                .join(ChatHistory, Feedback.message_id == ChatHistory.id)
-                .order_by(desc(Feedback.timestamp))
+                select(ChatHistory, Feedback)
+                .outerjoin(Feedback, ChatHistory.id == Feedback.message_id)
+                .order_by(desc(ChatHistory.request_start_time))
             )
+
+            # 1. Aplicar Filtro de Origem
+            if origin_filter == "Usuário Real":
+                statement = statement.where(ChatHistory.is_synthetic == False)
+            elif origin_filter == "Teste Sintético":
+                statement = statement.where(ChatHistory.is_synthetic == True)
+
+            # 2. Aplicar Filtro de Métrica
+            if metric_filter == "👍 Likes":
+                statement = statement.where(Feedback.rating == "like")
+            elif metric_filter == "👎 Dislikes":
+                statement = statement.where(Feedback.rating == "dislike")
+            elif metric_filter == "⬜ Em Branco":
+                statement = statement.where(Feedback.id == None)
+
+            # Executa a query
             results = session.exec(statement).all()
 
             if not results:
-                st.warning("Nenhum feedback encontrado.")
+                st.warning("Nenhum registro encontrado com os filtros selecionados.")
                 return
 
-            for feedback, history in results:
-                icon = "👍" if feedback.rating == "like" else "👎"
+            st.success(f"Encontrados {len(results)} registros.")
+
+            for history, feedback in results:
+                # Determina o ícone/texto da avaliação
+                if feedback:
+                    icon = "👍" if feedback.rating == "like" else "👎"
+                    rating_text = feedback.rating.upper()
+                    ts = feedback.timestamp
+                    comment = feedback.comment
+                else:
+                    icon = "⬜"
+                    rating_text = "EM BRANCO"
+                    ts = history.request_start_time
+                    comment = None
 
                 # Definição do Label de Origem
                 if history.is_synthetic:
@@ -179,13 +221,11 @@ def run_list_feedback():
 
                 with st.container(border=True):
                     c1, c2 = st.columns([3, 1])
-                    c1.markdown(
-                        f"**{icon} {feedback.rating.upper()}** | {feedback.timestamp}"
-                    )
+                    c1.markdown(f"**{icon} {rating_text}** | {ts}")
                     c2.markdown(f":{origin_color}[**{origin_label}**]")
 
-                    if feedback.comment:
-                        st.info(f"Comentário: {feedback.comment}")
+                    if comment:
+                        st.info(f"Comentário: {comment}")
                     st.text(f"Q: {history.user_message}")
                     st.text(f"A: {history.bot_response}")
 
