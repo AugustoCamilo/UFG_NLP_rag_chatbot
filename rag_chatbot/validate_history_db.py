@@ -835,7 +835,7 @@ def run_shutdown():
 
 def main():
     st.set_page_config(page_title="Auditoria Histórico", layout="wide")
-    st.title("Auditoria do Histórico (SQLModel)")
+    st.title("Auditoria do Histórico do Chatbot RAG")
 
     st.sidebar.title("Menu")
 

@@ -9,6 +9,7 @@ dados de "verdade de campo" (ground truth).
 Atualizado para:
 1. Usar settings.py.
 2. Importar XML (Nova Funcionalidade).
+3. Reorganização do Menu em Blocos (Ferramentas vs Relatórios).
 """
 
 import streamlit as st
@@ -345,7 +346,6 @@ def run_export_xml(retriever: VectorRetriever):
                 st.error(f"Erro ao salvar o arquivo XML: {e}")
 
 
-# --- NOVA FUNÇÃO DE IMPORTAÇÃO (PADRÃO validate_evaluation) ---
 def run_import_xml(retriever: VectorRetriever):
     """Modo 5: Importar Chunks (XML)"""
     st.subheader("Modo 5: Importar Chunks de XML (Adicionar à Base)")
@@ -444,32 +444,80 @@ def main():
         st.session_state.query_input_rerank = ""
         st.session_state.clear_inputs = False
 
-    st.title("Ferramenta de Validação do Banco de Vetores (ChromaDB)")
+    st.title("Ferramenta de Validação do Banco de Vetores (Chunks)")
     st.caption(
         "Interface de auditoria para o VectorDB (baseado em 'vector_retriever.py' e 'ingest.py')"
     )
 
     retriever = initialize_retriever()
 
-    st.sidebar.title("Opções de Validação")
+    # --- DEFINIÇÃO DOS BLOCOS DE MENU ---
+    # Grupo 1: Ferramentas
+    tools_options = [
+        "1. Testar Busca (SÓ Vetorial)",
+        "2. Testar Busca (COM Re-Ranking)",
+    ]
+
+    # Grupo 2: Relatórios
+    reports_options = [
+        "3. Listar Todos os Chunks",
+        "4. Exportar Chunks para XML",
+        "5. Importar Chunks (XML)",
+        "6. Sair",
+    ]
+
+    # --- GESTÃO DE ESTADO DO MENU (MUTUAMENTE EXCLUSIVO) ---
+    if "menu_selection" not in st.session_state:
+        st.session_state.menu_selection = tools_options[0]  # Default
+
+    # Callbacks para garantir que apenas um radio tenha seleção ativa visualmente
+    def update_from_tools():
+        st.session_state.menu_selection = st.session_state.radio_tools
+
+    def update_from_reports():
+        st.session_state.menu_selection = st.session_state.radio_reports
+
+    # --- RENDERIZAÇÃO DA SIDEBAR ---
+    st.sidebar.title("Ferramentas de validação")
+
+    # Define o índice do Radio 1 com base na seleção global
+    tools_index = None
+    if st.session_state.menu_selection in tools_options:
+        tools_index = tools_options.index(st.session_state.menu_selection)
+
+    st.sidebar.radio(
+        "Ferramentas:",
+        tools_options,
+        index=tools_index,
+        key="radio_tools",
+        label_visibility="collapsed",
+        on_change=update_from_tools,
+    )
 
     st.sidebar.markdown("---")
+    st.sidebar.title("Relatórios")
+
+    # Define o índice do Radio 2 com base na seleção global
+    reports_index = None
+    if st.session_state.menu_selection in reports_options:
+        reports_index = reports_options.index(st.session_state.menu_selection)
+
+    st.sidebar.radio(
+        "Relatórios:",
+        reports_options,
+        index=reports_index,
+        key="radio_reports",
+        label_visibility="collapsed",
+        on_change=update_from_reports,
+    )
+
     add_print_to_pdf_button()
     st.sidebar.markdown("---")
 
-    opcoes = [
-        "1. Testar Busca (SÓ Vetorial)",
-        "2. Testar Busca (COM Re-Ranking)",
-        "3. Listar Todos os Chunks",
-        "4. Exportar Chunks para XML",
-        "5. Importar Chunks (XML)",  # Nova Opção
-        "6. Sair",
-    ]
-    modo = st.sidebar.radio(
-        "Selecione uma operação:", opcoes, label_visibility="collapsed"
-    )
+    # --- ROTEAMENTO DA SELEÇÃO ---
+    modo = st.session_state.menu_selection
 
-    # Limpa o estado da sessão se o modo for alterado
+    # Limpa o estado da busca se mudar de funcionalidade
     if "current_mode" not in st.session_state or st.session_state.current_mode != modo:
         st.session_state.current_mode = modo
         if "results" in st.session_state:
@@ -479,17 +527,18 @@ def main():
         if "search_type" in st.session_state:
             del st.session_state.search_type
 
-    if modo == opcoes[0]:
+    # Execução baseada na string selecionada
+    if modo == tools_options[0]:
         run_search_test_no_rerank(retriever)
-    elif modo == opcoes[1]:
+    elif modo == tools_options[1]:
         run_search_test(retriever)
-    elif modo == opcoes[2]:
+    elif modo == reports_options[0]:
         run_list_all(retriever)
-    elif modo == opcoes[3]:
+    elif modo == reports_options[1]:
         run_export_xml(retriever)
-    elif modo == opcoes[4]:
-        run_import_xml(retriever)  # Chamada da nova função
-    elif modo == opcoes[5]:
+    elif modo == reports_options[2]:
+        run_import_xml(retriever)
+    elif modo == reports_options[3]:
         run_shutdown()
 
 
