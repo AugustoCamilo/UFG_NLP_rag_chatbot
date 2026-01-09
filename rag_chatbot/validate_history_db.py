@@ -14,6 +14,7 @@ Atualizado para:
 9. Cálculo granular de médias de tempo por métrica (Like/Dislike/Blank).
 10. Filtros de Origem e Métrica na listagem detalhada de feedbacks.
 11. Visualização Cruzada de Contexto (Lookup na tabela de validação) com regras de tipo.
+12. Reordenação do Menu Principal.
 """
 
 import streamlit as st
@@ -54,12 +55,13 @@ def ir_para_busca(session_id):
     esteja atualizado quando a interface for redesenhada.
     """
     st.session_state["target_session_id"] = session_id
-    st.session_state["sb_menu"] = "2. Buscar Sessão"
+    # ATUALIZADO: Reflete a nova numeração do menu
+    st.session_state["sb_menu"] = "4. Buscar Sessão"
 
 
 def run_list_sessions():
-    """Modo 1: Listar Todas as Sessões"""
-    st.subheader("Modo 1: Listar Todas as Sessões")
+    """Modo: Listar Todas as Sessões"""
+    st.subheader("Listar Todas as Sessões")
 
     if st.button("Carregar Resumo das Sessões"):
         with st.spinner("Consultando sessões via SQLModel..."):
@@ -115,8 +117,8 @@ def run_list_sessions():
 
 
 def run_search_by_session():
-    """Modo 2: Buscar por Sessão"""
-    st.subheader("Modo 2: Buscar Histórico por Sessão")
+    """Modo: Buscar por Sessão"""
+    st.subheader("Buscar Histórico por Sessão")
 
     default_id = st.session_state.get("target_session_id", "")
 
@@ -152,8 +154,8 @@ def run_search_by_session():
 
 
 def run_list_feedback():
-    """Modo 3: Ver Avaliações Detalhadas"""
-    st.subheader("Modo 3: Ver Avaliações (Detalhado)")
+    """Modo: Ver Avaliações Detalhadas"""
+    st.subheader("Ver Avaliações (Detalhado)")
 
     # --- FILTROS ---
     c1, c2 = st.columns(2)
@@ -163,7 +165,8 @@ def run_list_feedback():
         )
     with c2:
         metric_filter = st.selectbox(
-            "Filtrar por Métrica:", ["Todos", "👍 Likes", "👎 Dislikes", "⬜ Em Branco"]
+            "Filtrar por Avaliação:",
+            ["Todos", "👍 Likes", "👎 Dislikes", "⬜ Em Branco"],
         )
 
     if st.button("Carregar Lista de Feedbacks"):
@@ -232,8 +235,7 @@ def run_list_feedback():
 
                     # --- ÁREA DE CONTEXTO CRUZADO (VALIDATION RUNS) ---
                     with st.expander(
-                        "🔍 Visualizar Validação Chunks (Via Validação Cruzada)",
-                        expanded=False,
+                        "🔍 Visualizar Contexto (Via Validação Cruzada)", expanded=False
                     ):
 
                         # 1. Definir Tipos de Busca Permitidos (Regras de Negócio)
@@ -299,8 +301,8 @@ def run_list_feedback():
 
 
 def run_feedback_summary():
-    """Modo 4: Resumo dos Feedbacks"""
-    st.subheader("Modo 4: Resumo dos Feedbacks (Estatísticas)")
+    """Modo: Resumo dos Feedbacks"""
+    st.subheader("Resumo dos Feedbacks (Estatísticas)")
     st.info(
         "Estatísticas consolidadas de satisfação e performance, separadas por origem e métrica."
     )
@@ -609,8 +611,8 @@ def run_feedback_summary():
 
 
 def run_export_csv():
-    """Modo 5: Exportar para CSV"""
-    st.subheader("Modo 5: Exportar Histórico Completo (CSV)")
+    """Modo: Exportar para CSV"""
+    st.subheader("Exportar Histórico Completo (CSV)")
 
     if st.button("Gerar Arquivo CSV"):
         file_timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
@@ -644,8 +646,8 @@ def run_export_csv():
 
 
 def run_export_xml():
-    """Modo 6: Exportar XML"""
-    st.subheader("Modo 6: Exportar Histórico (XML)")
+    """Modo: Exportar XML"""
+    st.subheader("Exportar Histórico (XML)")
     st.info("Gera um backup completo em XML, incluindo feedbacks aninhados.")
 
     if st.button("Gerar Arquivo XML"):
@@ -701,8 +703,8 @@ def run_export_xml():
 
 
 def run_import_xml():
-    """Modo 7: Importar XML"""
-    st.subheader("Modo 7: Importar Histórico (XML)")
+    """Modo: Importar XML"""
+    st.subheader("Importar Histórico (XML)")
     st.info(
         "Importa mensagens e feedbacks. Evita duplicatas baseando-se no ID da Sessão + Timestamp."
     )
@@ -822,8 +824,8 @@ def run_import_xml():
 
 
 def run_shutdown():
-    """Modo 8: Sair"""
-    st.subheader("Modo 8: Sair")
+    """Modo: Sair"""
+    st.subheader("Sair")
     st.warning("Clicar neste botão encerrará este servidor Streamlit.")
     if st.button("Encerrar Aplicação"):
         st.success("Encerrando servidor...")
@@ -842,11 +844,12 @@ def main():
 
     st.sidebar.markdown("---")
 
+    # REORDENAÇÃO DO MENU CONFORME SOLICITADO
     options = {
-        "1. Listar Sessões": run_list_sessions,
-        "2. Buscar Sessão": run_search_by_session,
-        "3. Ver Feedbacks (Detalhes)": run_list_feedback,
-        "4. Resumo dos Feedbacks": run_feedback_summary,
+        "1. Resumo dos Feedbacks": run_feedback_summary,
+        "2. Ver Feedbacks (Detalhes)": run_list_feedback,
+        "3. Listar Sessões": run_list_sessions,
+        "4. Buscar Sessão": run_search_by_session,
         "5. Exportar CSV": run_export_csv,
         "6. Exportar XML": run_export_xml,
         "7. Importar XML": run_import_xml,
