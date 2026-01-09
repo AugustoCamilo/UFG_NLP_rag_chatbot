@@ -13,6 +13,7 @@ Atualizado para:
 8. Filtro dinâmico de Origem no Resumo dos Feedbacks.
 9. Cálculo granular de médias de tempo por métrica (Like/Dislike/Blank).
 10. Filtros de Origem e Métrica na listagem detalhada de feedbacks.
+11. Visualização Cruzada de Contexto (Lookup na tabela de validação) com regras de tipo.
 """
 
 import streamlit as st
@@ -22,12 +23,12 @@ import xml.etree.ElementTree as ET
 import altair as alt
 from xml.dom import minidom
 from datetime import datetime
-from sqlmodel import Session, create_engine, select, func, desc
+from sqlmodel import Session, create_engine, select, func, desc, col
 
 # --- Imports do Projeto ---
 from settings import settings
 from ui_utils import add_print_to_pdf_button
-from database import ChatHistory, Feedback
+from database import ChatHistory, Feedback, ValidationRun, ValidationRetrievedChunk
 
 # --- Configuração do Engine Síncrono ---
 engine = create_engine(settings.SYNC_DATABASE_URL)
@@ -228,6 +229,73 @@ def run_list_feedback():
                         st.info(f"Comentário: {comment}")
                     st.text(f"Q: {history.user_message}")
                     st.text(f"A: {history.bot_response}")
+
+                    # --- ÁREA DE CONTEXTO CRUZADO (VALIDATION RUNS) ---
+                    with st.expander(
+                        "🔍 Visualizar Validação Chunks (Via Validação Cruzada)",
+                        expanded=False,
+                    ):
+
+                        # 1. Definir Tipos de Busca Permitidos (Regras de Negócio)
+                        target_search_types = []
+                        if origin_filter == "Teste Sintético":
+                            target_search_types = ["reranked_AB"]
+                        elif origin_filter == "Usuário Real":
+                            target_search_types = ["reranked_USER"]
+                        else:  # Todos
+                            target_search_types = ["reranked_USER", "reranked_AB"]
+
+                        # 2. Busca na Tabela de Validação
+                        # Filtra por Query Exata E pelo Tipo definido acima
+                        val_run = session.exec(
+                            select(ValidationRun)
+                            .where(ValidationRun.query == history.user_message)
+                            .where(ValidationRun.search_type.in_(target_search_types))
+                            .order_by(desc(ValidationRun.timestamp))
+                        ).first()
+
+                        if val_run:
+                            st.success(
+                                f"Validação Cruzada Encontrada! (Tipo: {val_run.search_type})"
+                            )
+                            st.caption(f"ID: {val_run.id} | Data: {val_run.timestamp}")
+
+                            # Métricas da Validação
+                            m1, m2, m3 = st.columns(3)
+                            hr_icon = "✅" if val_run.hit_rate_eval else "❌"
+                            m1.metric("Hit Rate (Gabarito)", hr_icon)
+                            m2.metric("MRR", f"{val_run.mrr_eval:.4f}")
+                            m3.metric("P@K", f"{val_run.precision_at_k_eval:.4f}")
+
+                            # Carrega Chunks
+                            chunks = session.exec(
+                                select(ValidationRetrievedChunk)
+                                .where(ValidationRetrievedChunk.run_id == val_run.id)
+                                .order_by(ValidationRetrievedChunk.rank)
+                            ).all()
+
+                            st.markdown("---")
+                            st.markdown("**Chunks Retornados:**")
+
+                            for chunk in chunks:
+                                color = "green" if chunk.is_correct_eval else "red"
+                                correct_lbl = "SIM" if chunk.is_correct_eval else "NÃO"
+
+                                st.markdown(
+                                    f"**{chunk.rank}.** :{color}[Relevante: {correct_lbl}] | Score: {chunk.score:.4f} | {chunk.source} (p.{chunk.page})"
+                                )
+                                st.text(chunk.chunk_content)
+                                st.markdown("---")
+                        else:
+                            st.warning(
+                                "⚠️ Nenhuma validação compatível foi encontrada para esta pergunta."
+                            )
+                            st.markdown(f"**Critérios de busca:**")
+                            st.markdown(f"- Query exata: *'{history.user_message}'*")
+                            st.markdown(f"- Tipos procurados: `{target_search_types}`")
+                            st.info(
+                                "Dica: Use o 'validate_vector_db.py' para criar o gabarito desta pergunta."
+                            )
 
 
 def run_feedback_summary():

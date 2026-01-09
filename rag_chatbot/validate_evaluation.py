@@ -13,6 +13,7 @@ Atualizado para:
 5. Nova Métrica: Precisão@1.
 6. Legendas das Métricas (Texto Evoluído e Didático).
 7. Filtros avançados na listagem (Hit Rate, MRR, P@K).
+8. Ordenação da tabela de resumo por Hit Rate e P@1 (Decrescente).
 """
 
 import streamlit as st
@@ -85,20 +86,39 @@ def run_metrics_summary():
             # Cria um dicionário para busca rápida: {tipo_busca: score_p1}
             p1_map = {row[0]: row[1] for row in p1_results}
 
-            # 3. Montagem dos Dados
-            data = []
+            # 3. Montagem dos Dados e Ordenação
+            # Armazenamos os dados brutos primeiro para poder ordenar corretamente
+            raw_data = []
             for row in main_results:
                 search_type = row[0]
                 p1_score = p1_map.get(search_type, 0.0)
 
+                # row[2] = Hit Rate Avg, row[3] = MRR Avg, row[4] = Precision@K Avg
+                raw_data.append(
+                    {
+                        "type": search_type,
+                        "total": row[1],
+                        "hit_rate": row[2] if row[2] is not None else 0.0,
+                        "mrr": row[3] if row[3] is not None else 0.0,
+                        "pk": row[4] if row[4] is not None else 0.0,
+                        "p1": p1_score if p1_score is not None else 0.0,
+                    }
+                )
+
+            # Ordena decrescente por Hit Rate e depois por Precisão@1
+            raw_data.sort(key=lambda x: (x["hit_rate"], x["p1"]), reverse=True)
+
+            # 4. Formatação Final para Exibição
+            data = []
+            for item in raw_data:
                 data.append(
                     {
-                        "TIPO DE BUSCA": search_type,
-                        "TOTAL": row[1],
-                        "HIT RATE (%)": f"{row[2]*100:.2f}%",
-                        "MRR MÉDIO": f"{row[3]:.4f}",
-                        "PRECISÃO@K (K=3)": f"{row[4]:.4f}",
-                        "PRECISÃO@1": f"{p1_score:.4f}",
+                        "TIPO DE BUSCA": item["type"],
+                        "TOTAL": item["total"],
+                        "HIT RATE (%)": f"{item['hit_rate']*100:.2f}%",
+                        "MRR MÉDIO": f"{item['mrr']:.4f}",
+                        "PRECISÃO@K (K=3)": f"{item['pk']:.4f}",
+                        "PRECISÃO@1": f"{item['p1']:.4f}",
                     }
                 )
 
@@ -417,7 +437,7 @@ def run_shutdown():
 # --- MAIN ---
 def main():
     st.set_page_config(page_title="Auditoria de Avaliação", layout="wide")
-    st.title("Ferramenta de Auditoria (SQLModel)")
+    st.title("Ferramenta de Auditoria (Validação Chunks)")
 
     add_print_to_pdf_button()
     st.sidebar.markdown("---")
