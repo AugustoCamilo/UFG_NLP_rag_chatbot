@@ -315,7 +315,7 @@ A colaboração seguiu uma dinâmica fluida de "Human-in-the-Loop":
     * **Refinamento**: Ajustes finos de UI/UX e validação de lógica pelo humano.
 
 ```mermaid
-graph TD
+graph LR
     A[👨‍💻 Intenção & Arquitetura] -->|Natural Language| B[🤖 Vibe Coding Engine]
     B -->|⚡ High-Quality Code| C[👨‍💻 Code Review & Teste]
     C -->|❌ Feedback| B

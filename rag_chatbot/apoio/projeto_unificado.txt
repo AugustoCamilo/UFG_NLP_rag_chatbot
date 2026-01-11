@@ -1265,6 +1265,7 @@ dados de "verdade de campo" (ground truth).
 Atualizado para:
 1. Usar settings.py.
 2. Importar XML (Nova Funcionalidade).
+3. Reorganização do Menu em Blocos (Ferramentas vs Relatórios).
 """
 
 import streamlit as st
@@ -1601,7 +1602,6 @@ def run_export_xml(retriever: VectorRetriever):
                 st.error(f"Erro ao salvar o arquivo XML: {e}")
 
 
-# --- NOVA FUNÇÃO DE IMPORTAÇÃO (PADRÃO validate_evaluation) ---
 def run_import_xml(retriever: VectorRetriever):
     """Modo 5: Importar Chunks (XML)"""
     st.subheader("Modo 5: Importar Chunks de XML (Adicionar à Base)")
@@ -1700,32 +1700,80 @@ def main():
         st.session_state.query_input_rerank = ""
         st.session_state.clear_inputs = False
 
-    st.title("Ferramenta de Validação do Banco de Vetores (ChromaDB)")
+    st.title("Ferramenta de Validação do Banco de Vetores (Chunks)")
     st.caption(
         "Interface de auditoria para o VectorDB (baseado em 'vector_retriever.py' e 'ingest.py')"
     )
 
     retriever = initialize_retriever()
 
-    st.sidebar.title("Opções de Validação")
+    # --- DEFINIÇÃO DOS BLOCOS DE MENU ---
+    # Grupo 1: Ferramentas
+    tools_options = [
+        "1. Testar Busca (SÓ Vetorial)",
+        "2. Testar Busca (COM Re-Ranking)",
+    ]
+
+    # Grupo 2: Relatórios
+    reports_options = [
+        "3. Listar Todos os Chunks",
+        "4. Exportar Chunks para XML",
+        "5. Importar Chunks (XML)",
+        "6. Sair",
+    ]
+
+    # --- GESTÃO DE ESTADO DO MENU (MUTUAMENTE EXCLUSIVO) ---
+    if "menu_selection" not in st.session_state:
+        st.session_state.menu_selection = tools_options[0]  # Default
+
+    # Callbacks para garantir que apenas um radio tenha seleção ativa visualmente
+    def update_from_tools():
+        st.session_state.menu_selection = st.session_state.radio_tools
+
+    def update_from_reports():
+        st.session_state.menu_selection = st.session_state.radio_reports
+
+    # --- RENDERIZAÇÃO DA SIDEBAR ---
+    st.sidebar.title("Ferramentas de validação")
+
+    # Define o índice do Radio 1 com base na seleção global
+    tools_index = None
+    if st.session_state.menu_selection in tools_options:
+        tools_index = tools_options.index(st.session_state.menu_selection)
+
+    st.sidebar.radio(
+        "Ferramentas:",
+        tools_options,
+        index=tools_index,
+        key="radio_tools",
+        label_visibility="collapsed",
+        on_change=update_from_tools,
+    )
 
     st.sidebar.markdown("---")
+    st.sidebar.title("Relatórios")
+
+    # Define o índice do Radio 2 com base na seleção global
+    reports_index = None
+    if st.session_state.menu_selection in reports_options:
+        reports_index = reports_options.index(st.session_state.menu_selection)
+
+    st.sidebar.radio(
+        "Relatórios:",
+        reports_options,
+        index=reports_index,
+        key="radio_reports",
+        label_visibility="collapsed",
+        on_change=update_from_reports,
+    )
+
     add_print_to_pdf_button()
     st.sidebar.markdown("---")
 
-    opcoes = [
-        "1. Testar Busca (SÓ Vetorial)",
-        "2. Testar Busca (COM Re-Ranking)",
-        "3. Listar Todos os Chunks",
-        "4. Exportar Chunks para XML",
-        "5. Importar Chunks (XML)",  # Nova Opção
-        "6. Sair",
-    ]
-    modo = st.sidebar.radio(
-        "Selecione uma operação:", opcoes, label_visibility="collapsed"
-    )
+    # --- ROTEAMENTO DA SELEÇÃO ---
+    modo = st.session_state.menu_selection
 
-    # Limpa o estado da sessão se o modo for alterado
+    # Limpa o estado da busca se mudar de funcionalidade
     if "current_mode" not in st.session_state or st.session_state.current_mode != modo:
         st.session_state.current_mode = modo
         if "results" in st.session_state:
@@ -1735,17 +1783,18 @@ def main():
         if "search_type" in st.session_state:
             del st.session_state.search_type
 
-    if modo == opcoes[0]:
+    # Execução baseada na string selecionada
+    if modo == tools_options[0]:
         run_search_test_no_rerank(retriever)
-    elif modo == opcoes[1]:
+    elif modo == tools_options[1]:
         run_search_test(retriever)
-    elif modo == opcoes[2]:
+    elif modo == reports_options[0]:
         run_list_all(retriever)
-    elif modo == opcoes[3]:
+    elif modo == reports_options[1]:
         run_export_xml(retriever)
-    elif modo == opcoes[4]:
-        run_import_xml(retriever)  # Chamada da nova função
-    elif modo == opcoes[5]:
+    elif modo == reports_options[2]:
+        run_import_xml(retriever)
+    elif modo == reports_options[3]:
         run_shutdown()
 
 
@@ -1773,6 +1822,8 @@ Atualizado para:
 4. Filtro por tipo de busca na listagem.
 5. Nova Métrica: Precisão@1.
 6. Legendas das Métricas (Texto Evoluído e Didático).
+7. Filtros avançados na listagem (Hit Rate, MRR, P@K).
+8. Ordenação da tabela de resumo por Hit Rate e P@1 (Decrescente).
 """
 
 import streamlit as st
@@ -1845,20 +1896,39 @@ def run_metrics_summary():
             # Cria um dicionário para busca rápida: {tipo_busca: score_p1}
             p1_map = {row[0]: row[1] for row in p1_results}
 
-            # 3. Montagem dos Dados
-            data = []
+            # 3. Montagem dos Dados e Ordenação
+            # Armazenamos os dados brutos primeiro para poder ordenar corretamente
+            raw_data = []
             for row in main_results:
                 search_type = row[0]
                 p1_score = p1_map.get(search_type, 0.0)
 
+                # row[2] = Hit Rate Avg, row[3] = MRR Avg, row[4] = Precision@K Avg
+                raw_data.append(
+                    {
+                        "type": search_type,
+                        "total": row[1],
+                        "hit_rate": row[2] if row[2] is not None else 0.0,
+                        "mrr": row[3] if row[3] is not None else 0.0,
+                        "pk": row[4] if row[4] is not None else 0.0,
+                        "p1": p1_score if p1_score is not None else 0.0,
+                    }
+                )
+
+            # Ordena decrescente por Hit Rate e depois por Precisão@1
+            raw_data.sort(key=lambda x: (x["hit_rate"], x["p1"]), reverse=True)
+
+            # 4. Formatação Final para Exibição
+            data = []
+            for item in raw_data:
                 data.append(
                     {
-                        "TIPO DE BUSCA": search_type,
-                        "TOTAL": row[1],
-                        "HIT RATE (%)": f"{row[2]*100:.2f}%",
-                        "MRR MÉDIO": f"{row[3]:.4f}",
-                        "PRECISÃO@K (K=3)": f"{row[4]:.4f}",
-                        "PRECISÃO@1": f"{p1_score:.4f}",
+                        "TIPO DE BUSCA": item["type"],
+                        "TOTAL": item["total"],
+                        "HIT RATE (%)": f"{item['hit_rate']*100:.2f}%",
+                        "MRR MÉDIO": f"{item['mrr']:.4f}",
+                        "PRECISÃO@K (K=3)": f"{item['pk']:.4f}",
+                        "PRECISÃO@1": f"{item['p1']:.4f}",
                     }
                 )
 
@@ -1916,14 +1986,43 @@ def run_metrics_summary():
 def run_list_evaluations():
     st.subheader("Modo 2: Listar Avaliações Detalhadas")
 
-    # 1. Carregar Tipos de Busca
+    # 1. Carregar Tipos de Busca Disponíveis
     with get_session() as session:
         types_statement = select(ValidationRun.search_type).distinct()
         available_types = session.exec(types_statement).all()
 
-    # Opções do Filtro
-    filter_options = ["Todos"] + list(available_types)
-    selected_type = st.selectbox("Filtrar por Tipo de Busca:", filter_options)
+    # --- INTERFACE DE FILTROS AVANÇADOS ---
+    with st.expander("🔎 Filtros de Pesquisa", expanded=True):
+        c1, c2, c3, c4 = st.columns(4)
+
+        with c1:
+            filter_options = ["Todos"] + list(available_types)
+            selected_type = st.selectbox("Tipo de Busca:", filter_options)
+
+        with c2:
+            filter_hit = st.selectbox(
+                "Hit Rate (Status):", ["Todos", "Sucesso (1)", "Falha (0)"]
+            )
+
+        with c3:
+            mrr_range = st.slider(
+                "Intervalo MRR:",
+                min_value=0.0,
+                max_value=1.0,
+                value=(0.0, 1.0),
+                step=0.1,
+                help="Filtre pela qualidade do ranking. 1.0 = Perfeito.",
+            )
+
+        with c4:
+            pak_range = st.slider(
+                "Intervalo P@K:",
+                min_value=0.0,
+                max_value=1.0,
+                value=(0.0, 1.0),
+                step=0.1,
+                help="Filtre pela densidade de acertos.",
+            )
 
     if st.button("Carregar Avaliações"):
         with get_session() as session:
@@ -1931,15 +2030,33 @@ def run_list_evaluations():
             # 2. Query Base
             statement = select(ValidationRun).order_by(desc(ValidationRun.timestamp))
 
-            # 3. Aplicar Filtro
+            # 3. Aplicar Filtro de Tipo
             if selected_type != "Todos":
                 statement = statement.where(ValidationRun.search_type == selected_type)
+
+            # 4. Aplicar Filtro de Hit Rate
+            if filter_hit == "Sucesso (1)":
+                statement = statement.where(ValidationRun.hit_rate_eval == 1)
+            elif filter_hit == "Falha (0)":
+                statement = statement.where(ValidationRun.hit_rate_eval == 0)
+
+            # 5. Aplicar Filtro de Intervalo MRR
+            statement = statement.where(ValidationRun.mrr_eval >= mrr_range[0])
+            statement = statement.where(ValidationRun.mrr_eval <= mrr_range[1])
+
+            # 6. Aplicar Filtro de Intervalo P@K
+            statement = statement.where(
+                ValidationRun.precision_at_k_eval >= pak_range[0]
+            )
+            statement = statement.where(
+                ValidationRun.precision_at_k_eval <= pak_range[1]
+            )
 
             runs = session.exec(statement).all()
 
             if not runs:
                 st.warning(
-                    f"Nenhuma avaliação encontrada para o filtro: {selected_type}"
+                    f"Nenhuma avaliação encontrada para os filtros selecionados."
                 )
                 return
 
@@ -2130,7 +2247,7 @@ def run_shutdown():
 # --- MAIN ---
 def main():
     st.set_page_config(page_title="Auditoria de Avaliação", layout="wide")
-    st.title("Ferramenta de Auditoria (SQLModel)")
+    st.title("Ferramenta de Auditoria (Validação Chunks)")
 
     add_print_to_pdf_button()
     st.sidebar.markdown("---")
@@ -2170,21 +2287,26 @@ Atualizado para:
 5. Resumo Estatístico agrupado por Origem (Real vs Sintético).
 6. Importação e Exportação de XML (Backup completo).
 7. Gráficos de Pizza (Pie Charts) com Altair para visualização de feedbacks.
+8. Filtro dinâmico de Origem no Resumo dos Feedbacks.
+9. Cálculo granular de médias de tempo por métrica (Like/Dislike/Blank).
+10. Filtros de Origem e Métrica na listagem detalhada de feedbacks.
+11. Visualização Cruzada de Contexto (Lookup na tabela de validação) com regras de tipo.
+12. Reordenação do Menu Principal.
 """
 
 import streamlit as st
 import pandas as pd
 import os
 import xml.etree.ElementTree as ET
-import altair as alt  # IMPORTAÇÃO NOVA
+import altair as alt
 from xml.dom import minidom
 from datetime import datetime
-from sqlmodel import Session, create_engine, select, func, desc
+from sqlmodel import Session, create_engine, select, func, desc, col
 
 # --- Imports do Projeto ---
 from settings import settings
 from ui_utils import add_print_to_pdf_button
-from database import ChatHistory, Feedback
+from database import ChatHistory, Feedback, ValidationRun, ValidationRetrievedChunk
 
 # --- Configuração do Engine Síncrono ---
 engine = create_engine(settings.SYNC_DATABASE_URL)
@@ -2210,12 +2332,13 @@ def ir_para_busca(session_id):
     esteja atualizado quando a interface for redesenhada.
     """
     st.session_state["target_session_id"] = session_id
-    st.session_state["sb_menu"] = "2. Buscar Sessão"
+    # ATUALIZADO: Reflete a nova numeração do menu
+    st.session_state["sb_menu"] = "4. Buscar Sessão"
 
 
 def run_list_sessions():
-    """Modo 1: Listar Todas as Sessões"""
-    st.subheader("Modo 1: Listar Todas as Sessões")
+    """Modo: Listar Todas as Sessões"""
+    st.subheader("Listar Todas as Sessões")
 
     if st.button("Carregar Resumo das Sessões"):
         with st.spinner("Consultando sessões via SQLModel..."):
@@ -2271,8 +2394,8 @@ def run_list_sessions():
 
 
 def run_search_by_session():
-    """Modo 2: Buscar por Sessão"""
-    st.subheader("Modo 2: Buscar Histórico por Sessão")
+    """Modo: Buscar por Sessão"""
+    st.subheader("Buscar Histórico por Sessão")
 
     default_id = st.session_state.get("target_session_id", "")
 
@@ -2308,24 +2431,66 @@ def run_search_by_session():
 
 
 def run_list_feedback():
-    """Modo 3: Ver Avaliações Detalhadas"""
-    st.subheader("Modo 3: Ver Avaliações (Detalhado)")
+    """Modo: Ver Avaliações Detalhadas"""
+    st.subheader("Ver Avaliações (Detalhado)")
+
+    # --- FILTROS ---
+    c1, c2 = st.columns(2)
+    with c1:
+        origin_filter = st.selectbox(
+            "Filtrar por Origem:", ["Todos", "Usuário Real", "Teste Sintético"]
+        )
+    with c2:
+        metric_filter = st.selectbox(
+            "Filtrar por Avaliação:",
+            ["Todos", "👍 Likes", "👎 Dislikes", "⬜ Em Branco"],
+        )
 
     if st.button("Carregar Lista de Feedbacks"):
         with get_session_sync() as session:
+            # Construção da Query: ChatHistory LEFT JOIN Feedback
+            # Usamos outerjoin para garantir que trazemos mensagens SEM feedback (Em Branco)
             statement = (
-                select(Feedback, ChatHistory)
-                .join(ChatHistory, Feedback.message_id == ChatHistory.id)
-                .order_by(desc(Feedback.timestamp))
+                select(ChatHistory, Feedback)
+                .outerjoin(Feedback, ChatHistory.id == Feedback.message_id)
+                .order_by(desc(ChatHistory.request_start_time))
             )
+
+            # 1. Aplicar Filtro de Origem
+            if origin_filter == "Usuário Real":
+                statement = statement.where(ChatHistory.is_synthetic == False)
+            elif origin_filter == "Teste Sintético":
+                statement = statement.where(ChatHistory.is_synthetic == True)
+
+            # 2. Aplicar Filtro de Métrica
+            if metric_filter == "👍 Likes":
+                statement = statement.where(Feedback.rating == "like")
+            elif metric_filter == "👎 Dislikes":
+                statement = statement.where(Feedback.rating == "dislike")
+            elif metric_filter == "⬜ Em Branco":
+                statement = statement.where(Feedback.id == None)
+
+            # Executa a query
             results = session.exec(statement).all()
 
             if not results:
-                st.warning("Nenhum feedback encontrado.")
+                st.warning("Nenhum registro encontrado com os filtros selecionados.")
                 return
 
-            for feedback, history in results:
-                icon = "👍" if feedback.rating == "like" else "👎"
+            st.success(f"Encontrados {len(results)} registros.")
+
+            for history, feedback in results:
+                # Determina o ícone/texto da avaliação
+                if feedback:
+                    icon = "👍" if feedback.rating == "like" else "👎"
+                    rating_text = feedback.rating.upper()
+                    ts = feedback.timestamp
+                    comment = feedback.comment
+                else:
+                    icon = "⬜"
+                    rating_text = "EM BRANCO"
+                    ts = history.request_start_time
+                    comment = None
 
                 # Definição do Label de Origem
                 if history.is_synthetic:
@@ -2337,29 +2502,109 @@ def run_list_feedback():
 
                 with st.container(border=True):
                     c1, c2 = st.columns([3, 1])
-                    c1.markdown(
-                        f"**{icon} {feedback.rating.upper()}** | {feedback.timestamp}"
-                    )
+                    c1.markdown(f"**{icon} {rating_text}** | {ts}")
                     c2.markdown(f":{origin_color}[**{origin_label}**]")
 
-                    if feedback.comment:
-                        st.info(f"Comentário: {feedback.comment}")
+                    if comment:
+                        st.info(f"Comentário: {comment}")
                     st.text(f"Q: {history.user_message}")
                     st.text(f"A: {history.bot_response}")
 
+                    # --- ÁREA DE CONTEXTO CRUZADO (VALIDATION RUNS) ---
+                    with st.expander(
+                        "🔍 Visualizar Contexto (Via Validação Cruzada)", expanded=False
+                    ):
+
+                        # 1. Definir Tipos de Busca Permitidos (Regras de Negócio)
+                        target_search_types = []
+                        if origin_filter == "Teste Sintético":
+                            target_search_types = ["reranked_AB"]
+                        elif origin_filter == "Usuário Real":
+                            target_search_types = ["reranked_USER"]
+                        else:  # Todos
+                            target_search_types = ["reranked_USER", "reranked_AB"]
+
+                        # 2. Busca na Tabela de Validação
+                        # Filtra por Query Exata E pelo Tipo definido acima
+                        val_run = session.exec(
+                            select(ValidationRun)
+                            .where(ValidationRun.query == history.user_message)
+                            .where(ValidationRun.search_type.in_(target_search_types))
+                            .order_by(desc(ValidationRun.timestamp))
+                        ).first()
+
+                        if val_run:
+                            st.success(
+                                f"Validação Cruzada Encontrada! (Tipo: {val_run.search_type})"
+                            )
+                            st.caption(f"ID: {val_run.id} | Data: {val_run.timestamp}")
+
+                            # Métricas da Validação
+                            m1, m2, m3 = st.columns(3)
+                            hr_icon = "✅" if val_run.hit_rate_eval else "❌"
+                            m1.metric("Hit Rate (Gabarito)", hr_icon)
+                            m2.metric("MRR", f"{val_run.mrr_eval:.4f}")
+                            m3.metric("P@K", f"{val_run.precision_at_k_eval:.4f}")
+
+                            # Carrega Chunks
+                            chunks = session.exec(
+                                select(ValidationRetrievedChunk)
+                                .where(ValidationRetrievedChunk.run_id == val_run.id)
+                                .order_by(ValidationRetrievedChunk.rank)
+                            ).all()
+
+                            st.markdown("---")
+                            st.markdown("**Chunks Retornados:**")
+
+                            for chunk in chunks:
+                                color = "green" if chunk.is_correct_eval else "red"
+                                correct_lbl = "SIM" if chunk.is_correct_eval else "NÃO"
+
+                                st.markdown(
+                                    f"**{chunk.rank}.** :{color}[Relevante: {correct_lbl}] | Score: {chunk.score:.4f} | {chunk.source} (p.{chunk.page})"
+                                )
+                                st.text(chunk.chunk_content)
+                                st.markdown("---")
+                        else:
+                            st.warning(
+                                "⚠️ Nenhuma validação compatível foi encontrada para esta pergunta."
+                            )
+                            st.markdown(f"**Critérios de busca:**")
+                            st.markdown(f"- Query exata: *'{history.user_message}'*")
+                            st.markdown(f"- Tipos procurados: `{target_search_types}`")
+                            st.info(
+                                "Dica: Use o 'validate_vector_db.py' para criar o gabarito desta pergunta."
+                            )
+
 
 def run_feedback_summary():
-    """Modo 4: Resumo dos Feedbacks"""
-    st.subheader("Modo 4: Resumo dos Feedbacks (Estatísticas por Origem)")
-    st.info("Estatísticas consolidadas de satisfação, separadas por tipo de interação.")
+    """Modo: Resumo dos Feedbacks"""
+    st.subheader("Resumo dos Feedbacks (Estatísticas)")
+    st.info(
+        "Estatísticas consolidadas de satisfação e performance, separadas por origem e métrica."
+    )
+
+    # --- FILTRO DE ORIGEM ---
+    origin_filter = st.selectbox(
+        "Filtrar Dados por Origem:", ["Todos", "Usuário Real", "Teste Sintético"]
+    )
 
     if st.button("Calcular Estatísticas"):
         with get_session_sync() as session:
 
-            origins_to_check = [
+            # Definição base das origens
+            all_origins = [
                 {"label": "👤 Usuário Real", "is_synthetic": False},
                 {"label": "🧪 Teste Sintético", "is_synthetic": True},
             ]
+
+            # Aplica o filtro
+            if origin_filter == "Todos":
+                origins_to_check = all_origins
+            elif origin_filter == "Usuário Real":
+                origins_to_check = [all_origins[0]]
+            else:  # Teste Sintético
+                origins_to_check = [all_origins[1]]
 
             consolidated_data = []
             charts_payload = []  # Para armazenar dados para os gráficos
@@ -2368,7 +2613,41 @@ def run_feedback_summary():
                 is_synth = origin["is_synthetic"]
                 label_origin = origin["label"]
 
-                # 1. Total de Interações desta origem
+                # --- HELPER: Calcula médias para um subset específico ---
+                def get_avg_times(rating_filter=None, only_blanks=False):
+                    """
+                    Calcula médias de tempo filtrando por rating.
+                    rating_filter: 'like' ou 'dislike'
+                    only_blanks: True para pegar mensagens sem feedback
+                    """
+                    query = select(
+                        func.avg(ChatHistory.retrieval_duration_sec),
+                        func.avg(ChatHistory.generation_duration_sec),
+                        func.avg(ChatHistory.total_duration_sec),
+                    ).where(ChatHistory.is_synthetic == is_synth)
+
+                    if only_blanks:
+                        # Left Join para encontrar onde Feedback é Nulo
+                        query = query.outerjoin(
+                            Feedback, ChatHistory.id == Feedback.message_id
+                        ).where(Feedback.id == None)
+                    elif rating_filter:
+                        # Inner Join para filtrar por rating específico
+                        query = query.join(
+                            Feedback, ChatHistory.id == Feedback.message_id
+                        ).where(Feedback.rating == rating_filter)
+
+                    # Executa a query
+                    result = session.exec(query).one()
+
+                    # Trata None (caso não haja registros no filtro)
+                    return (
+                        result[0] if result[0] else 0.0,
+                        result[1] if result[1] else 0.0,
+                        result[2] if result[2] else 0.0,
+                    )
+
+                # 1. Total de Interações (Geral da Origem)
                 total_msgs = session.exec(
                     select(func.count(ChatHistory.id)).where(
                         ChatHistory.is_synthetic == is_synth
@@ -2378,65 +2657,97 @@ def run_feedback_summary():
                 if total_msgs == 0:
                     continue
 
-                # 2. Likes
+                # 2. Likes (Contagem e Médias)
                 likes = session.exec(
                     select(func.count(Feedback.id))
                     .join(ChatHistory, Feedback.message_id == ChatHistory.id)
                     .where(Feedback.rating == "like")
                     .where(ChatHistory.is_synthetic == is_synth)
                 ).one()
+                avg_ret_like, avg_gen_like, avg_tot_like = get_avg_times(
+                    rating_filter="like"
+                )
 
-                # 3. Dislikes
+                # 3. Dislikes (Contagem e Médias)
                 dislikes = session.exec(
                     select(func.count(Feedback.id))
                     .join(ChatHistory, Feedback.message_id == ChatHistory.id)
                     .where(Feedback.rating == "dislike")
                     .where(ChatHistory.is_synthetic == is_synth)
                 ).one()
+                avg_ret_dislike, avg_gen_dislike, avg_tot_dislike = get_avg_times(
+                    rating_filter="dislike"
+                )
 
-                # 4. Em Branco
+                # 4. Em Branco (Contagem e Médias)
                 total_feedbacks = likes + dislikes
                 blanks = total_msgs - total_feedbacks
                 if blanks < 0:
                     blanks = 0
+                avg_ret_blank, avg_gen_blank, avg_tot_blank = get_avg_times(
+                    only_blanks=True
+                )
 
-                # 5. Cálculos
+                # 5. Médias Gerais (TOTAL da Origem)
+                avg_ret_total, avg_gen_total, avg_tot_total = get_avg_times()
+
+                # --- Cálculos Percentuais ---
                 pct_likes = (likes / total_msgs) * 100
                 pct_dislikes = (dislikes / total_msgs) * 100
                 pct_blanks = (blanks / total_msgs) * 100
 
-                # Adicionar à tabela
-                consolidated_data.append(
-                    {
+                # Helper para criar a linha da tabela formatada
+                def create_row(metric, total, pct, ret_time, gen_time, tot_time):
+                    return {
                         "Origem": label_origin,
-                        "Métrica": "👍 Likes",
-                        "Total": likes,
-                        "Porcentagem": f"{pct_likes:.2f}%",
+                        "Métrica": metric,
+                        "Total": total,
+                        "Porcentagem": pct,
+                        "Tempo médio RAG": f"{ret_time:.2f}s",
+                        "Tempo médio LLM": f"{gen_time:.2f}s",
+                        "Tempo médio Total": f"{tot_time:.2f}s",
                     }
+
+                # Adicionar linhas à tabela com as médias ESPECÍFICAS
+                consolidated_data.append(
+                    create_row(
+                        "👍 Likes",
+                        likes,
+                        f"{pct_likes:.2f}%",
+                        avg_ret_like,
+                        avg_gen_like,
+                        avg_tot_like,
+                    )
                 )
                 consolidated_data.append(
-                    {
-                        "Origem": label_origin,
-                        "Métrica": "👎 Dislikes",
-                        "Total": dislikes,
-                        "Porcentagem": f"{pct_dislikes:.2f}%",
-                    }
+                    create_row(
+                        "👎 Dislikes",
+                        dislikes,
+                        f"{pct_dislikes:.2f}%",
+                        avg_ret_dislike,
+                        avg_gen_dislike,
+                        avg_tot_dislike,
+                    )
                 )
                 consolidated_data.append(
-                    {
-                        "Origem": label_origin,
-                        "Métrica": "⬜ Em Branco",
-                        "Total": blanks,
-                        "Porcentagem": f"{pct_blanks:.2f}%",
-                    }
+                    create_row(
+                        "⬜ Em Branco",
+                        blanks,
+                        f"{pct_blanks:.2f}%",
+                        avg_ret_blank,
+                        avg_gen_blank,
+                        avg_tot_blank,
+                    )
                 )
                 consolidated_data.append(
-                    {
-                        "Origem": label_origin,
-                        "Métrica": "TOTAL",
-                        "Total": total_msgs,
-                        "Porcentagem": "100%",
-                    }
+                    create_row(
+                        "TOTAL",
+                        total_msgs,
+                        "100%",
+                        avg_ret_total,
+                        avg_gen_total,
+                        avg_tot_total,
+                    )
                 )
 
                 # Dados para o Gráfico
@@ -2458,21 +2769,76 @@ def run_feedback_summary():
                 )
 
             if not consolidated_data:
-                st.warning("Nenhum dado encontrado para gerar estatísticas.")
+                st.warning(f"Nenhum dado encontrado para o filtro: {origin_filter}.")
                 return
 
             # Exibir Tabela
-            st.markdown("### 📋 Tabela de Dados")
+            st.markdown("### 📋 Tabela de Dados e Performance")
             df = pd.DataFrame(consolidated_data)
-            df = df[["Origem", "Métrica", "Total", "Porcentagem"]]
+
+            # Ordenação das colunas
+            cols_order = [
+                "Origem",
+                "Métrica",
+                "Total",
+                "Porcentagem",
+                "Tempo médio RAG",
+                "Tempo médio LLM",
+                "Tempo médio Total",
+            ]
+            df = df[cols_order]
+
             st.table(df)
 
+            # --- LEGENDA DESCRITIVA ---
+            with st.expander(
+                "ℹ️ Legenda das Colunas (Entenda os dados)", expanded=False
+            ):
+                st.markdown(
+                    """
+                * **Origem:** Tipo de interação (Usuário Real ou Teste Sintético).
+                * **Métrica:** Categoria da avaliação (Like, Dislike, Em Branco).
+                * **Tempo médio RAG:** Tempo médio gasto na etapa de busca vetorial e re-ranking (Recuperação de Contexto) para este grupo.
+                * **Tempo médio LLM:** Tempo médio de processamento do modelo (Gemini) para gerar a resposta final para este grupo.
+                * **Tempo médio Total:** Tempo total de ponta a ponta percebido (Latência Total) para este grupo.
+                * **Os tempos médios são calculados separadamente para cada métrica, permitindo uma análise granular da performance.**
+                * **A unidade de medida de tempo é segundos.**
+                """
+                )
+
             st.divider()
+
+            # --- CSS PARA IMPRESSÃO ---
+            st.markdown(
+                """
+            <style>
+            @media print {
+                .page-break { 
+                    page-break-before: always; 
+                    margin-top: 2rem;
+                    display: block;
+                }
+                div[data-baseweb="select"] > div,
+                div[data-baseweb="base-input"] {
+                    background-color: #ffffff !important;
+                    border: 1px solid #999999 !important;
+                    color: #000000 !important;
+                    -webkit-print-color-adjust: exact;
+                }
+                div[data-baseweb="select"] span, 
+                div[data-baseweb="select"] div {
+                    color: #000000 !important;
+                }
+            }
+            </style>
+            <div class="page-break"></div>
+            """,
+                unsafe_allow_html=True,
+            )
 
             # Exibir Gráficos
             st.markdown("### 📊 Visualização Gráfica")
 
-            # Cria colunas dinamicamente baseado na quantidade de origens encontradas
             if charts_payload:
                 cols = st.columns(len(charts_payload))
 
@@ -2480,21 +2846,25 @@ def run_feedback_summary():
                     with cols[idx]:
                         st.markdown(f"**{item['origin']}**")
 
+                        # 1. Base SEM propriedade de background
                         base = alt.Chart(item["data"]).encode(
                             theta=alt.Theta("Quantidade", stack=True)
                         )
 
-                        # Gráfico de Pizza (Arcos)
+                        # 2. Camada Pie (Arcos)
                         pie = base.mark_arc(outerRadius=100).encode(
                             color=alt.Color(
                                 "Categoria",
                                 scale=alt.Scale(
                                     domain=["Likes", "Dislikes", "Em Branco"],
-                                    range=[
-                                        "#28a745",
-                                        "#dc3545",
-                                        "#eaeaea",
-                                    ],  # Verde, Vermelho, Cinza
+                                    range=["#28a745", "#dc3545", "#eaeaea"],
+                                ),
+                                legend=alt.Legend(
+                                    orient="bottom",
+                                    direction="horizontal",
+                                    titleColor="black",
+                                    labelColor="black",
+                                    titleFontWeight="bold",
                                 ),
                             ),
                             tooltip=[
@@ -2504,19 +2874,22 @@ def run_feedback_summary():
                             ],
                         )
 
-                        # Labels de Porcentagem
+                        # 3. Camada Texto (Labels)
                         text = base.mark_text(radius=120).encode(
                             text=alt.Text("Porcentagem", format=".1%"),
                             order=alt.Order("Quantidade", sort="descending"),
                             color=alt.value("black"),
                         )
 
-                        st.altair_chart(pie + text, use_container_width=True)
+                        # 4. Combinação (CORREÇÃO: background aplicado AQUI)
+                        final_chart = (pie + text).properties(background="white")
+
+                        st.altair_chart(final_chart, use_container_width=True)
 
 
 def run_export_csv():
-    """Modo 5: Exportar para CSV"""
-    st.subheader("Modo 5: Exportar Histórico Completo (CSV)")
+    """Modo: Exportar para CSV"""
+    st.subheader("Exportar Histórico Completo (CSV)")
 
     if st.button("Gerar Arquivo CSV"):
         file_timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
@@ -2550,8 +2923,8 @@ def run_export_csv():
 
 
 def run_export_xml():
-    """Modo 6: Exportar XML"""
-    st.subheader("Modo 6: Exportar Histórico (XML)")
+    """Modo: Exportar XML"""
+    st.subheader("Exportar Histórico (XML)")
     st.info("Gera um backup completo em XML, incluindo feedbacks aninhados.")
 
     if st.button("Gerar Arquivo XML"):
@@ -2607,8 +2980,8 @@ def run_export_xml():
 
 
 def run_import_xml():
-    """Modo 7: Importar XML"""
-    st.subheader("Modo 7: Importar Histórico (XML)")
+    """Modo: Importar XML"""
+    st.subheader("Importar Histórico (XML)")
     st.info(
         "Importa mensagens e feedbacks. Evita duplicatas baseando-se no ID da Sessão + Timestamp."
     )
@@ -2728,8 +3101,8 @@ def run_import_xml():
 
 
 def run_shutdown():
-    """Modo 8: Sair"""
-    st.subheader("Modo 8: Sair")
+    """Modo: Sair"""
+    st.subheader("Sair")
     st.warning("Clicar neste botão encerrará este servidor Streamlit.")
     if st.button("Encerrar Aplicação"):
         st.success("Encerrando servidor...")
@@ -2739,7 +3112,7 @@ def run_shutdown():
 
 def main():
     st.set_page_config(page_title="Auditoria Histórico", layout="wide")
-    st.title("Auditoria do Histórico (SQLModel)")
+    st.title("Auditoria do Histórico do Chatbot RAG")
 
     st.sidebar.title("Menu")
 
@@ -2748,11 +3121,12 @@ def main():
 
     st.sidebar.markdown("---")
 
+    # REORDENAÇÃO DO MENU CONFORME SOLICITADO
     options = {
-        "1. Listar Sessões": run_list_sessions,
-        "2. Buscar Sessão": run_search_by_session,
-        "3. Ver Feedbacks (Detalhes)": run_list_feedback,
-        "4. Resumo dos Feedbacks": run_feedback_summary,
+        "1. Resumo dos Feedbacks": run_feedback_summary,
+        "2. Ver Feedbacks (Detalhes)": run_list_feedback,
+        "3. Listar Sessões": run_list_sessions,
+        "4. Buscar Sessão": run_search_by_session,
         "5. Exportar CSV": run_export_csv,
         "6. Exportar XML": run_export_xml,
         "7. Importar XML": run_import_xml,
