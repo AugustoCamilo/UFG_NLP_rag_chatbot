@@ -1,7 +1,7 @@
 # database.py
 import asyncio
 from datetime import datetime
-from typing import Optional
+from typing import Optional, AsyncGenerator
 from sqlmodel import Field, SQLModel
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -19,7 +19,7 @@ engine = create_async_engine(settings.DATABASE_URL, echo=False, future=True)
 AsyncSessionFactory = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
-# --- Modelos de Dados (Inalterados, mas mantidos aqui para contexto) ---
+# --- Modelos de Dados ---
 class ChatHistory(SQLModel, table=True):
     __tablename__ = "chat_history"
     __table_args__ = {"extend_existing": True}
@@ -28,6 +28,13 @@ class ChatHistory(SQLModel, table=True):
     session_id: str = Field(index=True)
     user_message: str
     bot_response: str
+
+    # --- NOVA FLAG ---
+    is_synthetic: bool = Field(
+        default=False,
+        description="Indica se é teste sintético (True) ou usuário real (False)",
+    )
+
     user_chars: int = 0
     bot_chars: int = 0
     user_tokens: int = 0
@@ -88,7 +95,7 @@ async def init_db():
     print(f"Banco de dados (Async) inicializado em: {settings.DB_PATH}")
 
 
-async def get_session() -> AsyncSession:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionFactory() as session:
         yield session
 

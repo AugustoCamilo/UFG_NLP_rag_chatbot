@@ -3,17 +3,20 @@
 Módulo Central de Recuperação de Informação (Retriever).
 
 Atualizado para:
-1. Usar settings.py em vez de config.py.
+1. Usar settings.py.
+2. Correção de bugs (device não definido, reranker vs cross_encoder).
+3. Suporte a GPU/MPS/CPU.
 """
 
 import os
+import torch  # Necessário para detecção de device
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from sentence_transformers import CrossEncoder
 from langchain_core.documents import Document
 from typing import List, Tuple
 
-# Importar a nova configuração
+# Importar a configuração
 from settings import settings
 
 
@@ -26,7 +29,11 @@ class VectorRetriever:
     def __init__(self):
         print("Inicializando o VectorRetriever...")
 
-        # Verifica existência do diretório (convertendo Path para str se necessário)
+        # 1. Definir o dispositivo (CPU ou GPU)
+        self.device = self._get_device()
+        print(f"Dispositivo de processamento selecionado: {self.device}")
+
+        # Verifica existência do diretório
         db_dir_str = str(settings.VECTOR_DB_DIR)
 
         if not os.path.exists(db_dir_str):
@@ -39,27 +46,43 @@ class VectorRetriever:
             raise FileNotFoundError(db_dir_str)
 
         try:
-            # 1. Carregar modelo de embedding (para ler o Chroma DB)
+            # 2. Carregar modelo de embedding
             print("Carregando modelo de embedding...")
             self.embeddings = HuggingFaceEmbeddings(
-                model_name=settings.EMBEDDING_MODEL_NAME
+                model_name=settings.EMBEDDING_MODEL_NAME,
+                model_kwargs={
+                    "device": self.device
+                },  # Garante uso da GPU se disponível
             )
 
-            # 2. Carregar o banco de vetores Chroma
+            # 3. Carregar o banco de vetores Chroma
             print(f"Carregando banco de vetores de '{db_dir_str}'...")
             self.vectordb = Chroma(
                 persist_directory=db_dir_str,
                 embedding_function=self.embeddings,
             )
 
-            # 3. Carregar o modelo de Re-Ranker (CrossEncoder)
+            # 4. Carregar o modelo de Re-Ranker (Cross-Encoder)
             print("Carregando modelo de Re-Ranking (Cross-Encoder)...")
-            self.reranker = CrossEncoder(settings.RERANKER_MODEL_NAME)
+            self.cross_encoder = CrossEncoder(
+                settings.RERANK_MODEL_NAME,
+                max_length=512,
+                device=self.device,
+                automodel_args={"low_cpu_mem_usage": False},
+            )
             print("VectorRetriever inicializado com sucesso.")
 
         except Exception as e:
             print(f"Ocorreu um erro ao inicializar o VectorRetriever: {e}")
             raise
+
+    def _get_device(self) -> str:
+        """Detecta o melhor dispositivo disponível (CUDA, MPS ou CPU)."""
+        if torch.cuda.is_available():
+            return "cuda"
+        elif torch.backends.mps.is_available():
+            return "mps"  # Para Macs com Apple Silicon (M1/M2/M3)
+        return "cpu"
 
     def retrieve_context(self, query: str) -> List[Document]:
         """
@@ -89,9 +112,12 @@ class VectorRetriever:
         # ETAPA 2: RE-RANKING
         try:
             pairs = [[query, doc.page_content] for doc, score in results_with_scores]
-            rerank_scores = self.reranker.predict(pairs)
+
+            # Correção: Usar self.cross_encoder em vez de self.reranker
+            rerank_scores = self.cross_encoder.predict(pairs)
 
             reranked_results = list(zip(results_with_scores, rerank_scores))
+            # Ordena pelo novo score (maior é melhor)
             reranked_results.sort(key=lambda x: x[1], reverse=True)
 
             top_k_results = reranked_results[: settings.SEARCH_K_FINAL]
@@ -126,7 +152,7 @@ class VectorRetriever:
                 print("Nenhum resultado encontrado na busca vetorial.")
                 return []
 
-            # Ordena por score (distância - MENOR é MELHOR para Chroma padrão, mas varia pela métrica)
+            # Ordena por score (distância - MENOR é MELHOR para Chroma padrão)
             results_with_scores.sort(key=lambda x: x[1])
 
             print(

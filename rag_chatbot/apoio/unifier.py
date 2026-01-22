@@ -22,6 +22,7 @@ FILES_TO_PROCESS: List[str] = [
     "validate_vector_db.py",
     "validate_evaluation.py",
     "validate_history_db.py",
+    "edit_evaluation.py",
 ]
 
 # Mapeamento de extensão para sintaxe Markdown (para highlight correto)
