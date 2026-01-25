@@ -25,25 +25,25 @@ O sistema opera de forma assíncrona para garantir fluidez na UI enquanto proces
 
 ```mermaid
 graph TD
-    User(Usuário) -->|Input| UI[Streamlit App]
-    UI -->|Async Call| Chain[LangGraph RAG Chain]
+    Usuário -->|Entrada / Pergunta| UI[Aplicação Principal Web]
+    UI -->|Chamada Assíncrona| Chain[LangGraph RAG Chain]
     
-    subgraph "Knowledge Base (Base de Conhecimento)"
-        PDF[PDF Docs/XML] -->|Ingest| ETL[PyMuPDF + Splitter]
+    subgraph "Base de Conhecimento"
+        PDF[PDF Docs/XML] -->|Alimentação| ETL[PyMuPDF + Splitter]
         ETL -->|Embeddings| VectorDB[(ChromaDB)]
     end
 
-    subgraph "Core Engine (Motor Principal)"
-        Chain -->|1. Load History| SQL[(SQLite/SQLModel)]
-        Chain -->|2. Retrieve Context| Retriever[Hybrid Retriever]
-        Retriever -->|Recall| VectorDB
-        Retriever -->|Precision| Reranker[Cross-Encoder]
-        Chain -->|3. Generate| LLM[Google Gemini 2.5]
+    subgraph "Motor Principal"
+        Chain -->|1. Carrega Histórico| SQL[(SQLite/SQLModel)]
+        Chain -->|2. Recuperação contexto| Retriever[Recuperação Híbrida]
+        Retriever -->|Recuperação| VectorDB
+        Retriever -->|Precisão| Reranker[Cross-Encoder]
+        Chain -->|3. Prompt estruturado| LLM[Google Gemini 2.5]
     end
 
-    LLM -->|Answer| Chain
-    Chain -->|Persist Logs| SQL
-    Chain -->|Response| UI
+    LLM -->|Resposta| Chain
+    Chain -->|Registros de Persistência| SQL
+    Chain -->|Resposta| UI
 ```
 
 
@@ -61,32 +61,32 @@ graph TD
     Admin(Admin do Sistema) -->|4. Audita Produção| ValHist[validate_history_db.py]
 
     %% Componentes Reutilizados do Core
-    subgraph "Core Modules"
-        Retriever[VectorRetriever]
+    subgraph "Módulo Principal"
+        Recuperador[VectorRetriever]
     end
 
     %% Armazenamento
-    subgraph "Data Layer"
+    subgraph "Camada de Dados"
         VectorDB[(ChromaDB)]
         SQL_Val[(Tabela: ValidationRuns)]
         SQL_Prod[(Tabela: ChatHistory)]
     end
 
     %% Fluxo de Coleta (Criação)
-    ValDB -->|Uses| Retriever
-    Retriever -->|Search| VectorDB
+    ValDB -->|Usuário| Recuperador
+    Recuperador -->|Busca| VectorDB
     ValDB -->|Insert: Queries & Scores| SQL_Val
 
     %% Fluxo de Curadoria (Edição)
-    ValEdit <-->|Read/Update: Recalcula Métricas| SQL_Val
+    ValEdit <-->|Leitura/Atualização: Recalcula Métricas| SQL_Val
 
     %% Fluxo de Análise (Leitura)
-    ValEval -->|Read: Hit Rate / MRR| SQL_Val
-    ValEval <-->|Import/Export Dataset| XML[📄 Arquivos XML]
+    ValEval -->|Leitura: Hit Rate / MRR| SQL_Val
+    ValEval <-->|Importar/Exportar Dataset| XML[📄 Arquivos XML]
 
     %% Fluxo de Auditoria (Produção)
-    ValHist -->|Read: Sessions & Feedback| SQL_Prod
-    ValHist -->|Export Data| CSV[📊 CSV / XML / Charts]
+    ValHist -->|Leitura: Sessões & Feedback| SQL_Prod
+    ValHist -->|Exportar Dados| CSV[📊 CSV / XML / Charts]
 
 ```
 
@@ -315,10 +315,10 @@ A colaboração seguiu uma dinâmica fluida de "Human-in-the-Loop":
     * **Refinamento**: Ajustes finos de UI/UX e validação de lógica pelo humano.
 
 ```mermaid
-graph LR
-    A[👨‍💻 Intenção & Arquitetura] -->|Natural Language| B[🤖 Vibe Coding Engine]
-    B -->|⚡ High-Quality Code| C[👨‍💻 Code Review & Teste]
-    C -->|❌ Feedback| B
+graph TD
+    A[👨‍💻 Intenção & Arquitetura] -->|Linguagem Natural| B[🤖 Vibe Coding Engine]
+    B -->|⚡ Código de Alta qualidade| C[👨‍💻 Revisão de Código & Teste]
+    C -->|❌ Refinamento| B
     C -->|✅ Aprovado| D[🚀 Deploy/Commit]
 ```
 
