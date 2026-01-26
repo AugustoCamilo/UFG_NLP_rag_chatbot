@@ -2,19 +2,8 @@
 """
 Módulo de Dashboard de Auditoria do Histórico de Produção.
 
-Atualizado para:
-1. Usar Callbacks no botão de navegação.
-2. Usar settings.py.
-3. Exportar CSV com timestamp e identificação de origem.
-4. Usar SQLModel.
-5. Resumo Estatístico agrupado por Origem (Real vs Sintético).
-6. Importação e Exportação de XML (Backup completo).
-7. Gráficos de Pizza (Pie Charts) com Altair para visualização de feedbacks.
-8. Filtro dinâmico de Origem no Resumo dos Feedbacks.
-9. Cálculo granular de médias de tempo por métrica (Like/Dislike/Blank).
-10. Filtros de Origem e Métrica na listagem detalhada de feedbacks.
-11. Visualização Cruzada de Contexto (Lookup na tabela de validação) com regras de tipo.
-12. Reordenação do Menu Principal.
+Permite a visualização detalhada de sessões de chat, feedbacks dos usuários,
+métricas consolidadas e cruzamento de dados com a base de validação.
 """
 
 import streamlit as st
@@ -55,7 +44,6 @@ def ir_para_busca(session_id):
     esteja atualizado quando a interface for redesenhada.
     """
     st.session_state["target_session_id"] = session_id
-    # ATUALIZADO: Reflete a nova numeração do menu
     st.session_state["sb_menu"] = "4. Buscar Sessão"
 
 
@@ -72,7 +60,6 @@ def run_list_sessions():
                         func.count(ChatHistory.id).label("msg_count"),
                         func.max(ChatHistory.response_end_time).label("last_activity"),
                         func.avg(ChatHistory.total_duration_sec).label("avg_duration"),
-                        # Pegamos o max(is_synthetic) para saber se a sessão teve flag de teste
                         func.max(ChatHistory.is_synthetic).label("is_synthetic_flag"),
                     )
                     .group_by(ChatHistory.session_id)
@@ -165,8 +152,7 @@ def run_list_feedback():
         )
     with c2:
         metric_filter = st.selectbox(
-            "Filtrar por Avaliação:",
-            ["Todos", "👍 Likes", "👎 Dislikes", "⬜ Em Branco"],
+            "Filtrar por Métrica:", ["Todos", "👍 Likes", "👎 Dislikes", "⬜ Em Branco"]
         )
 
     if st.button("Carregar Lista de Feedbacks"):
@@ -604,7 +590,7 @@ def run_feedback_summary():
                             color=alt.value("black"),
                         )
 
-                        # 4. Combinação (CORREÇÃO: background aplicado AQUI)
+                        # 4. Combinação
                         final_chart = (pie + text).properties(background="white")
 
                         st.altair_chart(final_chart, use_container_width=True)
@@ -844,7 +830,6 @@ def main():
 
     st.sidebar.markdown("---")
 
-    # REORDENAÇÃO DO MENU CONFORME SOLICITADO
     options = {
         "1. Resumo dos Feedbacks": run_feedback_summary,
         "2. Ver Feedbacks (Detalhes)": run_list_feedback,

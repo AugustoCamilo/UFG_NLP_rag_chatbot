@@ -6,7 +6,6 @@ from sqlmodel import Field, SQLModel
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-# IMPORTAÇÃO NOVA
 from settings import settings
 
 # Garante que o diretório existe usando pathlib
@@ -29,7 +28,6 @@ class ChatHistory(SQLModel, table=True):
     user_message: str
     bot_response: str
 
-    # --- NOVA FLAG ---
     is_synthetic: bool = Field(
         default=False,
         description="Indica se é teste sintético (True) ou usuário real (False)",

@@ -3,13 +3,8 @@
 Módulo de Frontend para Avaliação Manual do Retriever (Entrada de Dados).
 
 Esta aplicação Streamlit é a principal ferramenta do avaliador humano para
-testar a qualidade do sistema de recuperação (Retrieval) e *criar* os
+testar a qualidade do sistema de recuperação (Retrieval) e criar os
 dados de "verdade de campo" (ground truth).
-
-Atualizado para:
-1. Usar settings.py.
-2. Importar XML (Nova Funcionalidade).
-3. Reorganização do Menu em Blocos (Ferramentas vs Relatórios).
 """
 
 import streamlit as st

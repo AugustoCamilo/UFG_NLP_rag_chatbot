@@ -30,7 +30,7 @@ class RAGState(TypedDict):
     request_start_time: datetime
     retrieval_end_time: datetime
     new_message_id: Optional[int]
-    is_synthetic: bool  # <-- NOVO CAMPO NO STATE
+    is_synthetic: bool
 
 
 class RAGChain:
