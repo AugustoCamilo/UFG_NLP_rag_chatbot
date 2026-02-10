@@ -1,0 +1,263 @@
+## **Slide 1: Capa**
+
+* 
+**Título:** Protótipo de Chatbot Jurídico baseado em LLM e RAG 
+
+
+* 
+**Subtítulo:** Programas de Negociação de Dívidas Tributárias (Programa Quita Goiás) 
+
+
+* 
+**Autores:** Augusto Camilo da Silva Neto, Juliana Pereira de Souza Zinader e Lucas Gonçalves da Silva 
+
+
+* 
+**Instituição:** Universidade Federal de Goiás (UFG) - AKCIT 
+
+
+* 
+**Data:** 2026 
+
+
+
+---
+
+## **Slide 2: Contexto e Desafio**
+
+* 
+**Complexidade Tributária:** A legislação brasileira é complexa e o letramento jurídico da população é baixo.
+
+
+* 
+**Gargalo no Atendimento:** Alta demanda por atendimentos especializados sobre dívidas fiscais sobrecarrega órgãos públicos.
+
+
+* 
+**Limitação das IAs Comuns:** LLMs puros podem gerar "alucinações" (respostas plausíveis, mas falsas), o que é inaceitável no Direito.
+
+
+
+---
+
+## **Slide 3: A Solução Proposta (RAG)**
+
+* 
+**Conceito:** Utilização de *Retrieval-Augmented Generation* (RAG).
+
+
+* 
+**Como funciona:** O sistema busca informações em documentos oficiais **antes** de gerar a resposta.
+
+
+* **Benefícios:**
+* Ancoragem em documentos reais (leis e editais).
+
+
+* Rastreabilidade das fontes.
+
+
+* Redução significativa de informações não fundamentadas.
+
+
+
+
+
+---
+
+## **Slide 4: Objetivo do Estudo**
+
+* 
+**Objetivo Geral:** Desenvolver e avaliar um chatbot inteligente capaz de ampliar o acesso e a precisão das informações sobre negociação de dívidas tributárias.
+
+
+* 
+**Foco Prático:** Apoiar a comunicação entre o Estado de Goiás e o contribuinte através de tecnologia de IA.
+
+
+
+---
+
+## **Slide 5: Metodologia de Desenvolvimento**
+
+* 
+**Abordagem:** Pesquisa aplicada e exploratória com ambiente controlado.
+
+
+* 
+**Vibe Coding:** Fluxo de desenvolvimento orientado à intenção e linguagem natural.
+
+
+* 
+**Human-in-the-loop:** Todo código e resposta gerados pela IA passaram por curadoria e validação humana crítica.
+
+
+
+---
+
+## **Slide 6: Arquitetura do Sistema**
+
+* **Fluxo de 2 Estágios:**
+1. 
+**Recuperação Híbrida:** Busca vetorial por similaridade (embeddings).
+
+
+2. 
+**Re-ranking Semântico:** Uso de *Cross-Encoder* para priorizar o contexto mais relevante.
+
+
+
+
+* 
+**Tecnologias:** LangGraph para orquestração e Google Gemini para geração.
+
+
+
+---
+
+## **Slide 7: Base de Dados e Amostra**
+
+* 
+**Fontes Oficiais:** Lei Complementar nº 197/2024, Portarias, Editais do Quita Goiás e Manuais da PGE-GO.
+
+
+* 
+**Amostra de Teste:** 59 interações avaliadas.
+
+
+* 
+**50 perguntas sintéticas:** Casos de borda e situações típicas.
+
+
+* 
+**9 perguntas reais:** Extraídas de atendimentos reais de órgãos públicos.
+
+
+
+
+
+---
+
+## **Slide 8: Resultados: Motor de Recuperação**
+
+* 
+**Desempenho Superior:** A recuperação híbrida com re-ranking superou a busca vetorial simples.
+
+
+* **Métricas Principais (Testes Sintéticos):**
+* 
+**Hit Rate:** 80%.
+
+
+* 
+**MRR (Qualidade do ranking):** 0,71.
+
+
+* 
+**Precision@1:** 66%.
+
+
+*Criar um gráfico para comparação com os seguintes valores
+**Reranked Chunk tamanho fixo (Hit rate 80%, MRR 0,64, Precisiona@1 0,52)
+**Busca vetorial chunk semântico (Hit rate 44,44%, MRR 0,37, Precisiona@1 0,33)
+
+
+---
+
+## **Slide 9: Resultados: Ciclo Completo (Chatbot)**
+
+* **Taxas de Aprovação (Feedback Positivo):**
+* Perguntas Sintéticas: **80%**.
+
+
+* Perguntas Reais: **87,5%**.
+
+
+
+
+* **Latência (Tempo de Resposta):**
+* Recuperação de documentos: ~1,1 segundo.
+
+
+* Resposta final total: inferior a 10 segundos para casos reais.
+
+
+
+
+
+---
+
+## **Slide 10: Garantia de Qualidade e Auditoria**
+
+* 
+**Monitoramento Contínuo:** O sistema registra todas as sessões, documentos recuperados e feedbacks.
+
+
+* 
+**QA Suite:** Permite que especialistas humanos revisem diálogos e refinem a base de conhecimento com base em evidências.
+
+
+
+---
+
+## **Slide 11: Conclusões**
+
+* 
+**Viabilidade:** O protótipo provou-se tecnicamente viável e seguro para o domínio jurídico-tributário.
+
+
+* 
+**Impacto:** Redução de alucinações da IA e potencial para diminuir a sobrecarga do atendimento humano especializado.
+
+
+* 
+**Contribuição:** Modelo replicável e auditável para o uso responsável de IA na gestão pública.
+
+
+
+---
+
+## **Slide 12: Próximos Passos e Contato**
+
+* 
+**Pesquisas Futuras:** Realizar testes com usuários finais e investigar o ajuste fino (*fine-tuning*) dos modelos com dados específicos.
+
+
+* 
+**Repositório Público:** Código-fonte disponível em: `github.com/AugustoCamilo/UFG-ESP-T2-NLP-G25`.
+
+
+* 
+**Obrigado!** 
+
+
+para fins de comparação com o resultado de recuperação, 
+alterar o gráfico e adicionar mais dois resultados no gráfico. 
+Reranked Chunk tamanho fixo (
+Hit rate 80%
+MRR 0,64
+Precisiona@1 0,52)
+
+Busca vetorial chunk semântico (
+Hit rate 44,44%
+MRR 0,37
+Precisiona@1 0,33)
+*****
+
+ajustar o gráfico em relação aos dados
+deve conter três resultados
+
+Híbrida + Re-ranking (Hit rate 80%, MRR 0,71, Precisiona@1 0,66): Melhor resultado
+
+Reranked Chunk tamanho fixo (Hit rate 80%, MRR 0,64, Precisiona@1 0,52): Segundo melhor resultado
+
+Busca vetorial chunk semântico (Hit rate 50%,MRR 0,39,Precisiona@1 0,34): Pior resultado
+
+Adicionar o rótulo dos valores no gráfico
+
+projeto
+https://www.genspark.ai/agents?id=40b7856e-7ff9-4f19-8f3b-f273c8a68081
+
+
+apresentação
+https://qqmasyoh.gensparkspace.com/
