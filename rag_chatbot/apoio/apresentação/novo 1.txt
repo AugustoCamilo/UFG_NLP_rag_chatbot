@@ -261,3 +261,31 @@ https://www.genspark.ai/agents?id=40b7856e-7ff9-4f19-8f3b-f273c8a68081
 
 apresentação
 https://qqmasyoh.gensparkspace.com/
+
+
+#o que fazer
+*vamos ajustar alguns slides para apresentar o todo o texto, redimensionando as imagens sem perde a exibição dos menus laterais das telas, pois ali exibem mais funcionalidades que cada ferramenta possui.
+
+#orientações gerais
+*a alteração será somente nos slides 14, 15, e 19
+*redimensionar apenas as imagens indicadas, as demais não indicadas pode manter a área de apresentação atual, caso necessário, pode alterar sem perder a exibição dos textos
+
+#slides
+
+
+## slide 14
+*ajustar o slide para que todo o seu conteúdo fique visível para apresentação
+*o texto adicionado abaixo das imagens não está visível na apresentação, reduzir o tamanho das telas para que o slide possa exibir o conteúdo completo
+*na imagem do card "02. Visualização", reduzir a imagem de modo que ainda exiba a tabela e pelo menos parte do gráfico de pizza
+
+
+## slide 15
+*ajustar o slide para que todo o seu conteúdo fique visível para apresentação
+*o texto adicionado abaixo das imagens não está visível na apresentação, reduzir o tamanho das telas para que o slide possa exibir o conteúdo completo
+
+## slide 19
+*a página do slide 19 está com o número 15. ajustar o número da página para 19
+
+
+
+
