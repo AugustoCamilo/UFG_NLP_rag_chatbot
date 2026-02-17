@@ -1675,4 +1675,32 @@ Essa multa é calculada à taxa de 0,33% (trinta e três centésimos por cento) 
       <rating>like</rating>
     </feedback>
   </chat_message>
+  <chat_message>
+    <is_synthetic>False</is_synthetic>
+    <bot_chars>661</bot_chars>
+    <bot_tokens>171</bot_tokens>
+    <retrieval_end_time>2026-01-08 18:07:48.342924</retrieval_end_time>
+    <retrieval_duration_sec>0.963056</retrieval_duration_sec>
+    <total_duration_sec>6.071512</total_duration_sec>
+    <bot_response>Para solicitar o seu cadastro no Programa Quita Goiás, o primeiro passo é bem simples:
+
+1.  **Envie um requerimento:** Você deve preparar um pedido formal (um requerimento).
+2.  **Anexe os documentos necessários:** Junto com o requerimento, você precisará enviar os documentos que forem solicitados.
+3.  **Encaminhe para o e-mail oficial:** Envie tudo para o e-mail da Procuradoria-Geral do Estado: **ntt@pge.go.gov.br**.
+
+Este é o procedimento para solicitar a sua adesão e, com isso, obter a simulação dos seus créditos tributários (suas dívidas de impostos) que podem ser negociados. Após o envio, seu pedido será analisado pela Procuradoria-Geral do Estado.</bot_response>
+    <id>60</id>
+    <user_message>como solicito o meu cadastro?</user_message>
+    <session_id>1d21b40f-d7e5-4e22-a8f4-6a7fa8710206</session_id>
+    <user_chars>29</user_chars>
+    <user_tokens>1336</user_tokens>
+    <request_start_time>2026-01-08 18:07:47.379868</request_start_time>
+    <response_end_time>2026-01-08 18:07:53.451380</response_end_time>
+    <generation_duration_sec>5.108456</generation_duration_sec>
+    <feedback>
+      <rating>like</rating>
+      <timestamp>2026-02-17 18:08:00.060288</timestamp>
+      <id>59</id>
+    </feedback>
+  </chat_message>
 </chat_database_export>

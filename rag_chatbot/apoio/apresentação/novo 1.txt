@@ -264,28 +264,37 @@ https://qqmasyoh.gensparkspace.com/
 
 
 #o que fazer
-*vamos ajustar alguns slides para apresentar o todo o texto, redimensionando as imagens sem perde a exibição dos menus laterais das telas, pois ali exibem mais funcionalidades que cada ferramenta possui.
+*vamos ajustar o slide 15 para apresentar toda a imagem do quadro "02. Conversação"
+*vamos inserir um novo slide após o slide 15, seguindo o mesmo template do slide 15
+
 
 #orientações gerais
-*a alteração será somente nos slides 14, 15, e 19
-*redimensionar apenas as imagens indicadas, as demais não indicadas pode manter a área de apresentação atual, caso necessário, pode alterar sem perder a exibição dos textos
+*a alteração será somente no slide 15
+*a criação será somente de um slide logo após o slide 15
+*os textos e as imagens do slide 15 devem estar totalmente visíveis na área de visualização da apresentação
+*está permitido realinhar todos os componhentes do slide 5 para que fiquem em harmonia e alinhados
+*o novo slide deve possuir o alinhamento e mostrar todo o texto e as imagens
 
 #slides
 
-
-## slide 14
-*ajustar o slide para que todo o seu conteúdo fique visível para apresentação
-*o texto adicionado abaixo das imagens não está visível na apresentação, reduzir o tamanho das telas para que o slide possa exibir o conteúdo completo
-*na imagem do card "02. Visualização", reduzir a imagem de modo que ainda exiba a tabela e pelo menos parte do gráfico de pizza
-
-
 ## slide 15
-*ajustar o slide para que todo o seu conteúdo fique visível para apresentação
-*o texto adicionado abaixo das imagens não está visível na apresentação, reduzir o tamanho das telas para que o slide possa exibir o conteúdo completo
+*ajustar a imagem do quadro "02. Conversação" para que ela fique toda visível, incluindo os botões de like e dislike
 
-## slide 19
-*a página do slide 19 está com o número 15. ajustar o número da página para 19
 
+## novo slide
+*inserir o novo slide logo após o slide 15
+*seguir o mesmo modelo e estrutura do slide 15
+*ajustar a numeração do novo slide para a página 16
+*inserir as imagens "03-auditoria-chat-tela03.png" e "03-auditoria-chat-tela04.png" anexadas
+*a primeira imagem a ser apresentada é a "03-auditoria-chat-tela03.png"
+*a segunda imagem a ser apresentada, ao lado da primeira, é "03-auditoria-chat-tela03.png"
+*No campo de título da descrição da primeira imagem, nomear para "Histórico do Chat"
+*No campo da descrição da primeira imagem, inserir "Exemplo da lista de históricos de conversa com o chatbot, apresentando a avaliação e o tipo da conversa, se teste sintético ou conversa real."
+*No campo de título da descrição da segunda imagem, nomear para "Validação cruzada"
+*No campo da descrição da segunda imagem, inserir "O sistema faz um cruzamento com as validações dos chunks e mostra o resultado da validação dos chunks para cruzar os resultados. O sistema pesquisa na validação usada para o chatbot."
+
+## demais slides após o slide 15
+*renumerar as páginas dos slides seguintes, considerando a inclusão do novo slide que será o slide 16
 
 
 
